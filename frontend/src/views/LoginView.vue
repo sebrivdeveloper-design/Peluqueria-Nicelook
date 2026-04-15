@@ -39,21 +39,31 @@ window.handleCredentialResponse = async (response) => {
   try {
     loading.value = true;
 
-    const token = response.credential;
+    const tokenGoogle = response.credential;
 
     const res = await axios.post("http://localhost:8080/auth/google", {
-      token: token
+      token: tokenGoogle
     });
 
-    const rol = res.data.rol.nombreRol;
+    const tokenJWT = res.data;
+
+    // 🔥 GUARDAR TOKEN
+    localStorage.setItem("token", tokenJWT);
+
+    // 🔥 DECODIFICAR TOKEN
+    const payload = JSON.parse(atob(tokenJWT.split('.')[1]));
+    const rol = payload.rol;
 
     setTimeout(() => {
       if (rol === "ADMIN") router.push("/admin");
       else if (rol === "RECEPCIONISTA") router.push("/recepcionista");
       else if (rol === "EMPLEADO") router.push("/empleado");
+      else router.push("/cliente");
     }, 1200);
 
   } catch (error) {
+    console.error(error);
+
     setTimeout(() => {
       router.push("/cliente");
     }, 1200);

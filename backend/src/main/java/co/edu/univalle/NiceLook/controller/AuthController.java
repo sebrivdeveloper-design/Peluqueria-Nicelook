@@ -1,4 +1,4 @@
-package co.edu.univalle.NiceLook.Controller;
+package co.edu.univalle.NiceLook.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -10,14 +10,18 @@ import org.springframework.web.bind.annotation.RestController;
 
 import co.edu.univalle.NiceLook.DTO.GoogleUser;
 import co.edu.univalle.NiceLook.DTO.TokenRequest;
-import co.edu.univalle.NiceLook.Service.GoogleAuthService;
-import co.edu.univalle.NiceLook.Service.UsuarioService;
+import co.edu.univalle.NiceLook.Segurity.JwtService;
+import co.edu.univalle.NiceLook.service.GoogleAuthService;
+import co.edu.univalle.NiceLook.service.UsuarioService;
 import co.edu.univalle.NiceLook.model.Usuario;
 
 @RestController
 @RequestMapping("/auth")
 @CrossOrigin(origins = "*")
 public class AuthController {
+
+    @Autowired
+    private JwtService jwtService;
 
     @Autowired
     private GoogleAuthService googleAuthService;
@@ -41,9 +45,13 @@ public class AuthController {
                 return ResponseEntity.status(404)
                         .body("El usuario no se encuentra registrado");
             }
+            // 🔥 DEBUG
+            System.out.println("ROL DEL USUARIO: " + user.getRol());
 
             // Retornar usuario (incluye rol)
-            return ResponseEntity.ok(user);
+            String token = jwtService.generateToken(user);
+
+            return ResponseEntity.ok(token);
 
         } catch (Exception e) {
 

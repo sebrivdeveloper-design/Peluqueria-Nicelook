@@ -1,4 +1,4 @@
-package co.edu.univalle.NiceLook.Service;
+package co.edu.univalle.NiceLook.service;
 
 import java.util.Collections;
 
@@ -20,7 +20,7 @@ public class GoogleAuthService {
 
         GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
                 new NetHttpTransport(),
-                new GsonFactory()
+                GsonFactory.getDefaultInstance()
         )
         .setAudience(Collections.singletonList(CLIENT_ID))
         .build();
