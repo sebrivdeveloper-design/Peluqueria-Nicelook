@@ -25,14 +25,10 @@ public class Usuario {
 
     @Column(name = "nombre_completo", nullable = false)
     private String nombreCompleto;
-    
-    @Column(name = "contrasena", nullable = false)
-    private String contrasena;
-    
-    @Column(name = "correo", nullable = false)
+
+    @Column(nullable = false, unique = true)
     private String correo;
-    
-    @Column(name = "telefono", nullable = false)
+
     private String telefono;
 
     @Column(name = "fecha_registro", nullable = false)
@@ -40,6 +36,8 @@ public class Usuario {
 
     @Column(name = "estado", nullable = false)
     private String estado;
+
+    private Boolean esGoogleUser;
 
     // getters y setters
 }
