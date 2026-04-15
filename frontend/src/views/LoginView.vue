@@ -78,9 +78,10 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* 🔥 FIX REAL PARA MOBILE HEIGHT */
 .login-container {
   display: flex;
-  height: 100vh;
+  min-height: 100dvh; /* 🔥 clave (arregla el bug del 100vh) */
   font-family: 'Segoe UI', sans-serif;
   overflow: hidden;
 }
@@ -126,7 +127,7 @@ onMounted(() => {
   position: relative;
 }
 
-/* 🔥 BURBUJAS ANIMADAS */
+/* BURBUJAS */
 .left::before,
 .left::after {
   content: "";
@@ -157,7 +158,7 @@ onMounted(() => {
 
 /* LOGO */
 .logo-wrapper img {
-  width: 600px; /* 🔥 MÁS GRANDE */
+  width: 450px;
   max-width: 90%;
   animation: fadeInScale 1.2s ease, floatLogo 4s infinite ease-in-out;
   filter: drop-shadow(0 20px 40px rgba(0,0,0,0.5));
@@ -179,24 +180,29 @@ onMounted(() => {
   50% { transform: translateY(-15px); }
 }
 
-/* DERECHA */
 .right {
   flex: 1;
   display: flex;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(to bottom right, #ffffff, #f8f8f8);
+  background: #ffffff; /* 🔥 BLANCO en PC */
 }
 
-/* 🔥 CARD GLASS */
+/* CARD */
 .card {
-  padding: 50px;
-  border-radius: 20px;
-  backdrop-filter: blur(15px);
-  background: rgba(255,255,255,0.7);
-  box-shadow: 0 20px 50px rgba(0,0,0,0.1);
+  padding: 60px 40px;
+  min-height: 320px;
+  border-radius: 25px;
+  backdrop-filter: blur(20px);
+  background: rgba(255,255,255,0.92);
+  box-shadow: 0 25px 60px rgba(0,0,0,0.2);
   text-align: center;
   animation: fadeIn 1s ease;
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
 }
 
 @keyframes fadeIn {
@@ -212,30 +218,50 @@ onMounted(() => {
 h1 {
   font-size: 42px;
   margin: 10px 0 30px;
+  font-weight: 700;
+  color: #1f3d2b;
 }
 
-/* BOTÓN */
+/* BOTÓN GOOGLE */
 .g_id_signin {
   display: flex;
   justify-content: center;
+  margin-top: 10px;
 }
 
-/* RESPONSIVE */
+/* 🔥 MOBILE PERFECTO */
 @media (max-width: 768px) {
   .login-container {
     flex-direction: column;
+    min-height: 100dvh;
+    background: linear-gradient(135deg, #4e6f52, #2e5e3f);
   }
 
   .left {
-    height: 40%;
+    height: 25%;
+    min-height: 140px;
   }
 
   .right {
-    height: 60%;
+    background: transparent;
+    flex: 1;
+    display: flex;
+    align-items: flex-start;
+  }
+
+  .card {
+    margin: -20px 20px 20px;
+    padding: 40px 20px;
+    border-radius: 25px;
+    min-height: 280px;
   }
 
   .logo-wrapper img {
-    width: 350px;
+    width: 190px;
+  }
+
+  h1 {
+    font-size: 30px;
   }
 }
 </style>
