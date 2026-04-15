@@ -21,13 +21,17 @@ public class Usuario {
     private Rol rol;
 
     private String nombreCompleto;
-    private String contrasena;
+
+    @Column(nullable = false, unique = true)
     private String correo;
+
     private String telefono;
 
     private LocalDateTime fechaRegistro;
 
     private String estado;
+
+    private Boolean esGoogleUser;
 
     // getters y setters
 }
