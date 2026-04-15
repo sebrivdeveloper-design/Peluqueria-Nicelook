@@ -1,4 +1,4 @@
-package co.edu.univalle.NiceLook.Repository;
+package co.edu.univalle.NiceLook.repository;
 
 import java.util.Optional;
 
