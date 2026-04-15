@@ -37,7 +37,7 @@ export default {
   border-radius: 15px;
   text-align: center;
   padding: 15px;
-  width: 100%;
+  width: 80%;
   aspect-ratio: 1/1;
   cursor: pointer;
   transition: 0.2s;
