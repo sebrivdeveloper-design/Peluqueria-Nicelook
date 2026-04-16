@@ -10,9 +10,10 @@
       </div>
 
       <ul>
-        <li>Categorías</li>
-        <li>Servicios</li>
-        <li>Empleados</li>
+        <li @click="$router.push('/admin/categorias')">Categorías</li>
+        <li @click="$router.push('/admin/servicios')">Servicios</li>
+        <li @click="$router.push('/admin/empleados')">Empleados</li>
+
       </ul>
     </div>
 
