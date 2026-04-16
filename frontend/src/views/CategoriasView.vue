@@ -2,6 +2,7 @@
   
 
     <HeaderBar 
+  v-model:busqueda="busqueda"
   @crear="mostrarModal = true"
   textoBoton="Crear categoría"
 />
