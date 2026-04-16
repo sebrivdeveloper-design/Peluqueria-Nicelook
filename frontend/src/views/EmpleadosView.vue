@@ -1,6 +1,7 @@
 <template>
 
   <HeaderBar 
+  v-model:busqueda="busqueda"
   @crear="mostrarModal = true"
   textoBoton="Crear empleado"
 />
@@ -9,7 +10,7 @@
   <h2>EMPLEADOS</h2>
 
   <div class="grid">
-    <div v-for="emp in empleados" :key="emp.idEmpleado" class="card">
+    <div v-for="emp in filtrados" :key="emp.idEmpleado" class="card">
       
       <h3>{{ emp.usuario.nombreCompleto }}</h3>
       <p>{{ emp.usuario.correo }}</p>
@@ -39,9 +40,25 @@ export default {
   data() {
     return {
       empleados: [],
-      mostrarModal: false
+      mostrarModal: false,
+      busqueda: ''
     }
   },
+
+  computed: {
+  filtrados() {
+    return this.empleados.filter(e => {
+      const texto = this.busqueda.toLowerCase()
+
+      const nombre = e.usuario.nombreCompleto?.toLowerCase() || ''
+      const documento = e.documento?.toString() || ''
+
+      return nombre.includes(texto) || documento.includes(texto)
+    })
+  }
+},
+
+
 
   mounted() {
     this.cargarEmpleados()
