@@ -5,14 +5,22 @@
   @input="$emit('update:busqueda', $event.target.value)" 
   placeholder="Buscar..." 
 />
-    <button @click="$emit('crear')">Crear categoría</button>
+    <button @click="$emit('crear')">
+  {{ textoBoton }}
+</button>
+
   </div>
 </template>
 
 <script>
 export default {
-  props: ['busqueda'],
-  emits: ['update:busqueda', 'crear']
+  props: {
+  busqueda: String,
+  textoBoton: {
+    type: String,
+    default: "Crear"
+  }
+}
 }
 </script>
 

@@ -2,9 +2,9 @@
   
 
     <HeaderBar 
-        v-model:busqueda="busqueda"
-        @crear="mostrarModal = true"
-    />
+  @crear="mostrarModal = true"
+  textoBoton="Crear categoría"
+/>
 
     <h2>CATEGORÍAS</h2>
 
