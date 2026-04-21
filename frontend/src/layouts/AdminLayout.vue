@@ -1,14 +1,14 @@
 <template>
-  <div class="layout">
-    
+  <div class="admin-layout">
     <!-- Sidebar fijo -->
     <Sidebar />
 
-    <!-- Contenido dinámico según la ruta -->
-    <div class="content">
-      <router-view />
+    <!-- Área principal -->
+    <div class="admin-main">
+      <div class="admin-content">
+        <router-view />
+      </div>
     </div>
-
   </div>
 </template>
 
@@ -22,27 +22,56 @@ export default {
 </script>
 
 <style scoped>
-.layout {
+.admin-layout {
   display: flex;
-  height: 100vh;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(139, 93, 122, 0.08), transparent 22%),
+    radial-gradient(circle at bottom right, rgba(139, 93, 122, 0.05), transparent 20%),
+    linear-gradient(180deg, #f9f7fb 0%, #f4f1f7 100%);
   overflow: hidden;
 }
 
-.content {
+.admin-main {
   flex: 1;
-  padding: 20px;
-  background: #f4f4f4;
+  min-width: 0;
+  height: 100vh;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
-/* 📱 Responsive */
+.admin-content {
+  min-height: 100%;
+  padding: 32px;
+  box-sizing: border-box;
+}
+
+/* Tablet */
+@media (max-width: 1024px) {
+  .admin-content {
+    padding: 24px;
+  }
+}
+
+/* Móvil */
 @media (max-width: 768px) {
-  .layout {
+  .admin-layout {
     flex-direction: column;
   }
 
-  .content {
-    padding: 15px;
+  .admin-main {
+    height: auto;
+  }
+
+  .admin-content {
+    padding: 18px;
+  }
+}
+
+/* Móvil pequeño */
+@media (max-width: 480px) {
+  .admin-content {
+    padding: 14px;
   }
 }
 </style>

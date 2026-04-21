@@ -1,13 +1,17 @@
 <template>
-  
+  <section class="categorias-page">
+    <HeaderBar
+      v-model:busqueda="busqueda"
+      @crear="mostrarModal = true"
+      textoBoton="Crear categoría"
+    />
 
-    <HeaderBar 
-  v-model:busqueda="busqueda"
-  @crear="mostrarModal = true"
-  textoBoton="Crear categoría"
-/>
-
-    <h2>CATEGORÍAS</h2>
+    <div class="page-header">
+      <div>
+        <h1>Categorías</h1>
+        <p>Administra las categorías disponibles para organizar los servicios del salón.</p>
+      </div>
+    </div>
 
     <div class="grid">
       <CategoriaCard
@@ -18,33 +22,50 @@
       />
     </div>
 
+    <div v-if="filtradas.length === 0" class="empty-state">
+      <h3>No se encontraron categorías</h3>
+      <p>No hay resultados para la búsqueda actual.</p>
+    </div>
+
     <CategoriaModal
       v-if="mostrarModal"
       @cerrar="mostrarModal = false"
       @actualizar="cargarCategorias"
     />
 
-  
+    <AppConfirmModal
+      :visible="confirmModal.visible"
+      title="Desactivar categoría"
+      message="¿Estás seguro de que deseas desactivar esta categoría?"
+      @cancel="cerrarConfirmacion"
+      @confirm="confirmarDeshabilitacion"
+    />
+  </section>
 </template>
 
 <script>
 import HeaderBar from '../components/HeaderBar.vue'
 import CategoriaCard from '../components/CategoriaCard.vue'
 import CategoriaModal from '../components/CategoriaModal.vue'
-import { getCategorias } from '../services/categoriaServices'
-import { deshabilitarCategoria } from '../services/categoriaServices'
+import AppConfirmModal from '../components/AppConfirmModal.vue'
+import { getCategorias, deshabilitarCategoria } from '../services/categoriaServices'
 
 export default {
   components: {
-  HeaderBar,
-  CategoriaCard,
-  CategoriaModal
+    HeaderBar,
+    CategoriaCard,
+    CategoriaModal,
+    AppConfirmModal
   },
   data() {
     return {
       categorias: [],
       mostrarModal: false,
-      busqueda: ''
+      busqueda: '',
+      confirmModal: {
+        visible: false,
+        idCategoria: null
+      }
     }
   },
 
@@ -65,35 +86,134 @@ export default {
       const res = await getCategorias()
       this.categorias = res.data
     },
-  
-    async deshabilitar(idCategoria) {
-    if (confirm("¿Seguro que deseas desactivar esta categoría?")) {
-    await deshabilitarCategoria(idCategoria)
-    this.cargarCategorias()
+
+    deshabilitar(idCategoria) {
+      this.confirmModal.visible = true
+      this.confirmModal.idCategoria = idCategoria
+    },
+
+    async confirmarDeshabilitacion() {
+      try {
+        await deshabilitarCategoria(this.confirmModal.idCategoria)
+        this.cargarCategorias()
+      } finally {
+        this.cerrarConfirmacion()
+      }
+    },
+
+    cerrarConfirmacion() {
+      this.confirmModal.visible = false
+      this.confirmModal.idCategoria = null
+    }
   }
-}
-}
 }
 </script>
 
 <style scoped>
-.grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
+.categorias-page {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
 }
 
-/* tablet */
+.page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.page-header h1 {
+  margin: 0;
+  font-size: 38px;
+  font-weight: 700;
+  color: #173221;
+  line-height: 1.1;
+}
+
+.page-header p {
+  margin: 8px 0 0;
+  font-size: 15px;
+  color: #5f6f63;
+  max-width: 620px;
+}
+
+.stats-box {
+  min-width: 120px;
+  background: #ffffff;
+  border: 1px solid #d9e4da;
+  border-radius: 18px;
+  padding: 14px 18px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.04);
+  text-align: center;
+}
+
+.stats-box span {
+  display: block;
+  font-size: 12px;
+  color: #6c7c70;
+  margin-bottom: 4px;
+}
+
+.stats-box strong {
+  font-size: 26px;
+  color: #004518;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(240px, 1fr));
+  gap: 24px;
+}
+
+.empty-state {
+  background: #ffffff;
+  border: 1px dashed #c7d6c8;
+  border-radius: 22px;
+  padding: 40px 24px;
+  text-align: center;
+}
+
+.empty-state h3 {
+  margin: 0 0 8px;
+  font-size: 20px;
+  color: #173221;
+}
+
+.empty-state p {
+  margin: 0;
+  color: #6b7a6f;
+  font-size: 14px;
+}
+
+/* Tablet */
 @media (max-width: 1024px) {
   .grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(220px, 1fr));
+  }
+
+  .page-header h1 {
+    font-size: 32px;
   }
 }
 
-/* mobile */
-@media (max-width: 600px) {
+/* Mobile */
+@media (max-width: 640px) {
   .grid {
     grid-template-columns: 1fr;
+  }
+
+  .page-header {
+    align-items: stretch;
+  }
+
+  .page-header h1 {
+    font-size: 28px;
+  }
+
+  .stats-box {
+    width: 100%;
   }
 }
 </style>
