@@ -7,6 +7,8 @@ import EmpleadoLayout from '@/layouts/EmpleadoLayout.vue'
 import ClienteLayout from '@/layouts/ClienteLayout.vue'
 import CategoriasView from '@/views/CategoriasView.vue'
 import CategoriaDetalle from '@/views/CategoriaDetalle.vue'
+import EmpleadosView from '@/views/EmpleadosView.vue'
+
 
 const routes = [
   { path: '/', component: LoginView },
@@ -29,7 +31,13 @@ const routes = [
         name: 'categoriaDetalle',
         component: CategoriaDetalle
         
+      },
+      {
+        path: 'empleados',
+        name: 'empleados',
+        component: EmpleadosView
       }
+
     ]
   },
 
