@@ -12,14 +12,10 @@ import EmpleadosView from '@/views/EmpleadosView.vue'
 
 const routes = [
   { path: '/', component: LoginView },
-
-  {
-    path: '/admin',
-    component: AdminLayout,
-    children: [
+  { path: '/admin', component: AdminLayout, children: [
       {
       path: '',
-      redirect: '/admin/categorias' // 🔥 ESTA LÍNEA ES LA CLAVE
+      redirect: '/admin/categorias' // ESTA LÍNEA ES LA CLAVE
       },
       {
         path: 'categorias',
@@ -50,5 +46,46 @@ const router = createRouter({
   history: createWebHistory(),
   routes
 })
+
+router.beforeEach((to, from, next) => {
+
+  const token = localStorage.getItem("token");
+
+  // rutas públicas
+  if (to.path === "/" || to.path === "/cliente") {
+    return next();
+  }
+
+  // si no hay token → login
+  if (!token) {
+    return next("/");
+  }
+
+  try {
+    // validar token (decodificar)
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const rol = payload.rol;
+
+    // PROTECCIÓN POR ROL
+    if (to.path.startsWith("/admin") && rol !== "ADMIN") {
+      return next("/");
+    }
+
+    if (to.path.startsWith("/recepcionista") && rol !== "RECEPCIONISTA") {
+      return next("/");
+    }
+
+    if (to.path.startsWith("/empleado") && rol !== "EMPLEADO") {
+      return next("/");
+    }
+
+    next();
+
+  } catch (e) {
+    // token corrupto o inválido
+    localStorage.removeItem("token");
+    return next("/");
+  }
+});
 
 export default router
