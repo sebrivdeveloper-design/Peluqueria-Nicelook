@@ -1,9 +1,6 @@
 <template>
-  
-
-    <div class="container">
-
-      <div v-if="categoria" class="card">
+  <div class="container">
+    <div v-if="categoria" class="card">
 
         <img
           :src="categoria.imagen"
@@ -19,9 +16,15 @@
         <hr />
 
         <h3>Servicios</h3>
-        <p class="empty">
-          Aquí se mostrarán los servicios de esta categoría
-        </p>
+        <div v-if="servicios.length === 0" class="empty">
+          No hay servicios en esta categoría
+        </div>
+
+        <ul v-else>
+          <li v-for="s in servicios" :key="s.idServicio">
+            {{ s.nombreServicio }} - ${{ s.precio }}
+          </li>
+        </ul>
 
         <button @click="$router.push('/admin/categorias')">
           Volver
@@ -40,11 +43,13 @@
 
 <script>
 import { getCategoriaById } from '../services/categoriaServices'
+import axios from 'axios'
 
 export default {
 
   data() {
     return {
+      servicios: [],
       categoria: null
     }
   },
@@ -57,9 +62,19 @@ export default {
       const res = await getCategoriaById(idCategoria)
       this.categoria = res.data
 
+      const resServicios = await axios.get(
+        `http://localhost:8080/api/categorias/categoria/${idCategoria}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`
+          }
+        }
+      )
+
+      this.servicios = resServicios.data
+
     } catch (error) {
-      console.error("Error cargando categoría:", error)
-      this.categoria = null
+      console.error("Error:", error)
     }
   }
 }

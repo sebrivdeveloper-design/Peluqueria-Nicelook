@@ -6,11 +6,16 @@ import java.util.List;
 
 import co.edu.univalle.NiceLook.repository.CategoriaRepository;
 import co.edu.univalle.NiceLook.model.CategoriaServicios;
+import co.edu.univalle.NiceLook.model.Servicio;
+import co.edu.univalle.NiceLook.repository.ServicioRepository;
 
 @Service
 public class CategoriaService {
     @Autowired
     private CategoriaRepository repository;
+
+    @Autowired
+    private ServicioRepository servicioRepository;
 
     public CategoriaServicios crearCategoria(CategoriaServicios categoria) {
 
@@ -52,5 +57,11 @@ public class CategoriaService {
         categoria.setActivo(true);
         repository.save(categoria);
     }
-}
 
+    public List<Servicio> listarPorCategoria(Long idCategoria) {
+        return servicioRepository.findByCategoriaIdCategoria(idCategoria)
+            .stream()
+            .filter(s -> "activo".equals(s.getEstado()))
+            .toList();
+    }
+}
