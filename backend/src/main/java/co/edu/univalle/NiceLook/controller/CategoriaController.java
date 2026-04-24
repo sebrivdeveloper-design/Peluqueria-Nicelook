@@ -5,16 +5,21 @@ import org.springframework.http.ResponseEntity;
 import java.util.List;
 import co.edu.univalle.NiceLook.service.CategoriaService;
 import co.edu.univalle.NiceLook.model.CategoriaServicios;
+import co.edu.univalle.NiceLook.model.Servicio;
 import co.edu.univalle.NiceLook.repository.CategoriaRepository;
+import co.edu.univalle.NiceLook.service.ServicioService;
+
 @RestController
 @RequestMapping("/api/categorias")
 @CrossOrigin(origins = "*")
 public class CategoriaController {
 
     @Autowired
-private CategoriaRepository repository;
+    private CategoriaRepository repository;
     @Autowired
     private CategoriaService service;
+    @Autowired
+    private ServicioService servicioService;
 
     @PostMapping
     public ResponseEntity<?> crear(@RequestBody CategoriaServicios categoria) {
@@ -28,6 +33,11 @@ private CategoriaRepository repository;
     @GetMapping
     public List<CategoriaServicios> listar() {
         return service.listar();
+    }
+
+    @GetMapping("/categoria/{id}")
+    public List<Servicio> listarPorCategoria(@PathVariable Long id) {
+        return servicioService.listar();
     }
 
     @GetMapping("/{idCategoria}")
