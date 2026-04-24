@@ -56,6 +56,11 @@ export default {
 
   
   async mounted() {
+      this.servicios = []; // 1. Limpia siempre al iniciar
+      await this.cargarDatos();
+  },
+  methods: {
+    async cargarDatos() {
     try {
       const idCategoria = this.$route.params.idCategoria
 
@@ -71,10 +76,11 @@ export default {
         }
       )
 
-      this.servicios = resServicios.data
+        this.servicios = resServicios.data
 
-    } catch (error) {
-      console.error("Error:", error)
+      } catch (error) {
+        console.error("Error:", error)
+      }
     }
   }
 }
