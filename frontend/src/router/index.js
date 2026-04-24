@@ -8,6 +8,7 @@ import ClienteLayout from '@/layouts/ClienteLayout.vue'
 import CategoriasView from '@/views/CategoriasView.vue'
 import CategoriaDetalle from '@/views/CategoriaDetalle.vue'
 import EmpleadosView from '@/views/EmpleadosView.vue'
+import ServiciosView from '@/views/ServicioView.vue'
 
 
 const routes = [
@@ -32,6 +33,11 @@ const routes = [
         path: 'empleados',
         name: 'empleados',
         component: EmpleadosView
+      },
+      {
+        path: 'servicios',
+        name: 'servicios',
+        component: ServiciosView
       }
 
     ]
