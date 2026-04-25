@@ -1,32 +1,70 @@
 <template>
+  <section class="empleados-page">
+    <HeaderBar
+      v-model:busqueda="busqueda"
+      @crear="mostrarModal = true"
+      textoBoton="Crear empleado"
+    />
 
-  <HeaderBar 
-  v-model:busqueda="busqueda"
-  @crear="mostrarModal = true"
-  textoBoton="Crear empleado"
-/>
-
-
-  <h2>EMPLEADOS</h2>
-
-  <div class="grid">
-    <div v-for="emp in filtrados" :key="emp.idEmpleado" class="card">
-      
-      <h3>{{ emp.usuario.nombreCompleto }}</h3>
-      <p>{{ emp.usuario.correo }}</p>
-      <p>{{ emp.documento }}</p>
-      <p>{{ emp.especialidad }}</p>
-      <p>${{ emp.salario }}</p>
-
+    <div class="page-header">
+      <div>
+        <h1>Empleados</h1>
+        <p>Consulta y administra la información del personal registrado en el sistema.</p>
+      </div>
     </div>
-  </div>
 
-  <EmpleadoModal
-    v-if="mostrarModal"
-    @cerrar="mostrarModal = false"
-    @actualizar="cargarEmpleados"
-  />
+    <div class="table-card">
+      <div class="table-responsive">
+        <table class="empleados-table">
+          <thead>
+            <tr>
+              <th>Empleado</th>
+              <th>Correo</th>
+              <th>Documento</th>
+              <th>Especialidad</th>
+              <th>Salario</th>
+            </tr>
+          </thead>
 
+          <tbody>
+            <tr v-for="emp in filtrados" :key="emp.idEmpleado">
+              <td class="empleado-cell">
+                <div class="avatar">
+                  {{ obtenerInicial(emp.usuario?.nombreCompleto) }}
+                </div>
+
+                <div class="empleado-info">
+                  <strong>{{ emp.usuario?.nombreCompleto }}</strong>
+                  <span>{{ emp.usuario?.telefono || 'Sin teléfono' }}</span>
+                </div>
+              </td>
+
+              <td>{{ emp.usuario?.correo || 'Sin correo' }}</td>
+              <td>{{ emp.documento || 'Sin documento' }}</td>
+              <td>
+                <span class="badge">
+                  {{ emp.especialidad || 'No definida' }}
+                </span>
+              </td>
+              <td class="salary">{{ formatearMoneda(emp.salario) }}</td>
+            </tr>
+
+            <tr v-if="filtrados.length === 0">
+              <td colspan="5" class="empty-row">
+                No se encontraron empleados con esa búsqueda.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <EmpleadoModal
+      v-if="mostrarModal"
+      @cerrar="mostrarModal = false"
+      @actualizar="cargarEmpleados"
+    />
+  </section>
 </template>
 
 <script>
@@ -35,7 +73,10 @@ import { getEmpleados } from '../services/empleadoService'
 import EmpleadoModal from '../components/EmpleadoModal.vue'
 
 export default {
-  components: { EmpleadoModal, HeaderBar },
+  components: {
+    EmpleadoModal,
+    HeaderBar
+  },
 
   data() {
     return {
@@ -46,19 +87,17 @@ export default {
   },
 
   computed: {
-  filtrados() {
-    return this.empleados.filter(e => {
-      const texto = this.busqueda.toLowerCase()
+    filtrados() {
+      return this.empleados.filter(e => {
+        const texto = this.busqueda.toLowerCase()
 
-      const nombre = e.usuario.nombreCompleto?.toLowerCase() || ''
-      const documento = e.documento?.toString() || ''
+        const nombre = e.usuario?.nombreCompleto?.toLowerCase() || ''
+        const documento = e.documento?.toString() || ''
 
-      return nombre.includes(texto) || documento.includes(texto)
-    })
-  }
-},
-
-
+        return nombre.includes(texto) || documento.includes(texto)
+      })
+    }
+  },
 
   mounted() {
     this.cargarEmpleados()
@@ -71,23 +110,172 @@ export default {
         this.empleados = res.data
       } catch (error) {
         console.error(error)
-        alert("Error cargando empleados")
+        alert('Error cargando empleados')
       }
+    },
+
+    obtenerInicial(nombre) {
+      if (!nombre) return 'E'
+
+      const partes = nombre.trim().split(' ')
+
+      return partes.length > 1
+        ? (partes[0][0] + partes[1][0]).toUpperCase()
+        : partes[0][0].toUpperCase()
+    },
+
+    formatearMoneda(valor) {
+      if (valor === null || valor === undefined || valor === '') {
+        return 'Sin salario'
+      }
+
+      return new Intl.NumberFormat('es-CO', {
+        style: 'currency',
+        currency: 'COP',
+        maximumFractionDigits: 0
+      }).format(valor)
     }
   }
 }
 </script>
 
 <style scoped>
-.grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+.empleados-page {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
 }
 
-.card {
-  background: #dce6d7;
-  padding: 15px;
-  border-radius: 15px;
+.page-header h1 {
+  margin: 0;
+  font-size: 38px;
+  font-weight: 700;
+  color: #173221;
+  line-height: 1.1;
+}
+
+.page-header p {
+  margin: 8px 0 0;
+  font-size: 15px;
+  color: #5f6f63;
+  max-width: 620px;
+}
+
+.table-card {
+  background: #ffffff;
+  border: 1px solid #d9e4da;
+  border-radius: 24px;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.empleados-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 900px;
+}
+
+.empleados-table thead {
+  background: #f2f7f2;
+}
+
+.empleados-table th {
+  text-align: left;
+  padding: 18px 20px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #48604d;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid #e0e8e1;
+}
+
+.empleados-table td {
+  padding: 18px 20px;
+  font-size: 14px;
+  color: #173221;
+  border-bottom: 1px solid #edf2ed;
+  vertical-align: middle;
+}
+
+.empleados-table tbody tr:hover {
+  background: #fafcf9;
+}
+
+.empleado-cell {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.avatar {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  border-radius: 50%;
+  background: #dfe9db;
+  color: #004518;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
+.empleado-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.empleado-info strong {
+  font-size: 15px;
+  font-weight: 700;
+  color: #173221;
+}
+
+.empleado-info span {
+  font-size: 12px;
+  color: #728376;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: #eef5ee;
+  color: #35513b;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.salary {
+  font-weight: 700;
+  color: #004518;
+}
+
+.empty-row {
+  text-align: center;
+  padding: 28px !important;
+  color: #6a7b6d;
+}
+
+/* Tablet */
+@media (max-width: 1024px) {
+  .page-header h1 {
+    font-size: 32px;
+  }
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+  .page-header h1 {
+    font-size: 28px;
+  }
 }
 </style>
