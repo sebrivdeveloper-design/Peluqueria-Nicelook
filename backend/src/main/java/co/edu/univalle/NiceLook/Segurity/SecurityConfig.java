@@ -21,7 +21,13 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .cors(cors -> {})
             .authorizeHttpRequests(auth -> auth
+
+                // 🔥 PÚBLICOS
                 .requestMatchers("/auth/**").permitAll()
+                .requestMatchers("/api/servicios/**").permitAll()
+                .requestMatchers("/api/categorias/categoria/**").permitAll()
+
+                // 🔒 PROTEGIDOS
                 .requestMatchers("/api/categorias/**").hasRole("ADMIN")
                 .requestMatchers("/api/empleados/**").hasRole("ADMIN")
 
