@@ -52,6 +52,11 @@
         <Users :size="20" />
         <span v-if="!isCollapsed">Empleados</span>
       </button>
+
+      <button class="logout" @click="cerrarSesion">
+        Cerrar sesión
+      </button>
+
     </nav>
 
     <div class="sidebar-bottom">
@@ -117,7 +122,11 @@ export default {
       if (window.innerWidth <= 768) {
         this.isCollapsed = true
       }
-    }
+    },
+    cerrarSesion() {
+      localStorage.removeItem("token")
+      this.$router.replace('/') // 🔥 mejor que push
+    }   
   },
   mounted() {
     window.addEventListener('resize', this.handleResize)
@@ -126,6 +135,8 @@ export default {
     window.removeEventListener('resize', this.handleResize)
   }
 }
+
+
 </script>
 
 <style scoped>
@@ -359,4 +370,24 @@ export default {
     width: 250px;
   }
 }
+
+.logout {
+  margin-top: 10px;
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: none;
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffdddd;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.logout:hover {
+  background: #ffdddd;
+  color: #7a1c1c;
+}
+
 </style>

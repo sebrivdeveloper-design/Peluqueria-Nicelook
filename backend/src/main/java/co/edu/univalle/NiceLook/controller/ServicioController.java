@@ -18,22 +18,41 @@ public class ServicioController {
     @Autowired
     private ServicioService servicioService;
 
-    // 🔥 ESTE ES EL QUE TE FALTABA
-    @GetMapping
-    public List<Servicio> listar() {
-        return servicioService.listar();
+    // ADMIN
+    @GetMapping("/admin")
+    public List<Servicio> listarAdmin() {
+        return servicioService.listarTodos();
     }
 
-    // 🔥 LISTAR POR CATEGORÍA
+    // Cliente
+    @GetMapping
+    public List<Servicio> listar() {
+        return servicioService.listarActivos();
+    }
+
+    // LISTAR POR CATEGORÍA
     @GetMapping("/categoria/{idCategoria}")
     public List<Servicio> listarPorCategoria(@PathVariable Long idCategoria) {
         return servicioService.listarPorCategoria(idCategoria);
     }
 
-    // 🔥 CREAR
+    // GUARDAR
     @PostMapping
     public ResponseEntity<?> guardar(@Valid @RequestBody Servicio servicio) {
         Servicio nuevo = servicioService.guardar(servicio);
         return ResponseEntity.ok(nuevo);
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deshabilitar(@PathVariable Integer id) {
+        servicioService.deshabilitar(id);
+        return ResponseEntity.ok("Servicio desactivado");
+    }
+
+    @PutMapping("/activar/{id}")
+    public ResponseEntity<?> activar(@PathVariable Integer id) {
+        servicioService.activar(id);
+        return ResponseEntity.ok("Servicio activado");
+    }
+
 }
