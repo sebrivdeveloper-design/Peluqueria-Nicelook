@@ -55,7 +55,12 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
 
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("token"); // 🔥 PRIMERO
+
+  // si ya está logueado y quiere ir al login → redirigir
+  if (to.path === "/" && token) {
+    return next("/admin")
+  }
 
   // rutas públicas
   if (to.path === "/" || to.path === "/cliente") {
@@ -68,11 +73,16 @@ router.beforeEach((to, from, next) => {
   }
 
   try {
-    // validar token (decodificar)
     const payload = JSON.parse(atob(token.split('.')[1]));
     const rol = payload.rol;
 
-    // PROTECCIÓN POR ROL
+    // 🔥 validar expiración
+    if (payload.exp * 1000 < Date.now()) {
+      localStorage.removeItem("token");
+      return next("/");
+    }
+
+    // 🔥 roles
     if (to.path.startsWith("/admin") && rol !== "ADMIN") {
       return next("/");
     }
@@ -88,10 +98,10 @@ router.beforeEach((to, from, next) => {
     next();
 
   } catch (e) {
-    // token corrupto o inválido
     localStorage.removeItem("token");
     return next("/");
   }
 });
+
 
 export default router

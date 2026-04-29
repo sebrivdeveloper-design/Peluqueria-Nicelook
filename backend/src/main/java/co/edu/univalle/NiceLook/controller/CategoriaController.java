@@ -35,9 +35,17 @@ public class CategoriaController {
         }
     }
 
+
+    // ADMIN
+    @GetMapping("/admin")
+    public List<CategoriaServicios> listarAdmin() {
+     return service.listarTodas();
+    }
+
+    //Cliente
     @GetMapping
     public List<CategoriaServicios> listar() {
-        return service.listar();
+        return service.listarActivas();
     }
 
     // 🔥 ESTE ES EL BUENO
