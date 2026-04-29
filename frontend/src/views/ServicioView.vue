@@ -15,7 +15,12 @@
 
     <!-- GRID -->
     <div class="grid">
-      <div class="card" v-for="s in servicios" :key="s.idServicio">
+      <div 
+        class="card" 
+        :class="{ inactivo: s.estado === 'inactivo' }"
+        v-for="s in servicios" 
+        :key="s.idServicio"
+      >
         <h3>{{ s.nombreServicio }}</h3>
         <p>{{ s.descripcion }}</p>
 
@@ -27,7 +32,28 @@
         <div class="categoria">
           {{ s.categoria.nombreCategoria }}
         </div>
+
+        <!--  ESTADO -->
+        <span 
+          class="badge-estado"
+          :class="s.estado === 'activo' ? 'activo' : 'inactivo'"
+        >
+          {{ s.estado === 'activo' ? 'Activo' : 'Inactivo' }}
+        </span>
+
+
+        <!--  BOTÓN -->
+        <button 
+          class="btn-estado"
+          :class="s.estado === 'activo' ? 'btn-danger' : 'btn-success'"
+          @click="toggleEstado(s)"
+        >
+          {{ s.estado === 'activo' ? 'Desactivar' : 'Activar' }}
+        </button>
+
+
       </div>
+
     </div>
 
     <!-- EMPTY -->
@@ -61,10 +87,41 @@ export default {
 
   methods: {
     async recargar() {
-      const res = await servicioService.getServicios()
+      const res = await servicioService.getServiciosAdmin()
       this.servicios = res.data
       this.mostrarForm = false
+    },
+
+    async toggleEstado(s) {
+      try {
+        if (s.estado === "activo") {
+
+          const ok = confirm("¿Seguro que deseas desactivar este servicio?")
+          if (!ok) return
+
+          await servicioService.deshabilitar(s.idServicio)
+
+          alert("✅ Servicio desactivado correctamente")
+
+        } else {
+
+          const ok = confirm("¿Deseas activar este servicio nuevamente?")
+          if (!ok) return
+
+          await servicioService.activar(s.idServicio)
+
+          alert("✅ Servicio activado correctamente")
+        }
+
+        this.recargar()
+
+      } catch (error) {
+        console.error(error)
+        alert("❌ Ocurrió un error")
+      }
     }
+
+
   },
 
   mounted() {
@@ -152,4 +209,68 @@ export default {
     grid-template-columns: 1fr;
   }
 }
+
+.inactivo {
+  opacity: 0.5;
+  filter: grayscale(80%);
+}
+
+.estado {
+  margin-top: 10px;
+  font-weight: bold;
+}
+
+.btn-estado {
+  margin-top: 14px;
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* DESACTIVAR */
+.btn-danger {
+  background: #ffe5e5;
+  color: #b42318;
+}
+
+.btn-danger:hover {
+  background: #fecdcd;
+}
+
+/*  ACTIVAR */
+.btn-success {
+  background: #e6f4ea;
+  color: #1b5e20;
+}
+
+.btn-success:hover {
+  background: #cde8d5;
+}
+
+.badge-estado {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ACTIVO */
+.badge-estado.activo {
+  background: #e6f4ea;
+  color: #1b5e20;
+}
+
+/* INACTIVO */
+.badge-estado.inactivo {
+  background: #fdecea;
+  color: #b42318;
+}
+
 </style>

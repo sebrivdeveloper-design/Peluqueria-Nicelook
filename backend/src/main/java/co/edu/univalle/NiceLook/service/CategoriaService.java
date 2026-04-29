@@ -47,8 +47,13 @@ public class CategoriaService {
         return repository.save(existente);
     }
 
-    // 🔥 LISTAR ACTIVAS
-    public List<CategoriaServicios> listar() {
+    // admin todas (activas e inactivas)
+    public List<CategoriaServicios> listarTodas() {
+        return repository.findAll();
+}
+
+    //  LISTAR ACTIVAS
+    public List<CategoriaServicios> listarActivas() {
         return repository.findByActivoTrue();
     }
 
