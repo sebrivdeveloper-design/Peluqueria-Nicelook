@@ -1,6 +1,8 @@
 package co.edu.univalle.NiceLook.service;
 
+import co.edu.univalle.NiceLook.model.CategoriaServicios;
 import co.edu.univalle.NiceLook.model.Servicio;
+import co.edu.univalle.NiceLook.repository.CategoriaRepository;
 import co.edu.univalle.NiceLook.repository.ServicioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -11,17 +13,21 @@ import java.util.List;
 public class ServicioService {
 
     @Autowired
+    private CategoriaRepository categoriaRepository;
+
+    @Autowired
     private ServicioRepository servicioRepository;
 
-    // 🔥 LISTAR TODOS
-    public List<Servicio> listar() {
-        return servicioRepository.findAll()
-                .stream()
-                .filter(s -> "activo".equals(s.getEstado()))
-                .toList();
+    public List<Servicio> listarTodos() {
+        return servicioRepository.findAll();
     }
 
-    // 🔥 LISTAR POR CATEGORÍA (CLAVE)
+    public List<Servicio> listarActivos() {
+        return servicioRepository.findByEstado("activo");
+
+    }
+
+    // LISTAR POR CATEGORÍA
     public List<Servicio> listarPorCategoria(Long idCategoria) {
         return servicioRepository.findByCategoria_IdCategoria(idCategoria)
                 .stream()
@@ -29,9 +35,35 @@ public class ServicioService {
                 .toList();
     }
 
-    // 🔥 GUARDAR
+    // GUARDAR
     public Servicio guardar(Servicio servicio) {
+
+        CategoriaServicios categoria = categoriaRepository
+                .findById(servicio.getCategoria().getIdCategoria())
+                .orElseThrow(() -> new RuntimeException("Categoría no encontrada"));
+
+        if (!categoria.getActivo()) {
+            throw new RuntimeException("No se pueden crear servicios en una categoría inactiva");
+        }
+
         servicio.setEstado("activo");
         return servicioRepository.save(servicio);
     }
+
+    public void deshabilitar(Integer id) {
+        Servicio s = servicioRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Servicio no existe"));
+
+        s.setEstado("inactivo");
+        servicioRepository.save(s);
+    }
+
+    public void activar(Integer id) {
+        Servicio s = servicioRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Servicio no existe"));
+
+        s.setEstado("activo");
+        servicioRepository.save(s);
+    }
+
 }

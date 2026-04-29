@@ -28,8 +28,8 @@ public class Servicio {
     private String nombreServicio;
 
     @NotBlank
-    @Size(max = 100)
-    @Column(name = "descripcion", nullable = false)
+    @Size(max = 500)
+    @Column(name = "descripcion", nullable = false, length = 500)
     private String descripcion;
 
     // CAMBIO IMPORTANTE

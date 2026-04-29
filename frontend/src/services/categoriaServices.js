@@ -13,6 +13,9 @@ function getAuthHeader() {
   }
 }
 
+export const getCategoriasAdmin = () =>
+  axios.get(`${API}/admin`, getAuthHeader())
+
 export const getCategorias = () =>
   axios.get(API, getAuthHeader())
 
