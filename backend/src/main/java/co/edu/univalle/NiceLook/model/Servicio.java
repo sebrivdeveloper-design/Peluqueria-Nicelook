@@ -1,14 +1,15 @@
 package co.edu.univalle.NiceLook.model;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.math.BigDecimal;
 
 @Entity
 @Getter
 @Setter
-@Data
 @Table(name = "servicio")
 public class Servicio {
 
@@ -21,20 +22,28 @@ public class Servicio {
     @JoinColumn(name = "id_categoria", nullable = false)
     private CategoriaServicios categoria;
 
+    @NotBlank
+    @Size(max = 30)
     @Column(name = "nombre_servicio", nullable = false)
     private String nombreServicio;
 
+    @NotBlank
+    @Size(max = 100)
     @Column(name = "descripcion", nullable = false)
     private String descripcion;
 
+    // CAMBIO IMPORTANTE
+    @NotBlank
+    @Size(max = 30)
     @Column(name = "duracion", nullable = false)
-    private Integer duracion;
+    private String duracion;
 
+    // CAMBIO PRO
+    @NotNull
+    @Digits(integer = 8, fraction = 2)
     @Column(name = "precio", nullable = false)
-    private Double precio;
+    private BigDecimal precio;
 
     @Column(name = "estado", nullable = false)
-    private String estado;
-
-    // getters y setters
+    private String estado = "activo";
 }
