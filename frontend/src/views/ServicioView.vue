@@ -13,52 +13,66 @@
       </button>
     </div>
 
+    <input 
+      v-model="busqueda" 
+      placeholder="Buscar servicio..."
+      class="input-busqueda"
+    />
+
+
     <!-- GRID -->
-    <div class="grid">
-      <div 
-        class="card" 
-        :class="{ inactivo: s.estado === 'inactivo' }"
-        v-for="s in servicios" 
-        :key="s.idServicio"
-      >
-        <h3>{{ s.nombreServicio }}</h3>
-        <p>{{ s.descripcion }}</p>
+    <div v-for="(servs, categoria) in agrupados" :key="categoria">
 
-        <div class="info">
-          <span>⏱ {{ s.duracion }}</span>
-          <span>💲 {{ s.precio }}</span>
-        </div>
+      <h2 class="titulo-categoria">{{ categoria }}</h2>
 
-        <div class="categoria">
-          {{ s.categoria.nombreCategoria }}
-        </div>
-
-        <!--  ESTADO -->
-        <span 
-          class="badge-estado"
-          :class="s.estado === 'activo' ? 'activo' : 'inactivo'"
+      <div class="grid">
+        <div 
+          class="card" 
+          :class="{ inactivo: s.estado === 'inactivo' }"
+          v-for="s in servs" 
+          :key="s.idServicio"
+          @click="irDetalle(s.idServicio)"
         >
-          {{ s.estado === 'activo' ? 'Activo' : 'Inactivo' }}
-        </span>
+          <h3>{{ s.nombreServicio }}</h3>
+          <p>{{ s.descripcion }}</p>
 
+          <div class="info">
+            <span>⏱ {{ s.duracion }}</span>
+            <span>💲 {{ s.precio }}</span>
+          </div>
 
-        <!--  BOTÓN -->
-        <button 
-          class="btn-estado"
-          :class="s.estado === 'activo' ? 'btn-danger' : 'btn-success'"
-          @click="toggleEstado(s)"
-        >
-          {{ s.estado === 'activo' ? 'Desactivar' : 'Activar' }}
-        </button>
+          <div class="categoria">
+           {{ s.categoria.nombreCategoria }}
+          </div>
 
+          <span 
+            class="badge-estado"
+            :class="s.estado === 'activo' ? 'activo' : 'inactivo'"
+          >
+            {{ s.estado === 'activo' ? 'Activo' : 'Inactivo' }}
+          </span>
 
+          <button 
+            class="btn-estado"
+            :class="s.estado === 'activo' ? 'btn-danger' : 'btn-success'"
+            @click.stop="toggleEstado(s)"
+          >
+            {{ s.estado === 'activo' ? 'Desactivar' : 'Activar' }}
+         </button>
+
+        </div>
       </div>
 
     </div>
 
+
     <!-- EMPTY -->
     <div v-if="servicios.length === 0" class="empty">
-      No hay servicios registrados
+     No hay servicios registrados
+    </div>
+
+    <div v-else-if="filtrados.length === 0" class="empty">
+      No se encontró el servicio
     </div>
 
     <!-- MODAL -->
@@ -81,15 +95,24 @@ export default {
   data() {
     return {
       servicios: [],
-      mostrarForm: false
+      mostrarForm: false,
+      busqueda: ""
     }
   },
 
   methods: {
     async recargar() {
       const res = await servicioService.getServiciosAdmin()
+      console.log(res.data)
       this.servicios = res.data
       this.mostrarForm = false
+    },
+
+    irDetalle(id) {
+      this.$router.push({
+        name: 'ServicioDetalle',
+        params: { id }
+      })
     },
 
     async toggleEstado(s) {
@@ -123,6 +146,38 @@ export default {
 
 
   },
+
+  computed: {
+    filtrados() {
+     if (!this.busqueda) return this.servicios
+
+      return this.servicios.filter(s =>
+        (s.nombreServicio || "")
+          .toLowerCase()
+          .includes(this.busqueda.toLowerCase()
+        )
+      )
+    },
+    agrupados() {
+    const grupos = {}
+
+    this.filtrados.forEach(s => {
+      const nombreCat = s.categoria?.nombreCategoria || "Sin categoría"
+
+      if (!grupos[nombreCat]) {
+        grupos[nombreCat] = []
+      }
+
+      grupos[nombreCat].push(s)
+    })
+
+    return grupos
+  }
+
+
+  },
+
+
 
   mounted() {
     this.recargar()
@@ -272,5 +327,35 @@ export default {
   background: #fdecea;
   color: #b42318;
 }
+
+.titulo-categoria {
+  margin: 20px 0 10px;
+  color: #173221;
+}
+
+.input-busqueda {
+  padding: 12px 16px;
+  border-radius: 14px;
+  border: 1px solid #d9e4da;
+  outline: none;
+  font-size: 14px;
+  width: 300px;
+}
+
+.input-busqueda:focus {
+  border-color: #004518;
+  box-shadow: 0 0 0 2px rgba(0, 69, 24, 0.1);
+}
+
+.card {
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.card:hover {
+  transform: scale(1.02);
+}
+
+
 
 </style>
