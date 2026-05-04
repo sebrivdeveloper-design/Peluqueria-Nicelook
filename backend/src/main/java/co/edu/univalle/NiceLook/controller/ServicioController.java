@@ -43,6 +43,13 @@ public class ServicioController {
         return ResponseEntity.ok(nuevo);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<?> obtenerPorId(@PathVariable Integer id) {
+        return servicioService.obtenerPorId(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deshabilitar(@PathVariable Integer id) {
         servicioService.deshabilitar(id);
@@ -53,6 +60,15 @@ public class ServicioController {
     public ResponseEntity<?> activar(@PathVariable Integer id) {
         servicioService.activar(id);
         return ResponseEntity.ok("Servicio activado");
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> actualizar(@PathVariable Integer id, @Valid @RequestBody Servicio servicio) {
+        try {
+            return ResponseEntity.ok(servicioService.actualizar(id, servicio));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
 }
