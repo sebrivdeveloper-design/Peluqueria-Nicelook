@@ -1,5 +1,7 @@
 <template>
   <aside :class="['sidebar', { collapsed: isCollapsed }]">
+    
+    <!-- TOP -->
     <div class="sidebar-top">
       <div class="top-row">
         <div class="brand">
@@ -9,8 +11,8 @@
 
           <transition name="fade">
             <div v-if="!isCollapsed" class="brand-text">
-              <h2>Admin</h2>
-              <p>Panel de gestión</p>
+              <h2>{{ rol === 'ADMIN' ? 'Admin' : 'Cliente' }}</h2>
+              <p>Panel de {{ rol === 'ADMIN' ? 'gestión' : 'usuario' }}</p>
             </div>
           </transition>
         </div>
@@ -22,45 +24,65 @@
       </div>
     </div>
 
+    <!-- MENÚ -->
     <nav class="nav-menu">
-      <button
-        class="nav-item"
-        :class="{ active: isActive('/admin/categorias') }"
-        @click="goTo('/admin/categorias')"
-        title="Categorías"
-      >
-        <LayoutGrid :size="20" />
-        <span v-if="!isCollapsed">Categorías</span>
-      </button>
 
-      <button
-        class="nav-item"
-        :class="{ active: isActive('/admin/servicios') }"
-        @click="goTo('/admin/servicios')"
-        title="Servicios"
-      >
-        <BriefcaseBusiness :size="20" />
-        <span v-if="!isCollapsed">Servicios</span>
-      </button>
+      <!-- ADMIN -->
+      <template v-if="rol === 'ADMIN'">
+        <button class="nav-item" :class="{ active: isActive('/admin/categorias') }" @click="goTo('/admin/categorias')">
+          <LayoutGrid :size="20" />
+          <span v-if="!isCollapsed">Categorías</span>
+        </button>
 
-      <button
-        class="nav-item"
-        :class="{ active: isActive('/admin/empleados') }"
-        @click="goTo('/admin/empleados')"
-        title="Empleados"
-      >
-        <Users :size="20" />
-        <span v-if="!isCollapsed">Empleados</span>
-      </button>
+        <button class="nav-item" :class="{ active: isActive('/admin/servicios') }" @click="goTo('/admin/servicios')">
+          <BriefcaseBusiness :size="20" />
+          <span v-if="!isCollapsed">Servicios</span>
+        </button>
 
-      <button class="logout" @click="cerrarSesion">
+        <button class="nav-item" :class="{ active: isActive('/admin/empleados') }" @click="goTo('/admin/empleados')">
+          <Users :size="20" />
+          <span v-if="!isCollapsed">Empleados</span>
+        </button>
+      </template>
+
+      <!-- CLIENTE -->
+      <template v-else>
+        <button class="nav-item" :class="{ active: isActive('/') }" @click="goTo('/')">
+          <LayoutGrid :size="20" />
+          <span v-if="!isCollapsed">Inicio</span>
+        </button>
+
+        <button class="nav-item" :class="{ active: isActive('/servicios') }" @click="goTo('/cliente/servicios')">
+          <BriefcaseBusiness :size="20" />
+          <span v-if="!isCollapsed">Servicios</span>
+        </button>
+
+        <button class="nav-item" :class="{ active: isActive('/mis-citas') }" @click="goTo('/cliente/mis-citas')">
+          <Users :size="20" />
+          <span v-if="!isCollapsed">Mis citas</span>
+        </button>
+      </template>
+
+      <!-- LOGIN / LOGOUT -->
+      <template v-if="!isLogged">
+        <button class="nav-item" @click="goTo('/login')">
+          <span v-if="!isCollapsed">Iniciar sesión</span>
+        </button>
+
+        <button class="nav-item" @click="goTo('/register')">
+          <span v-if="!isCollapsed">Registrarse</span>
+        </button>
+      </template>
+
+      <button v-else class="logout" @click="cerrarSesion">
         Cerrar sesión
       </button>
 
     </nav>
 
+    <!-- BOTTOM -->
     <div class="sidebar-bottom">
-      <button class="nav-item secondary" title="Configuración">
+      <button class="nav-item secondary">
         <Settings :size="20" />
         <span v-if="!isCollapsed">Configuración</span>
       </button>
@@ -70,12 +92,13 @@
 
         <transition name="fade">
           <div v-if="!isCollapsed" class="profile-info">
-            <h4>Administrador</h4>
-            <p>Cuenta activa</p>
+            <h4>{{ rol === 'ADMIN' ? 'Administrador' : 'Usuario' }}</h4>
+            <p>{{ isLogged ? 'Cuenta activa' : 'Invitado' }}</p>
           </div>
         </transition>
       </div>
     </div>
+
   </aside>
 </template>
 
@@ -91,6 +114,14 @@ import {
 
 export default {
   name: 'Sidebar',
+
+  props: {
+    rol: {
+      type: String,
+      default: "CLIENTE"
+    }
+  },
+
   components: {
     LayoutGrid,
     BriefcaseBusiness,
@@ -99,44 +130,56 @@ export default {
     PanelLeftClose,
     PanelLeftOpen
   },
+
   data() {
     return {
       isCollapsed: true
     }
   },
+
+  computed: {
+    isLogged() {
+      return !!localStorage.getItem("token")
+    }
+  },
+
   methods: {
     goTo(route) {
       this.$router.push(route)
-
       if (window.innerWidth <= 768) {
         this.isCollapsed = true
       }
     },
+
     isActive(route) {
       return this.$route.path === route
     },
+
     toggleSidebar() {
       this.isCollapsed = !this.isCollapsed
     },
+
     handleResize() {
       if (window.innerWidth <= 768) {
         this.isCollapsed = true
       }
     },
+
     cerrarSesion() {
       localStorage.removeItem("token")
-      this.$router.replace('/') // 🔥 mejor que push
-    }   
+      localStorage.removeItem("rol")
+      this.$router.replace('/')
+    }
   },
+
   mounted() {
     window.addEventListener('resize', this.handleResize)
   },
+
   beforeUnmount() {
     window.removeEventListener('resize', this.handleResize)
   }
 }
-
-
 </script>
 
 <style scoped>
