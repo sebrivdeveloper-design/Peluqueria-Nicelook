@@ -13,10 +13,11 @@ import ServiciosView from '@/views/ServicioView.vue'
 
 const routes = [
   { path: '/', component: LoginView },
-  { path: '/admin', component: AdminLayout, children: [
+  {
+    path: '/admin', component: AdminLayout, children: [
       {
-      path: '',
-      redirect: '/admin/categorias' // ESTA LÍNEA ES LA CLAVE
+        path: '',
+        redirect: '/admin/categorias' // ESTA LÍNEA ES LA CLAVE
       },
       {
         path: 'categorias',
@@ -27,7 +28,7 @@ const routes = [
         path: 'categorias/:idCategoria',
         name: 'categoriaDetalle',
         component: CategoriaDetalle
-        
+
       },
       {
         path: 'empleados',
@@ -38,7 +39,13 @@ const routes = [
         path: 'servicios',
         name: 'servicios',
         component: ServiciosView
+      },
+      {
+        path: '/admin/servicios/:id',
+        name: 'ServicioDetalle',
+        component: () => import('@/views/ServicioDetalleView.vue')
       }
+
 
     ]
   },

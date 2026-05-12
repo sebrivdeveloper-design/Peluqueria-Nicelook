@@ -6,7 +6,7 @@ import co.edu.univalle.NiceLook.repository.CategoriaRepository;
 import co.edu.univalle.NiceLook.repository.ServicioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
+import java.util.Optional;
 import java.util.List;
 
 @Service
@@ -20,6 +20,10 @@ public class ServicioService {
 
     public List<Servicio> listarTodos() {
         return servicioRepository.findAll();
+    }
+
+    public Optional<Servicio> obtenerPorId(Integer id) {
+        return servicioRepository.findById(id);
     }
 
     public List<Servicio> listarActivos() {
@@ -64,6 +68,19 @@ public class ServicioService {
 
         s.setEstado("activo");
         servicioRepository.save(s);
+    }
+
+    public Servicio actualizar(Integer id, Servicio datos) {
+
+        Servicio existente = servicioRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Servicio no existe"));
+
+        existente.setNombreServicio(datos.getNombreServicio());
+        existente.setDescripcion(datos.getDescripcion());
+        existente.setDuracion(datos.getDuracion());
+        existente.setPrecio(datos.getPrecio());
+
+        return servicioRepository.save(existente);
     }
 
 }

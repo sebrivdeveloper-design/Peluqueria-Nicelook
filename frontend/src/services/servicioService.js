@@ -39,5 +39,12 @@ export default {
 
   getCategorias() {
     return axios.get(`${API}/categorias`, getAuthHeader())
+  },
+
+  getById(id) {
+  return axios.get(`${API}/servicios/${id}`, getAuthHeader())
+  },
+  actualizar(id, data) {
+  return axios.put(`${API}/servicios/${id}`, data, getAuthHeader())
   }
 }
