@@ -83,25 +83,23 @@ const router = createRouter({
   routes
 })
 
-router.beforeEach((to, from, next) => {
+router.beforeEach((to) => {
   const token = localStorage.getItem("token");
 
   // 🟢 RUTAS PÚBLICAS (cliente)
   if (to.path.startsWith("/cliente")) {
-    return next();
+    return;
   }
 
   // 🟢 LOGIN siempre permitido
   if (to.path === "/") {
-    return next();
+    return;
   }
 
   // 🔴 PROTEGIDAS
   if (!token) {
-    return next("/");
+    return "/";
   }
-
-  next();
 });
 
 export default router
