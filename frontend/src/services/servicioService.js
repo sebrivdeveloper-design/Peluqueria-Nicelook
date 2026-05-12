@@ -4,6 +4,11 @@ const API = 'http://localhost:8080/api'
 
 function getAuthHeader() {
   const token = localStorage.getItem("token")
+  
+   if (!token) {
+    return {}; // 🔥 NO envía Authorization
+  }
+  
   return {
     headers: {
       Authorization: `Bearer ${token}`
