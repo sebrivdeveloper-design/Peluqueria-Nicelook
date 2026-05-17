@@ -4,6 +4,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import LoginView from '@/views/LoginView.vue'
 import ServicioClienteView from '@/views/ServicioClienteView.vue'
 import ServiciosView from '@/views/ServicioView.vue'
+import ClientesView from '@/views/ClientesView.vue'
 // Layouts
 import AdminLayout from '@/layouts/AdminLayout.vue'
 import RecepcionistaLayout from '@/layouts/RecepcionistaLayout.vue'
@@ -67,9 +68,31 @@ const routes = [
     ]
   },
 
-  // OTROS ROLES
-  { path: '/recepcionista', component: RecepcionistaLayout },
-  { path: '/empleado', component: EmpleadoLayout }
+  // 🟦 RECEPCIONISTA (Actualizado con rutas hijas)
+  {
+    path: '/recepcionista',
+    component: RecepcionistaLayout,
+    children: [
+      {
+        path: '',
+        redirect: '/recepcionista/clientes' // Redirección por defecto al entrar al módulo
+      },
+      {
+        path: 'clientes',
+        name: 'RecepcionClientes',
+        component: ClientesView // Carga la tabla de clientes calcada de tu diseño
+      }
+      // Aquí podrás añadir las demás cuando las crees:
+      // { path: 'disponibilidad', component: DisponibilidadView },
+      // { path: 'agenda', component: AgendaView }
+    ]
+  },
+
+  // 🟧 EMPLEADO
+  { 
+    path: '/empleado', 
+    component: EmpleadoLayout 
+  }
 ]
 
 const router = createRouter({
