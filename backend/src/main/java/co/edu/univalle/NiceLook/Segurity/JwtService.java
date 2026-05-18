@@ -1,13 +1,15 @@
 package co.edu.univalle.NiceLook.Segurity;
 
-import io.jsonwebtoken.*;
-import io.jsonwebtoken.security.Keys;
-import org.springframework.stereotype.Service;
-
 import java.security.Key;
 import java.util.Date;
 
+import org.springframework.stereotype.Service;
+
 import co.edu.univalle.NiceLook.model.Usuario;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 
 @Service
 public class JwtService {
@@ -18,15 +20,15 @@ public class JwtService {
         return Keys.hmacShaKeyFor(SECRET.getBytes());
     }
 
-    public String generateToken(Usuario user) {
-
-        return Jwts.builder()
-                .setSubject(user.getCorreo())
-                .claim("rol", user.getRol().getNombreRol()) // 🔥 IMPORTANTE
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 86400000)) // 1 día
-                .signWith(getKey(), SignatureAlgorithm.HS256)
-                .compact();
+    public String generateToken(Usuario user, Integer idCliente) {
+    return Jwts.builder()
+            .setSubject(user.getCorreo())
+            .claim("rol", user.getRol().getNombreRol())
+            .claim("idCliente", idCliente)
+            .setIssuedAt(new Date())
+            .setExpiration(new Date(System.currentTimeMillis() + 86400000))
+            .signWith(getKey(), SignatureAlgorithm.HS256)
+            .compact();
     }
 
     public String extractCorreo(String token) {

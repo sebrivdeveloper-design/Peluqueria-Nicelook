@@ -1,14 +1,25 @@
 package co.edu.univalle.NiceLook.model;
 
-import jakarta.persistence.*;
-import lombok.Data;
+import java.math.BigDecimal;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.validation.constraints.Digits;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
 @Entity
 @Getter
 @Setter
-@Data
 @Table(name = "servicio")
 public class Servicio {
 
@@ -21,20 +32,28 @@ public class Servicio {
     @JoinColumn(name = "id_categoria", nullable = false)
     private CategoriaServicios categoria;
 
+    @NotBlank
+    @Size(max = 30)
     @Column(name = "nombre_servicio", nullable = false)
     private String nombreServicio;
 
-    @Column(name = "descripcion", nullable = false)
+    @NotBlank
+    @Size(max = 500)
+    @Column(name = "descripcion", nullable = false, length = 500)
     private String descripcion;
 
+    // CAMBIO IMPORTANTE
+    @NotBlank
+    @Size(max = 30)
     @Column(name = "duracion", nullable = false)
-    private Integer duracion;
+    private String duracion;
 
+    // CAMBIO PRO
+    @NotNull
+    @Digits(integer = 8, fraction = 2)
     @Column(name = "precio", nullable = false)
-    private Double precio;
+    private BigDecimal precio;
 
     @Column(name = "estado", nullable = false)
-    private String estado;
-
-    // getters y setters
+    private String estado = "activo";
 }

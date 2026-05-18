@@ -1,5 +1,8 @@
 <template>
-  <article class="card" @click="verDetalle">
+  <article class="card"
+   :class="{inactiva: !categoria.activo}" 
+   @click="verDetalle"
+   >
     <div class="card-image-wrapper">
       <img
         :src="categoria.imagen || fallbackImage"
@@ -11,14 +14,25 @@
     <div class="card-content">
       <h3>{{ categoria.nombreCategoria }}</h3>
 
+      <span 
+        class="badge-estado"
+        :class="categoria.activo ? 'activo' : 'inactivo'"
+      >
+       {{ categoria.activo ? 'Activa' : 'Inactiva' }}
+      </span>
       <p class="descripcion">
         {{ categoria.descripcion || 'Categoría disponible para organizar servicios dentro del sistema.' }}
       </p>
 
       <div class="card-footer">
-        <button class="btn-warning" @click.stop="desactivar">
-          Desactivar
+        <button 
+          class="btn-estado"
+          :class="categoria.activo ? 'btn-danger' : 'btn-success'"
+          @click.stop="toggleEstado"
+         >
+          {{ categoria.activo ? 'Desactivar' : 'Activar' }}
         </button>
+
 
         <span class="ver-mas">Ver detalle</span>
       </div>
@@ -39,13 +53,15 @@ export default {
       this.$router.push(`/admin/categorias/${this.categoria.idCategoria}`)
     },
 
-    desactivar() {
-      this.$emit('deshabilitar', this.categoria.idCategoria)
-    },
-
     onImageError(e) {
       e.target.src = this.fallbackImage
+    },
+
+    toggleEstado() {
+      this.$emit('toggle-estado', this.categoria)
     }
+
+
   }
 }
 </script>
@@ -118,6 +134,35 @@ export default {
   align-items: center;
   gap: 12px;
 }
+.btn-estado {
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* DESACTIVAR */
+.btn-danger {
+  background: #ffe5e5;
+  color: #b42318;
+}
+
+.btn-danger:hover {
+  background: #fecdcd;
+}
+
+/* ACTIVAR */
+.btn-success {
+  background: #e6f4ea;
+  color: #1b5e20;
+}
+
+.btn-success:hover {
+  background: #cde8d5;
+}
 
 .btn-warning {
   border: none;
@@ -160,4 +205,28 @@ export default {
     font-size: 18px;
   }
 }
+
+.badge-estado {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  margin: 6px auto 0;
+}
+
+.badge-estado.activo {
+  background: #e6f4ea;
+  color: #1b5e20;
+}
+
+.badge-estado.inactivo {
+  background: #ffe5e5;
+  color: #b42318;
+}
+.inactiva {
+  opacity: 0.5;
+  filter: grayscale(80%);
+}
+
 </style>
