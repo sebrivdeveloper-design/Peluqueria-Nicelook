@@ -1,16 +1,19 @@
 package co.edu.univalle.NiceLook.model;
 
-import jakarta.persistence.*;
-import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
-
 import java.time.LocalDateTime;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.Data;
+
 @Entity
-@Getter
 @Data
-@Setter
 @Table(name = "usuario")
 public class Usuario {
 
@@ -23,13 +26,17 @@ public class Usuario {
     @JoinColumn(name = "id_rol", nullable = false)
     private Rol rol;
 
+    // Nuevo campo para mapear la cédula/ID que exige tu interfaz de Vue
+    @Column(name = "documento", nullable = false, unique = true)
+    private String documento;
+
     @Column(name = "nombre_completo", nullable = false)
     private String nombreCompleto;
 
     @Column(nullable = false, unique = true)
     private String correo;
 
-    private String telefono;
+    private String telefono; 
 
     @Column(name = "fecha_registro", nullable = false)
     private LocalDateTime fechaRegistro;
@@ -38,6 +45,4 @@ public class Usuario {
     private String estado;
 
     private Boolean esGoogleUser;
-
-    // getters y setters
 }
