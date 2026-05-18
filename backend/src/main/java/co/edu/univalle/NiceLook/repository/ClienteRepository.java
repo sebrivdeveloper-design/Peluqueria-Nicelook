@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository;
 import co.edu.univalle.NiceLook.model.Cliente;
 
 @Repository
-public interface ClienteRepository extends JpaRepository<Cliente, Long> {
+public interface ClienteRepository extends JpaRepository<Cliente, Integer> {
     
     Optional<Cliente> findByUsuario_Documento(String documento);
 }
