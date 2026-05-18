@@ -32,7 +32,7 @@ public class Cita {
     @Column(name = "hora_inicio", nullable = false)
     private LocalTime horaInicio;
 
-    @Column(name = "hola_fin", nullable = false)
+    @Column(name = "hora_fin", nullable = false)
     private LocalTime horaFin;
 
     @Column(name = "estado_cita", nullable = false)
