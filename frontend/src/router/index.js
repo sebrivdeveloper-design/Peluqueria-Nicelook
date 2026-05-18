@@ -11,10 +11,12 @@ import RecepcionistaLayout from '@/layouts/RecepcionistaLayout.vue'
 import EmpleadoLayout from '@/layouts/EmpleadoLayout.vue'
 import ClienteLayout from '@/layouts/ClienteLayout.vue'
 
+
 // Admin views
 import CategoriasView from '@/views/CategoriasView.vue'
 import CategoriaDetalle from '@/views/CategoriaDetalle.vue'
 import EmpleadosView from '@/views/EmpleadosView.vue'
+import AgendaView from '@/views/AgendaView.vue'
 
 const routes = [
   { path: '/', component: LoginView },
@@ -89,10 +91,21 @@ const routes = [
   },
 
   // 🟧 EMPLEADO
-  { 
-    path: '/empleado', 
-    component: EmpleadoLayout 
-  }
+{
+  path: '/empleado',
+  component: EmpleadoLayout,
+  children: [
+    {
+      path: '',
+      redirect: '/empleado/agenda'
+    },
+    {
+      path: 'agenda',
+      name: 'AgendaEmpleado',
+      component: AgendaView
+    }
+  ]
+}
 ]
 
 const router = createRouter({
