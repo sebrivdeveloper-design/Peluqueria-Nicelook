@@ -8,12 +8,18 @@
       <input
         :value="busqueda"
         @input="$emit('update:busqueda', $event.target.value)"
-        placeholder="Buscar categorías..."
+        @keyup.enter="$emit('buscar')"
+        :placeholder="placeholder"
+        maxlength="30"
       />
+
+      <button class="btn-buscar" @click="$emit('buscar')">
+        Buscar
+      </button>
     </div>
 
     <!-- Botón -->
-    <button class="btn-primary" @click="$emit('crear')">
+    <button v-if="mostrarBoton" class="btn-primary" @click="$emit('crear')">
       <Plus :size="18" />
       <span>{{ textoBoton }}</span>
     </button>
@@ -34,6 +40,14 @@ export default {
     textoBoton: {
       type: String,
       default: "Crear"
+    },
+    placeholder: {
+      type: String,
+      default: "Vamos a buscar tu estilo..."
+    },
+    mostrarBoton: {
+      type: Boolean,
+      default: true
     }
   }
 }
@@ -83,6 +97,22 @@ export default {
 
 .search-box input::placeholder {
   color: #8a9b8f;
+}
+
+.btn-buscar {
+  background: #145c43;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.btn-buscar:hover {
+  background: #004518;
 }
 
 /* 🟢 Botón principal */

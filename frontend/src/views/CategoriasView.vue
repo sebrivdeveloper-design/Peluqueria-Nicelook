@@ -18,7 +18,7 @@
         v-for="cat in filtradas"
         :key="cat.idCategoria"
         :categoria="cat"
-        @deshabilitar="deshabilitar"
+        @toggle-estado="toggleEstado"
       />
     </div>
 
@@ -33,13 +33,7 @@
       @actualizar="cargarCategorias"
     />
 
-    <AppConfirmModal
-      :visible="confirmModal.visible"
-      title="Desactivar categoría"
-      message="¿Estás seguro de que deseas desactivar esta categoría?"
-      @cancel="cerrarConfirmacion"
-      @confirm="confirmarDeshabilitacion"
-    />
+    
   </section>
 </template>
 
@@ -47,25 +41,20 @@
 import HeaderBar from '../components/HeaderBar.vue'
 import CategoriaCard from '../components/CategoriaCard.vue'
 import CategoriaModal from '../components/CategoriaModal.vue'
-import AppConfirmModal from '../components/AppConfirmModal.vue'
-import { getCategorias, deshabilitarCategoria } from '../services/categoriaServices'
+import { getCategoriasAdmin, deshabilitarCategoria, activarCategoria } from '../services/categoriaServices'
 
 export default {
   components: {
     HeaderBar,
     CategoriaCard,
-    CategoriaModal,
-    AppConfirmModal
+    CategoriaModal
   },
   data() {
     return {
       categorias: [],
       mostrarModal: false,
       busqueda: '',
-      confirmModal: {
-        visible: false,
-        idCategoria: null
-      }
+      
     }
   },
 
@@ -83,27 +72,35 @@ export default {
 
   methods: {
     async cargarCategorias() {
-      const res = await getCategorias()
+      const res = await getCategoriasAdmin()
       this.categorias = res.data
     },
 
-    deshabilitar(idCategoria) {
-      this.confirmModal.visible = true
-      this.confirmModal.idCategoria = idCategoria
-    },
-
-    async confirmarDeshabilitacion() {
+    
+    
+    async toggleEstado(cat) {
       try {
-        await deshabilitarCategoria(this.confirmModal.idCategoria)
-        this.cargarCategorias()
-      } finally {
-        this.cerrarConfirmacion()
-      }
-    },
+        if (cat.activo) {
+          const ok = confirm("¿Seguro que deseas desactivar esta categoría?")
+          if (!ok) return
 
-    cerrarConfirmacion() {
-      this.confirmModal.visible = false
-      this.confirmModal.idCategoria = null
+          await deshabilitarCategoria(cat.idCategoria)
+          alert("Categoría desactivada correctamente")
+
+        } else {
+          const ok = confirm("¿Deseas activar esta categoría?")
+          if (!ok) return
+
+          await activarCategoria(cat.idCategoria)
+          alert("Categoría activada correctamente")
+        }
+
+        this.cargarCategorias()
+
+      } catch (error) {
+        console.error(error)
+        alert("Error al cambiar estado")
+      }
     }
   }
 }

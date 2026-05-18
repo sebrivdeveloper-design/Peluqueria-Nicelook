@@ -1,7 +1,7 @@
 <template>
   <div class="admin-layout">
     <!-- Sidebar fijo -->
-    <Sidebar />
+    <Sidebar rol="ADMIN" />
 
     <!-- Área principal -->
     <div class="admin-main">

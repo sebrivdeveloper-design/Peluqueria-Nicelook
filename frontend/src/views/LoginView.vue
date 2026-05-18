@@ -47,13 +47,14 @@ window.handleCredentialResponse = async (response) => {
 
     const tokenJWT = res.data;
 
-    // 🔥 GUARDAR TOKEN
+    // GUARDAR TOKEN
     localStorage.setItem("token", tokenJWT);
 
-    // 🔥 DECODIFICAR TOKEN
+    // DECODIFICAR TOKEN
     const payload = JSON.parse(atob(tokenJWT.split('.')[1]));
     const rol = payload.rol;
 
+    // REDIRECCIÓN LIMPIA
     setTimeout(() => {
       if (rol === "ADMIN") router.push("/admin");
       else if (rol === "RECEPCIONISTA") router.push("/recepcionista");
@@ -62,15 +63,19 @@ window.handleCredentialResponse = async (response) => {
     }, 1200);
 
   } catch (error) {
-    console.error(error);
+      console.error(error);
 
     setTimeout(() => {
+      loading.value = false;
       router.push("/cliente");
     }, 1200);
   }
 };
 
 onMounted(() => {
+  // LIMPIAR SESIÓN SI ENTRA AL LOGIN
+  localStorage.removeItem("token");
+
   google.accounts.id.initialize({
     client_id: "1055219399395-41dgigof08dichfdip9uf0f5affo5vcp.apps.googleusercontent.com",
     callback: handleCredentialResponse
@@ -88,15 +93,15 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* 🔥 FIX REAL PARA MOBILE HEIGHT */
+/* FIX REAL PARA MOBILE HEIGHT */
 .login-container {
   display: flex;
-  min-height: 100dvh; /* 🔥 clave (arregla el bug del 100vh) */
+  min-height: 100dvh; /* arregla el bug del 100vh */
   font-family: 'Segoe UI', sans-serif;
   overflow: hidden;
 }
 
-/* 🔥 LOADING */
+/* LOADING */
 .loading-overlay {
   position: fixed;
   top: 0;
@@ -195,7 +200,7 @@ onMounted(() => {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: #ffffff; /* 🔥 BLANCO en PC */
+  background: #ffffff; /* BLANCO en PC */
 }
 
 /* CARD */
@@ -239,7 +244,7 @@ h1 {
   margin-top: 10px;
 }
 
-/* 🔥 MOBILE PERFECTO */
+/* MOBILE PERFECTO */
 @media (max-width: 768px) {
   .login-container {
     flex-direction: column;
