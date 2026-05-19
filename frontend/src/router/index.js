@@ -16,20 +16,12 @@ import CategoriaDetalle from '@/views/CategoriaDetalle.vue'
 import EmpleadosView from '@/views/EmpleadosView.vue'
 
 const routes = [
-  // LOGIN
+  { path: '/', component: LoginView },
   {
-    path: '/',
-    component: LoginView
-  },
-
-  // 🟩 ADMIN
-  {
-    path: '/admin',
-    component: AdminLayout,
-    children: [
+    path: '/admin', component: AdminLayout, children: [
       {
         path: '',
-        redirect: '/admin/categorias'
+        redirect: '/admin/categorias' // ESTA LÍNEA ES LA CLAVE
       },
       {
         path: 'categorias',
@@ -42,10 +34,19 @@ const routes = [
       {
         path: 'empleados',
         component: EmpleadosView
-      }, {
-      path: 'servicios', // 🔥 ESTA FALTABA
-      component: ServiciosView
-    }
+      },
+      {
+        path: 'servicios',
+        name: 'servicios',
+        component: ServiciosView
+      },
+      {
+        path: '/admin/servicios/:id',
+        name: 'ServicioDetalle',
+        component: () => import('@/views/ServicioDetalleView.vue')
+      }
+
+
     ]
   },
 
