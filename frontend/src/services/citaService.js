@@ -4,6 +4,7 @@ const API = 'http://localhost:8080/api'
 
 function getAuthHeader() {
   const token = localStorage.getItem("token")
+  console.log("TOKEN:", token)
   if (!token) return {}
   return {
     headers: {
