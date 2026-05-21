@@ -4,24 +4,36 @@ import { createRouter, createWebHistory } from 'vue-router'
 import LoginView from '@/views/LoginView.vue'
 import ServicioClienteView from '@/views/ServicioClienteView.vue'
 import ServiciosView from '@/views/ServicioView.vue'
+import ClientesView from '@/views/ClientesView.vue'
 // Layouts
 import AdminLayout from '@/layouts/AdminLayout.vue'
 import RecepcionistaLayout from '@/layouts/RecepcionistaLayout.vue'
 import EmpleadoLayout from '@/layouts/EmpleadoLayout.vue'
 import ClienteLayout from '@/layouts/ClienteLayout.vue'
 
+
 // Admin views
 import CategoriasView from '@/views/CategoriasView.vue'
 import CategoriaDetalle from '@/views/CategoriaDetalle.vue'
 import EmpleadosView from '@/views/EmpleadosView.vue'
+import AgendaEmpleadoView from '@/views/AgendaEmpleadoView.vue'
+import AgendaRecepcionistaView from '@/views/AgendaRecepcionistaView.vue'
 
 const routes = [
-  { path: '/', component: LoginView },
+  // LOGIN
   {
-    path: '/admin', component: AdminLayout, children: [
+    path: '/',
+    component: LoginView
+  },
+
+  // 🟩 ADMIN
+  {
+    path: '/admin',
+    component: AdminLayout,
+    children: [
       {
         path: '',
-        redirect: '/admin/categorias' // ESTA LÍNEA ES LA CLAVE
+        redirect: '/admin/categorias'
       },
       {
         path: 'categorias',
@@ -41,16 +53,14 @@ const routes = [
         component: ServiciosView
       },
       {
-        path: '/admin/servicios/:id',
+        path: 'servicios/:id', // Simplificado para que sea relativo al padre /admin
         name: 'ServicioDetalle',
         component: () => import('@/views/ServicioDetalleView.vue')
       }
-
-
     ]
   },
 
-  // 🟪 CLIENTE (🔥 BIEN UBICADO)
+  // 🟪 CLIENTE
   {
     path: '/cliente',
     component: ClienteLayout,
@@ -63,38 +73,79 @@ const routes = [
         path: 'servicios',
         name: 'serviciosCliente',
         component: ServicioClienteView
-      }
+      }, {
+      path: 'servicios/:id',
+      name: 'ServicioDetalleCliente',
+      component: () => import('@/views/ServicioDetalleView.vue')
+    }
     ]
   },
 
-  // OTROS ROLES
-  { path: '/recepcionista', component: RecepcionistaLayout },
-  { path: '/empleado', component: EmpleadoLayout }
+  // 🟦 RECEPCIONISTA (Actualizado con rutas hijas)
+  {
+    path: '/recepcionista',
+    component: RecepcionistaLayout,
+    children: [
+      {
+        path: '',
+        redirect: '/recepcionista/clientes' // Redirección por defecto al entrar al módulo
+      },
+      {
+        path: 'clientes',
+        name: 'RecepcionClientes',
+        component: ClientesView // Carga la tabla de clientes calcada de tu diseño
+      },
+      {
+        path: 'agenda',
+        name: 'AgendaRecepcionista',
+        component: AgendaRecepcionistaView
+      }
+      // Aquí podrás añadir las demás cuando las crees:
+      // { path: 'disponibilidad', component: DisponibilidadView },
+      // { path: 'agenda', component: AgendaView }
+    ]
+  },
+
+  // 🟧 EMPLEADO
+{
+  path: '/empleado',
+  component: EmpleadoLayout,
+  children: [
+    {
+      path: '',
+      redirect: '/empleado/agenda'
+    },
+    {
+      path: 'agenda',
+      name: 'AgendaEmpleado',
+      component: AgendaEmpleadoView
+    }
+  ]
+}
 ]
 
 const router = createRouter({
   history: createWebHistory(),
   routes
 })
-router.beforeEach((to, from, next) => {
 
+router.beforeEach((to) => {
   const token = localStorage.getItem("token");
 
   // 🟢 RUTAS PÚBLICAS (cliente)
   if (to.path.startsWith("/cliente")) {
-    return next();
+    return;
   }
 
   // 🟢 LOGIN siempre permitido
   if (to.path === "/") {
-    return next();
+    return;
   }
 
   // 🔴 PROTEGIDAS
   if (!token) {
-    return next("/");
+    return "/";
   }
-
-  next();
 });
+
 export default router
