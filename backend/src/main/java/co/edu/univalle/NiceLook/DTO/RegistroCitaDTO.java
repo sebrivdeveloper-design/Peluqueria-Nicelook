@@ -1,12 +1,14 @@
 package co.edu.univalle.NiceLook.DTO;
 
 public class RegistroCitaDTO {
+    private Integer idServicio;
     private Integer idCliente;
     private Integer idEmpleado;
     private String fecha;
     private String horaInicio;
     private String horaFin;
     private String observaciones;
+    private Integer idDisponibilidad;
 
     public Integer getIdCliente() { return idCliente; }
     public void setIdCliente(Integer idCliente) { this.idCliente = idCliente; }
@@ -25,4 +27,10 @@ public class RegistroCitaDTO {
 
     public String getObservaciones() { return observaciones; }
     public void setObservaciones(String observaciones) { this.observaciones = observaciones; }
+
+    public Integer getIdServicio() { return idServicio; }
+    public void setIdServicio(Integer idServicio) { this.idServicio = idServicio; }
+
+    public Integer getIdDisponibilidad() { return idDisponibilidad; }
+    public void setIdDisponibilidad(Integer idDisponibilidad) { this.idDisponibilidad = idDisponibilidad; }
 }

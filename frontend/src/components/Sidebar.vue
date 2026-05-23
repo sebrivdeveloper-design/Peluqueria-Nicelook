@@ -11,8 +11,8 @@
 
           <transition name="fade">
             <div v-if="!isCollapsed" class="brand-text">
-              <h2>{{ rol === 'ADMIN' ? 'Admin' : 'Cliente' }}</h2>
-              <p>Panel de {{ rol === 'ADMIN' ? 'gestión' : 'usuario' }}</p>
+            <h2>{{ roleConfig.title }}</h2>
+            <p>{{ roleConfig.subtitle }}</p>
             </div>
           </transition>
         </div>
@@ -27,58 +27,153 @@
     <!-- MENÚ -->
     <nav class="nav-menu">
 
-      <!-- ADMIN -->
-      <template v-if="rol === 'ADMIN'">
-        <button class="nav-item" :class="{ active: isActive('/admin/categorias') }" @click="goTo('/admin/categorias')">
-          <LayoutGrid :size="20" />
-          <span v-if="!isCollapsed">Categorías</span>
-        </button>
+  <!-- ADMIN -->
+  <template v-if="rol === 'ADMIN'">
 
-        <button class="nav-item" :class="{ active: isActive('/admin/servicios') }" @click="goTo('/admin/servicios')">
-          <BriefcaseBusiness :size="20" />
-          <span v-if="!isCollapsed">Servicios</span>
-        </button>
+    <button
+      class="nav-item"
+      :class="{ active: isActive('/admin/categorias') }"
+      @click="goTo('/admin/categorias')"
+    >
+      <LayoutGrid :size="20" />
+      <span v-if="!isCollapsed">Categorías</span>
+    </button>
 
-        <button class="nav-item" :class="{ active: isActive('/admin/empleados') }" @click="goTo('/admin/empleados')">
-          <Users :size="20" />
-          <span v-if="!isCollapsed">Empleados</span>
-        </button>
-      </template>
+    <button
+      class="nav-item"
+      :class="{ active: isActive('/admin/servicios') }"
+      @click="goTo('/admin/servicios')"
+    >
+      <BriefcaseBusiness :size="20" />
+      <span v-if="!isCollapsed">Servicios</span>
+    </button>
 
-      <!-- CLIENTE -->
-      <template v-else>
-        <button class="nav-item" :class="{ active: isActive('/') }" @click="goTo('/')">
-          <LayoutGrid :size="20" />
-          <span v-if="!isCollapsed">Inicio</span>
-        </button>
+    <button
+      class="nav-item"
+      :class="{ active: isActive('/admin/empleados') }"
+      @click="goTo('/admin/empleados')"
+    >
+      <Users :size="20" />
+      <span v-if="!isCollapsed">Empleados</span>
+    </button>
 
-        <button class="nav-item" :class="{ active: isActive('/servicios') }" @click="goTo('/cliente/servicios')">
-          <BriefcaseBusiness :size="20" />
-          <span v-if="!isCollapsed">Servicios</span>
-        </button>
+  </template>
 
-        <button class="nav-item" :class="{ active: isActive('/mis-citas') }" @click="goTo('/cliente/mis-citas')">
-          <Users :size="20" />
-          <span v-if="!isCollapsed">Mis citas</span>
-        </button>
-      </template>
+  <!-- CLIENTE -->
+  <template v-else-if="rol === 'CLIENTE'">
 
-      <!-- LOGIN / LOGOUT -->
-      <template v-if="!isLogged">
-        <button class="nav-item" @click="goTo('/login')">
-          <span v-if="!isCollapsed">Iniciar sesión</span>
-        </button>
+    <button
+      class="nav-item"
+      :class="{ active: isActive('/') }"
+      @click="goTo('/')"
+    >
+      <LayoutGrid :size="20" />
+      <span v-if="!isCollapsed">Inicio</span>
+    </button>
 
-        <button class="nav-item" @click="goTo('/register')">
-          <span v-if="!isCollapsed">Registrarse</span>
-        </button>
-      </template>
+    <button
+      class="nav-item"
+      :class="{ active: isActive('/cliente/servicios') }"
+      @click="goTo('/cliente/servicios')"
+    >
+      <BriefcaseBusiness :size="20" />
+      <span v-if="!isCollapsed">Servicios</span>
+    </button>
 
-      <button v-else class="logout" @click="cerrarSesion">
-        Cerrar sesión
-      </button>
+    <button
+      class="nav-item"
+      :class="{ active: isActive('/cliente/mis-citas') }"
+      @click="goTo('/cliente/mis-citas')"
+    >
+      <Users :size="20" />
+      <span v-if="!isCollapsed">Mis citas</span>
+    </button>
 
-    </nav>
+  </template>
+
+  <!-- EMPLEADO -->
+  <template v-else-if="rol === 'EMPLEADO'">
+
+    <button
+      class="nav-item"
+      :class="{ active: isActive('/empleado/agenda') }"
+      @click="goTo('/empleado/agenda')"
+    >
+      <LayoutGrid :size="20" />
+      <span v-if="!isCollapsed">Agenda</span>
+    </button>
+
+    <button
+      class="nav-item"
+      :class="{ active: isActive('/empleado/turnos') }"
+      @click="goTo('/empleado/turnos')"
+    >
+      <Users :size="20" />
+      <span v-if="!isCollapsed">Turnos</span>
+    </button>
+
+    <button
+      class="nav-item"
+      :class="{ active: isActive('/empleado/servicios') }"
+      @click="goTo('/empleado/servicios')"
+    >
+      <BriefcaseBusiness :size="20" />
+      <span v-if="!isCollapsed">Servicios</span>
+    </button>
+
+  </template>
+
+  <!-- RECEPCIONISTA -->
+  <template v-else-if="rol === 'RECEPCIONISTA'">
+
+    <button
+      class="nav-item"
+      :class="{ active: isActive('/recepcionista/clientes') }"
+      @click="goTo('/recepcionista/clientes')"
+    >
+      <Users :size="20" />
+      <span v-if="!isCollapsed">Clientes</span>
+    </button>
+
+    <button
+      class="nav-item"
+      :class="{ active: isActive('/recepcionista/agenda') }"
+      @click="goTo('/recepcionista/agenda')"
+    >
+      <LayoutGrid :size="20" />
+      <span v-if="!isCollapsed">Agenda</span>
+    </button>
+
+    <button
+      class="nav-item"
+      :class="{ active: isActive('/recepcionista/base-diaria') }"
+      @click="goTo('/recepcionista/base-diaria')"
+    >
+      <BriefcaseBusiness :size="20" />
+      <span v-if="!isCollapsed">Base diaria</span>
+    </button>
+
+  </template>
+
+  <!-- LOGIN -->
+  <template v-if="!isLogged">
+
+    <button class="nav-item" @click="goTo('/login')">
+      <span v-if="!isCollapsed">Iniciar sesión</span>
+    </button>
+
+    <button class="nav-item" @click="goTo('/register')">
+      <span v-if="!isCollapsed">Registrarse</span>
+    </button>
+
+  </template>
+
+  <!-- LOGOUT -->
+  <button v-else class="logout" @click="cerrarSesion">
+    <span v-if="!isCollapsed">Cerrar sesión</span>
+  </button>
+
+</nav>
 
     <!-- BOTTOM -->
     <div class="sidebar-bottom">
@@ -142,6 +237,34 @@ export default {
       return !!localStorage.getItem("token")
     }
   },
+  roleConfig() {
+
+  const roles = {
+
+    ADMIN: {
+      title: 'Administrador',
+      subtitle: 'Panel de gestión'
+    },
+
+    CLIENTE: {
+      title: 'Cliente',
+      subtitle: 'Panel de usuario'
+    },
+
+    EMPLEADO: {
+      title: 'Estilista',
+      subtitle: 'Panel de agenda'
+    },
+
+    RECEPCIONISTA: {
+      title: 'Recepción',
+      subtitle: 'Panel operativo'
+    }
+
+  }
+
+  return roles[this.rol] || roles.CLIENTE
+},
 
   methods: {
     goTo(route) {
