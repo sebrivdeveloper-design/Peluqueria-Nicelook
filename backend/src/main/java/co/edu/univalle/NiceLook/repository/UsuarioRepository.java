@@ -10,4 +10,5 @@ import co.edu.univalle.NiceLook.model.Usuario;
 @Repository
 public interface UsuarioRepository extends JpaRepository<Usuario, Integer> {
     Optional<Usuario> findByCorreo(String correo);
+    Optional<Usuario> findByTelefono(String telefono);
 }
