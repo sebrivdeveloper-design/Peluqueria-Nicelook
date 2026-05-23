@@ -34,36 +34,97 @@ public class DisponibilidadController {
 
     // GET por empleado y mes
     @GetMapping("/{idEmpleado}")
-    public ResponseEntity<?> getDisponibilidad(
-            @PathVariable Integer idEmpleado,
-            @RequestParam String mes,
-            @RequestParam String anio) {
+public ResponseEntity<?> getDisponibilidad(
+        @PathVariable Integer idEmpleado,
+        @RequestParam(required = false) Integer mes,
+        @RequestParam(required = false) Integer anio) {
 
-        LocalDate inicio = LocalDate.of(Integer.parseInt(anio), Integer.parseInt(mes), 1);
-        LocalDate fin = inicio.withDayOfMonth(inicio.lengthOfMonth());
+    // Si no envían datos
+    if (mes == null || anio == null) {
 
-        List<Disponibilidad> bloques = disponibilidadRepository
-            .findByEmpleadoAndFechaBetween(idEmpleado, inicio, fin);
+        LocalDate hoy = LocalDate.now();
 
-        return ResponseEntity.ok(bloques);
+        mes = hoy.getMonthValue();
+        anio = hoy.getYear();
     }
+
+    LocalDate inicio =
+            LocalDate.of(anio, mes, 1);
+
+    LocalDate fin =
+            inicio.withDayOfMonth(
+                    inicio.lengthOfMonth()
+            );
+
+    List<Disponibilidad> bloques =
+            disponibilidadRepository
+                    .findByEmpleadoAndFechaBetween(
+                            idEmpleado,
+                            inicio,
+                            fin
+                    );
+
+    return ResponseEntity.ok(bloques);
+}
 
     // POST registrar bloque de disponibilidad
     @PostMapping
-    public ResponseEntity<?> registrarDisponibilidad(@RequestBody DisponibilidadDTO dto) {
-        Empleado empleado = empleadoRepository.findById(dto.getIdEmpleado())
-            .orElseThrow(() -> new RuntimeException("Empleado no encontrado"));
+public ResponseEntity<?> registrarDisponibilidad(
+        @RequestBody DisponibilidadDTO dto) {
 
-        Disponibilidad disponibilidad = new Disponibilidad();
-        disponibilidad.setEmpleado(empleado);
-        disponibilidad.setFecha(LocalDate.parse(dto.getFecha()));
-        disponibilidad.setHoraInicioBloque(java.time.LocalTime.parse(dto.getHoraInicioBloque()));
-        disponibilidad.setHoraFinBloque(java.time.LocalTime.parse(dto.getHoraFinBloque()));
-        disponibilidad.setEstadoBloque(dto.getEstadoBloque());
+    Empleado empleado =
+        empleadoRepository.findById(dto.getIdEmpleado())
+            .orElseThrow(() ->
+                new RuntimeException(
+                    "Empleado no encontrado"
+                )
+            );
 
-        disponibilidadRepository.save(disponibilidad);
+    boolean existeCruce =
+        disponibilidadRepository
+            .existsByEmpleado_IdEmpleadoAndFechaAndHoraInicioBloqueLessThanAndHoraFinBloqueGreaterThan(
+                dto.getIdEmpleado(),
+                LocalDate.parse(dto.getFecha()),
+                java.time.LocalTime.parse(dto.getHoraFinBloque()),
+                java.time.LocalTime.parse(dto.getHoraInicioBloque())
+            );
 
-        return ResponseEntity.status(HttpStatus.CREATED)
-            .body("Horario registrado exitosamente.");
+    if (existeCruce) {
+
+        return ResponseEntity
+            .badRequest()
+            .body("Ya existe un horario en ese rango");
     }
+
+    Disponibilidad disponibilidad =
+        new Disponibilidad();
+
+    disponibilidad.setEmpleado(empleado);
+
+    disponibilidad.setFecha(
+        LocalDate.parse(dto.getFecha())
+    );
+
+    disponibilidad.setHoraInicioBloque(
+        java.time.LocalTime.parse(
+            dto.getHoraInicioBloque()
+        )
+    );
+
+    disponibilidad.setHoraFinBloque(
+        java.time.LocalTime.parse(
+            dto.getHoraFinBloque()
+        )
+    );
+
+    disponibilidad.setEstadoBloque(
+        dto.getEstadoBloque()
+    );
+
+    disponibilidadRepository.save(disponibilidad);
+
+    return ResponseEntity
+        .status(HttpStatus.CREATED)
+        .body("Horario registrado exitosamente.");
+}
 }

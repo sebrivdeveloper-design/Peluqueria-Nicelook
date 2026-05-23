@@ -35,21 +35,32 @@ public class JwtFilter extends OncePerRequestFilter {
             return;
         }
 
-        String token = authHeader.substring(7);
-        String correo = jwtService.extractCorreo(token);
-        String rol = jwtService.extractRol(token);
+       try {
 
-        UsernamePasswordAuthenticationToken authToken =
-                new UsernamePasswordAuthenticationToken(
-                        correo,
-                        null,
-                        Collections.singleton(() -> "ROLE_" + rol) // 🔥 CLAVE
-                );
+    String token = authHeader.substring(7);
 
-        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+    String correo = jwtService.extractCorreo(token);
+    String rol = jwtService.extractRol(token);
 
-        SecurityContextHolder.getContext().setAuthentication(authToken);
-        
-        filterChain.doFilter(request, response);
+    UsernamePasswordAuthenticationToken authToken =
+            new UsernamePasswordAuthenticationToken(
+                    correo,
+                    null,
+                    Collections.singleton(() -> "ROLE_" + rol.toUpperCase())
+            );
+
+    authToken.setDetails(
+            new WebAuthenticationDetailsSource().buildDetails(request)
+    );
+
+    SecurityContextHolder.getContext().setAuthentication(authToken);
+
+} catch (Exception e) {
+
+    System.out.println("JWT inválido: " + e.getMessage());
+
+}
+
+filterChain.doFilter(request, response);
     }
 }
