@@ -37,7 +37,13 @@
 
         <div class="modal-header">
 
-          <h2>Registrar horario</h2>
+          <h2>
+            {{
+              form.idDisponibilidad
+                ? 'Editar horario'
+                : 'Registrar horario'
+            }}
+          </h2>
 
           <button
             class="close-btn"
@@ -101,7 +107,11 @@
             class="btn-primary"
             @click="guardarHorario"
           >
-            Guardar horario
+            {{
+              form.idDisponibilidad
+                ? 'Actualizar horario'
+                : 'Guardar horario'
+            }}
           </button>
 
         </div>
@@ -114,7 +124,11 @@
 </template>
 
 <script>
-import axios from 'axios'
+import {
+  getDisponibilidad,
+  crearDisponibilidad,
+  editarDisponibilidad
+} from '@/services/disponibilidadService'
 
 import AgendaCalendar
 from '@/components/AgendaCalendar.vue'
@@ -137,8 +151,12 @@ export default {
 
       form: {
 
+        idDisponibilidad: null,
+
         fecha: '',
+
         horaInicio: '',
+
         horaFin: ''
       }
     }
@@ -184,12 +202,34 @@ export default {
 
     abrirModal() {
 
+      this.form = {
+
+        idDisponibilidad: null,
+
+        fecha: '',
+
+        horaInicio: '',
+
+        horaFin: ''
+      }
+
       this.mostrarModal = true
     },
 
     cerrarModal() {
 
       this.mostrarModal = false
+
+      this.form = {
+
+        idDisponibilidad: null,
+
+        fecha: '',
+
+        horaInicio: '',
+
+        horaFin: ''
+      }
     },
 
     // SELECT CALENDAR
@@ -216,80 +256,111 @@ export default {
 
     handleEventClick(info) {
 
-      alert(
-        `Evento: ${info.event.title}`
-      )
+      const evento = info.event
+
+
+      if (
+        evento.extendedProps.estado === 'ocupado'
+      ) {
+
+        alert(
+          'Este horario tiene citas agendadas'
+        )
+
+        return
+      }
+
+
+      this.form.idDisponibilidad =
+        evento.id
+
+      this.form.fecha =
+        evento.startStr.split('T')[0]
+
+      this.form.horaInicio =
+        evento.startStr
+          .split('T')[1]
+          ?.substring(0, 5)
+
+      this.form.horaFin =
+        evento.endStr
+          .split('T')[1]
+          ?.substring(0, 5)
+
+
+      this.mostrarModal = true
     },
 
     // CARGAR DISPONIBILIDAD
 
     async cargarDisponibilidad() {
 
-      try {
+  try {
 
-        const idEmpleado =
-          this.getIdEmpleado()
+    const idEmpleado =
+      this.getIdEmpleado()
 
-        if (!idEmpleado) return
+    if (!idEmpleado) return
 
-        const token = this.getToken()
+    const hoy = new Date()
 
-        const hoy = new Date()
+    const anio = hoy.getFullYear()
 
-        const anio = hoy.getFullYear()
+    const mes =
+      String(hoy.getMonth() + 1)
+        .padStart(2, '0')
 
-        const mes =
-          String(hoy.getMonth() + 1)
-            .padStart(2, '0')
+    const response =
+      await getDisponibilidad(
+        idEmpleado,
+        mes,
+        anio
+      )
 
-        const response = await axios.get(
-          `http://localhost:8080/api/disponibilidad/${idEmpleado}?mes=${mes}&anio=${anio}`,
-          {
-            headers: {
-              Authorization:
-                `Bearer ${token}`
-            }
-          }
-        )
+    this.eventos =
+      response.data.map(bloque => ({
 
-        this.eventos =
-          response.data.map(bloque => ({
+        id:
+          bloque.idDisponibilidad,
 
-            id:
-              bloque.idDisponibilidad,
+        title:
+          bloque.estado === 'ocupado'
+            ? `${bloque.cliente} - ${bloque.servicio}`
+            : 'Disponible',
 
-            title:
-              bloque.estadoBloque === 'ocupado'
-                ? 'Reservado'
-                : 'Disponible',
+        start:
+          `${bloque.fecha}T${bloque.horaInicio}`,
 
-            start:
-              `${bloque.fecha}T${bloque.horaInicioBloque}`,
+        end:
+          `${bloque.fecha}T${bloque.horaFin}`,
 
-            end:
-              `${bloque.fecha}T${bloque.horaFinBloque}`,
+        className:
+          bloque.estado === 'ocupado'
+            ? 'evento-ocupado'
+            : 'evento-disponible',
 
-            className:
-              bloque.estadoBloque === 'ocupado'
-                ? 'evento-ocupado'
-                : 'evento-disponible',
+        extendedProps: {
 
-            extendedProps: {
+          estado:
+            bloque.estado,
 
-              estado:
-                bloque.estadoBloque
-            }
+          cliente:
+            bloque.cliente,
 
-          }))
+          servicio:
+            bloque.servicio
+        }
 
-      } catch (error) {
+      }))
 
-        console.error(
-          'Error cargando disponibilidad:',
-          error
-        )
-      }
-    },
+  } catch (error) {
+
+    console.error(
+      'Error cargando disponibilidad:',
+      error
+    )
+  }
+},
 
     // GUARDAR HORARIO
 
@@ -342,58 +413,57 @@ export default {
           return
         }
 
-        const token = this.getToken()
-
         const idEmpleado =
           this.getIdEmpleado()
 
-        await axios.post(
-          'http://localhost:8080/api/disponibilidad',
-          {
+        
+        const data = {
 
-            idEmpleado,
+          idEmpleado,
 
-            fecha:
-              this.form.fecha,
+          fecha:
+            this.form.fecha,
 
-            horaInicioBloque:
-              this.form.horaInicio,
+          horaInicioBloque:
+            this.form.horaInicio,
 
-            horaFinBloque:
-              this.form.horaFin,
+          horaFinBloque:
+            this.form.horaFin,
 
-            estadoBloque:
-              'disponible'
-
-          },
-          {
-            headers: {
-              Authorization:
-                `Bearer ${token}`
-            }
-          }
-        )
-
-        // RECARGAR
-
-        await this.cargarDisponibilidad()
-
-        // RESET
-
-        this.form = {
-
-          fecha: '',
-
-          horaInicio: '',
-
-          horaFin: ''
+          estadoBloque:
+            'disponible'
         }
 
-        this.cerrarModal()
+          // EDITAR
 
-        alert(
-          'Horario registrado correctamente'
-        )
+          if (this.form.idDisponibilidad) {
+
+            await editarDisponibilidad(
+              this.form.idDisponibilidad,
+              data
+            )
+
+          } else {
+
+            // CREAR
+
+            await crearDisponibilidad(data)
+          }
+
+        const esEdicion =
+  !!this.form.idDisponibilidad
+
+
+
+    await this.cargarDisponibilidad()
+
+    this.cerrarModal()
+
+    alert(
+      esEdicion
+        ? 'Horario actualizado correctamente'
+        : 'Horario registrado correctamente'
+    )
 
       } catch (error) {
 
