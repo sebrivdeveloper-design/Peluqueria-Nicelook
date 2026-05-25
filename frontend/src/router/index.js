@@ -5,6 +5,8 @@ import LoginView from '@/views/LoginView.vue'
 import ServicioClienteView from '@/views/ServicioClienteView.vue'
 import ServiciosView from '@/views/ServicioView.vue'
 import ClientesView from '@/views/ClientesView.vue'
+import MisCitasView from '../views/MisCitasView.vue'
+
 // Layouts
 import AdminLayout from '@/layouts/AdminLayout.vue'
 import RecepcionistaLayout from '@/layouts/RecepcionistaLayout.vue'
@@ -78,7 +80,11 @@ const routes = [
       path: 'servicios/:id',
       name: 'ServicioDetalleCliente',
       component: () => import('@/views/ServicioDetalleView.vue')
-    }
+    },
+    {
+        path: '/cliente/mis-citas',
+        component: MisCitasView
+      }
     ]
   },
 

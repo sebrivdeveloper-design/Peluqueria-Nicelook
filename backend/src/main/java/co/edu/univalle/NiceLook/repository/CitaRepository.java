@@ -53,4 +53,7 @@ public interface CitaRepository extends JpaRepository<Cita, Integer> {
             @Param("idEmpleado") Integer idEmpleado,
             @Param("fecha") LocalDate fecha,
             @Param("horaInicio") LocalTime horaInicio);
+
+        // 🔥 HISTORIAL
+    List<Cita> findByCliente_IdCliente(Integer idCliente);
 }
