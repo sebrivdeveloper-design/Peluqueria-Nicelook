@@ -49,7 +49,9 @@ public class SecurityConfig {
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/servicios/**").permitAll()
                 .requestMatchers("/api/categorias/categoria/**").permitAll()
                 .requestMatchers("/api/citas/**").permitAll()
-                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/empleados/**").permitAll()
+                .requestMatchers("/api/historial/**").permitAll()
+                
+                .requestMatchers("/api/empleados/**").permitAll()
 
                 // Mutaciones de empleados solo ADMIN (HU-15/16/37)
                 .requestMatchers("/api/empleados/**").hasRole("ADMIN")

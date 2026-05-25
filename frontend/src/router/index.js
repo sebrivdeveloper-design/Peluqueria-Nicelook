@@ -4,11 +4,14 @@ import { createRouter, createWebHistory } from 'vue-router'
 import LoginView from '@/views/LoginView.vue'
 import ServiciosView from '@/views/ServicioView.vue'
 import ClientesView from '@/views/ClientesView.vue'
+import MisCitasView from '../views/MisCitasView.vue'
+
 // Layouts
 import AdminLayout from '@/layouts/AdminLayout.vue'
 import RecepcionistaLayout from '@/layouts/RecepcionistaLayout.vue'
 import EmpleadoLayout from '@/layouts/EmpleadoLayout.vue'
-
+import ClienteLayout from '@/layouts/ClienteLayout.vue'
+import ServicioClienteView from '@/views/ServicioClienteView.vue'
 
 // Admin views
 import CategoriasView from '@/views/CategoriasView.vue'
@@ -82,9 +85,30 @@ const routes = [
     ]
   },
 
-  // 🟪 CLIENTE → ahora todo va a la landing pública (CHANGE 4 V2: cliente sin login)
-  { path: '/cliente', redirect: '/reservar' },
-  { path: '/cliente/:pathMatch(.*)*', redirect: '/reservar' },
+  // 🟪 CLIENTE
+  {
+    path: '/cliente',
+    component: ClienteLayout,
+    children: [
+      {
+        path: '',
+        redirect: '/cliente/servicios'
+      },
+      {
+        path: 'servicios',
+        name: 'serviciosCliente',
+        component: ServicioClienteView
+      }, {
+      path: 'servicios/:id',
+      name: 'ServicioDetalleCliente',
+      component: () => import('@/views/ServicioDetalleView.vue')
+    },
+    {
+        path: '/cliente/mis-citas',
+        component: MisCitasView
+      }
+    ]
+  },
 
   // 🟦 RECEPCIONISTA (Actualizado con rutas hijas)
   {
