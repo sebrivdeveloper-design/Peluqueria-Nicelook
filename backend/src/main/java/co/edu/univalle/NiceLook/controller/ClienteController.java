@@ -45,6 +45,7 @@ public class ClienteController {
 
         List<ClienteDTO> dtos = clientes.stream().map(c -> {
             ClienteDTO dto = new ClienteDTO();
+            dto.setIdCliente(c.getIdCliente());
             if (c.getUsuario() != null) {
                 dto.setDocumento(c.getUsuario().getDocumento());
                 dto.setNombreCompleto(c.getUsuario().getNombreCompleto());

@@ -16,13 +16,41 @@ public interface CitaRepository extends JpaRepository<Cita, Integer> {
 
     // Verifica si un barbero ya tiene cita en ese horario
     @Query("SELECT COUNT(c) > 0 FROM Cita c WHERE c.empleado.idEmpleado = :idEmpleado " +
-           "AND c.fechaCita = :fecha AND c.horaInicio = :horaInicio " +
-           "AND c.estadoCita != 'cancelada'")
+            "AND c.fechaCita = :fecha AND c.horaInicio = :horaInicio " +
+            "AND c.estadoCita != 'cancelada'")
     boolean existeCitaEnHorario(@Param("idEmpleado") Integer idEmpleado,
-                                 @Param("fecha") LocalDate fecha,
-                                 @Param("horaInicio") LocalTime horaInicio);
+            @Param("fecha") LocalDate fecha,
+            @Param("horaInicio") LocalTime horaInicio);
 
     // Citas del día siguiente para el scheduler de recordatorios
     @Query("SELECT c FROM Cita c WHERE c.fechaCita = :fecha AND c.estadoCita = 'pendiente'")
     List<Cita> findCitasPorFecha(@Param("fecha") LocalDate fecha);
+
+    @Query("""
+                SELECT COUNT(c) > 0
+                FROM Cita c
+                WHERE c.empleado.idEmpleado = :idEmpleado
+                AND c.fechaCita = :fecha
+                AND c.horaInicio = :horaInicio
+                AND c.horaFin = :horaFin
+                AND c.estadoCita != 'cancelada'
+            """)
+    boolean existeCitaEnBloque(
+            @Param("idEmpleado") Integer idEmpleado,
+            @Param("fecha") LocalDate fecha,
+            @Param("horaInicio") LocalTime horaInicio,
+            @Param("horaFin") LocalTime horaFin);
+
+    @Query("""
+                SELECT c
+                FROM Cita c
+                WHERE c.empleado.idEmpleado = :idEmpleado
+                AND c.fechaCita = :fecha
+                AND c.horaInicio = :horaInicio
+                AND c.estadoCita != 'cancelada'
+            """)
+    Cita findByEmpleadoAndHorario(
+            @Param("idEmpleado") Integer idEmpleado,
+            @Param("fecha") LocalDate fecha,
+            @Param("horaInicio") LocalTime horaInicio);
 }
