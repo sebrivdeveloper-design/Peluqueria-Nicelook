@@ -44,6 +44,7 @@ public class EmpleadoService {
         usuario.setFechaRegistro(LocalDateTime.now());
         usuario.setEstado("activo");
         usuario.setEsGoogleUser(true);
+        usuario.setDocumento(request.getDocumento());
 
         usuarioRepository.save(usuario);
 
