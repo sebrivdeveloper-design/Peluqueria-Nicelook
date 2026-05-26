@@ -52,7 +52,7 @@
           </div>
 
           <button 
-            @click="$router.push({ name: 'ServicioDetalle', params: { id: serv.idServicio } })" 
+            @click="$router.push({ name: 'ServicioDetalleCliente', params: { id: serv.idServicio } })" 
             class="btn-reservar"
           >
             Reservar

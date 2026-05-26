@@ -16,7 +16,8 @@ import ClienteLayout from '@/layouts/ClienteLayout.vue'
 import CategoriasView from '@/views/CategoriasView.vue'
 import CategoriaDetalle from '@/views/CategoriaDetalle.vue'
 import EmpleadosView from '@/views/EmpleadosView.vue'
-import AgendaView from '@/views/AgendaView.vue'
+import AgendaEmpleadoView from '@/views/AgendaEmpleadoView.vue'
+import AgendaRecepcionistaView from '@/views/AgendaRecepcionistaView.vue'
 
 const routes = [
   // LOGIN
@@ -72,7 +73,11 @@ const routes = [
         path: 'servicios',
         name: 'serviciosCliente',
         component: ServicioClienteView
-      }
+      }, {
+      path: 'servicios/:id',
+      name: 'ServicioDetalleCliente',
+      component: () => import('@/views/ServicioDetalleView.vue')
+    }
     ]
   },
 
@@ -89,6 +94,11 @@ const routes = [
         path: 'clientes',
         name: 'RecepcionClientes',
         component: ClientesView // Carga la tabla de clientes calcada de tu diseño
+      },
+      {
+        path: 'agenda',
+        name: 'AgendaRecepcionista',
+        component: AgendaRecepcionistaView
       }
       // Aquí podrás añadir las demás cuando las crees:
       // { path: 'disponibilidad', component: DisponibilidadView },
@@ -108,7 +118,7 @@ const routes = [
     {
       path: 'agenda',
       name: 'AgendaEmpleado',
-      component: AgendaView
+      component: AgendaEmpleadoView
     }
   ]
 }
