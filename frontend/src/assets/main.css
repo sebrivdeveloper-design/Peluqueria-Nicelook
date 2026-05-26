@@ -1,3 +1,6 @@
+/* Importar fuente desde Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
+
 /* Variables globales de color */
 :root {
   --color-primary: #004518;
@@ -6,9 +9,6 @@
   --color-background: #f9f6f1;
   --color-cream: #f5f0e8;
 }
-
-/* Importar fuente desde Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
 
 /* Reset básico + fuente global */
 * {

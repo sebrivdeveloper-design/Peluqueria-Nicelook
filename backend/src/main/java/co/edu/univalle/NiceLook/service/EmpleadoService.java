@@ -40,6 +40,7 @@ public class EmpleadoService {
         usuario.setNombreCompleto(request.getNombreCompleto());
         usuario.setCorreo(request.getCorreo());
         usuario.setTelefono(request.getTelefono());
+        usuario.setDocumento(request.getDocumento());
         usuario.setRol(rol);
         usuario.setFechaRegistro(LocalDateTime.now());
         usuario.setEstado("activo");

@@ -267,14 +267,38 @@ async cargarServicios() {
 
     // Reemplaza solo si cambió la cantidad de bloques
     const nuevos = response.data.map(bloque => ({
+
       id: bloque.idDisponibilidad,
-      title: bloque.estadoBloque === 'ocupado' ? 'Reservado' : 'Disponible',
-      start: `${bloque.fecha}T${bloque.horaInicioBloque}`,
-      end: `${bloque.fecha}T${bloque.horaFinBloque}`,
-      className: bloque.estadoBloque === 'ocupado' ? 'evento-ocupado' : 'evento-disponible',
+
+      title:
+        bloque.estado === 'ocupado'
+          ? `${bloque.cliente} - ${bloque.servicio}`
+          : 'Disponible',
+
+      start:
+        `${bloque.fecha}T${bloque.horaInicio}`,
+
+      end:
+        `${bloque.fecha}T${bloque.horaFin}`,
+
+      className:
+        bloque.estado === 'ocupado'
+          ? 'evento-ocupado'
+          : 'evento-disponible',
+
       extendedProps: {
-        estado: bloque.estadoBloque,
-        idDisponibilidad: bloque.idDisponibilidad
+
+        estado:
+          bloque.estado,
+
+        idDisponibilidad:
+          bloque.idDisponibilidad,
+
+        cliente:
+          bloque.cliente,
+
+        servicio:
+          bloque.servicio
       }
     }))
 
