@@ -31,7 +31,7 @@
             <p>{{ s.descripcion }}</p>
 
             <div class="info">
-              <span>⏱ {{ s.duracion }}</span>
+              <span>⏱ {{ s.duracionMinutos }} min</span>
               <span>💲 {{ s.precio }}</span>
             </div>
 

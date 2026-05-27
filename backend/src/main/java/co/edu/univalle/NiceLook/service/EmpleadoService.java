@@ -65,4 +65,7 @@ public class EmpleadoService {
     return empleadoRepository.findAll();
     }
 
+    public List<Empleado> listarSoloEmpleados() {
+    return empleadoRepository.findByUsuarioRolNombreRol("EMPLEADO");
+    }
 }

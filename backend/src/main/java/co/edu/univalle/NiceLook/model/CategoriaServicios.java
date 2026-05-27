@@ -3,12 +3,13 @@ import lombok.Data;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @Data
 @Entity
 @Getter
 @Setter
 @Table(name = "categoria_servicios")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class CategoriaServicios {
 
     @Id

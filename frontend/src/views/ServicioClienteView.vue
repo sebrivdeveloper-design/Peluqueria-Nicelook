@@ -47,7 +47,7 @@
           <p class="desc">{{ serv.descripcion }}</p>
           
           <div class="card-meta">
-            <span class="duracion">⏱ {{ serv.duracion }}</span>
+            <span class="duracionMinutos">⏱ {{ serv.duracionMinutos }} min</span>
             <span class="precio">$ {{ formatearPrecio(serv.precio) }}</span>
           </div>
 

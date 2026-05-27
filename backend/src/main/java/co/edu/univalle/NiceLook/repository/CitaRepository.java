@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import co.edu.univalle.NiceLook.DTO.AgendaCitaDTO;
 import co.edu.univalle.NiceLook.model.Cita;
 
 @Repository
@@ -53,4 +54,23 @@ public interface CitaRepository extends JpaRepository<Cita, Integer> {
             @Param("idEmpleado") Integer idEmpleado,
             @Param("fecha") LocalDate fecha,
             @Param("horaInicio") LocalTime horaInicio);
+
+
+    @Query("""
+        SELECT new co.edu.univalle.NiceLook.DTO.AgendaCitaDTO(
+        c.fechaCita,
+        c.horaInicio,
+        c.cliente.usuario.nombreCompleto,
+        c.servicio.nombreServicio
+        )
+        FROM Cita c
+        WHERE c.empleado.idEmpleado = :idEmpleado
+        AND c.fechaCita BETWEEN :inicio AND :fin
+        AND c.estadoCita != 'cancelada'
+        """)
+   List<AgendaCitaDTO> findCitasDelMes(
+    @Param("idEmpleado") Integer idEmpleado,
+    @Param("inicio") LocalDate inicio,
+    @Param("fin") LocalDate fin
+);
 }

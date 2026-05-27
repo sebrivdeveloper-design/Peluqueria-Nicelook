@@ -21,7 +21,11 @@
 
       <div class="form-group">
         <label>Duración</label>
-        <input v-model="form.duracion" placeholder="Ej. 30 min" />
+        <input
+        v-model.number="form.duracionMinutos"
+        type="number"
+        placeholder="Ej. 30"
+      />
       </div>
 
       <div class="form-group">
@@ -63,7 +67,7 @@ export default {
       form: {
         nombreServicio: '',
         descripcion: '',
-        duracion: '',
+        duracionMinutos: '',
         precio: '',
         idCategoria: ''
       }
@@ -77,25 +81,61 @@ export default {
     },
 
     async guardar() {
-      try {
-        const payload = {
-          nombreServicio: this.form.nombreServicio,
-          descripcion: this.form.descripcion,
-          duracion: this.form.duracion,
-          precio: this.form.precio,
-          categoria: { idCategoria: this.form.idCategoria }
-        }
 
-        await servicioService.crearServicio(payload)
+  if (!this.form.nombreServicio.trim()) {
+    alert("Ingrese el nombre")
+    return
+  }
 
-        this.$emit("guardado")
+  if (!this.form.descripcion.trim()) {
+    alert("Ingrese la descripción")
+    return
+  }
 
-      } catch (error) {
-        console.error(error)
-        alert("Error al guardar")
+  if (!this.form.duracionMinutos) {
+    alert("Ingrese la duración")
+    return
+  }
+
+  if (!this.form.precio) {
+    alert("Ingrese el precio")
+    return
+  }
+
+  if (!this.form.idCategoria) {
+    alert("Seleccione una categoría")
+    return
+  }
+
+  try {
+
+    const payload = {
+      nombreServicio: this.form.nombreServicio.trim(),
+
+      descripcion: this.form.descripcion.trim(),
+
+      duracionMinutos: Number(this.form.duracionMinutos),
+
+      precio: Number(this.form.precio),
+
+      categoria: {
+        idCategoria: this.form.idCategoria
       }
     }
-  },
+
+    console.log(payload)
+
+    await servicioService.crearServicio(payload)
+
+    this.$emit("guardado")
+
+  } catch (error) {
+
+    console.error(error)
+
+    alert("Error al guardar")
+  }
+}},
 
   mounted() {
     this.cargarCategorias()
