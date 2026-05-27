@@ -1,16 +1,14 @@
 <template>
   <section class="categorias-page">
-    <HeaderBar
-      v-model:busqueda="busqueda"
-      @crear="mostrarModal = true"
-      textoBoton="Crear categoría"
-    />
-
     <div class="page-header">
       <div>
         <h1>Categorías</h1>
         <p>Administra las categorías disponibles para organizar los servicios del salón.</p>
       </div>
+      <HeaderBar
+        @crear="mostrarModal = true"
+        textoBoton="Crear categoría"
+      />
     </div>
 
     <div class="grid">
@@ -49,19 +47,24 @@ export default {
     CategoriaCard,
     CategoriaModal
   },
+
+  inject: {
+    adminSearch: { default: null }
+  },
+
   data() {
     return {
       categorias: [],
-      mostrarModal: false,
-      busqueda: '',
-      
+      mostrarModal: false
     }
   },
 
   computed: {
     filtradas() {
+      const q = (this.adminSearch ?? '').toLowerCase().trim()
+      if (!q) return this.categorias
       return this.categorias.filter(c =>
-        c.nombreCategoria?.toLowerCase().includes(this.busqueda.toLowerCase())
+        c.nombreCategoria?.toLowerCase().includes(q)
       )
     }
   },
@@ -115,10 +118,9 @@ export default {
 
 .page-header {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
-  flex-wrap: wrap;
 }
 
 .page-header h1 {
