@@ -39,59 +39,48 @@ export default {
 
   emits: [
     'select',
-    'eventClick'
+    'eventClick',
+    'datesSet'
   ],
 
   computed: {
 
     calendarOptions() {
-
       return {
-
         plugins: [
           dayGridPlugin,
           timeGridPlugin,
           interactionPlugin
         ],
-
         locale: esLocale,
-
         initialView: 'timeGridWeek',
-
         selectable: this.selectable,
-
         editable: false,
-
         height: 'auto',
-
         headerToolbar: {
           left: 'prev,next today',
           center: 'title',
           right: 'dayGridMonth,timeGridWeek,timeGridDay'
         },
-
         buttonText: {
           today: 'Hoy',
           month: 'Mes',
           week: 'Semana',
           day: 'Día'
         },
-
         slotMinTime: '08:00:00',
-
         slotMaxTime: '21:00:00',
-
         allDaySlot: false,
-
         events: this.eventos,
-
         select: (info) => {
           this.$emit('select', info)
         },
-
         eventClick: (info) => {
           this.$emit('eventClick', info)
-        }
+        },
+        datesSet: (info) => {
+          this.$emit('datesSet', info)
+        },
       }
     }
   }

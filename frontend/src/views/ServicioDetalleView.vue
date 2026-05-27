@@ -22,7 +22,7 @@
           <div class="metas-rapidas">
             <div class="meta-item">
               <span class="label">Duración</span>
-              <span class="valor">⏱ {{ servicio.duracion }}</span>
+              <span class="valor">⏱ {{ servicio.duracionMinutos }} min</span>
             </div>
             <div class="meta-item">
               <span class="label">Precio</span>
@@ -228,10 +228,11 @@ export default {
       this.horarios = []
       this.horarioSeleccionado = null
       try {
-        const res = await citaApi.getDisponibilidad(
-          this.empleadoSeleccionado.idEmpleado,
-          this.fechaSeleccionada
-        )
+        const res = await citaApi.getHorariosDisponibles(
+      this.empleadoSeleccionado.idEmpleado,
+      this.fechaSeleccionada,
+      this.servicio.idServicio
+      )
         this.horarios = res.data
       } catch (error) {
         console.error("Error cargando horarios:", error)
@@ -240,12 +241,26 @@ export default {
       }
     },
 
-    async confirmarReserva() {
+  async confirmarReserva() {
+
+  const token = localStorage.getItem('token')
+
+  // 🚨 VALIDAR LOGIN
+  if (!token) {
+
+    this.mensajeError = 'Debes iniciar sesión para reservar una cita'
+
+    setTimeout(() => {
+      this.$router.push('/')
+    }, 1500)
+
+    return
+  }
+
   this.guardando = true
   this.mensajeError = ''
   this.mensajeExito = ''
 
-  const token = localStorage.getItem('token')
   const payload = JSON.parse(atob(token.split('.')[1]))
 
   try {

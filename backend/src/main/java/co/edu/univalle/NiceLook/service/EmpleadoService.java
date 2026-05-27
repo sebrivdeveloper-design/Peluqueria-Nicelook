@@ -45,6 +45,7 @@ public class EmpleadoService {
         usuario.setFechaRegistro(LocalDateTime.now());
         usuario.setEstado("activo");
         usuario.setEsGoogleUser(true);
+        usuario.setDocumento(request.getDocumento());
 
         usuarioRepository.save(usuario);
 
@@ -64,4 +65,7 @@ public class EmpleadoService {
     return empleadoRepository.findAll();
     }
 
+    public List<Empleado> listarSoloEmpleados() {
+    return empleadoRepository.findByUsuarioRolNombreRol("EMPLEADO");
+    }
 }

@@ -232,38 +232,33 @@ export default {
     }
   },
 
-  computed: {
-    isLogged() {
-      return !!localStorage.getItem("token")
-    }
+computed: {
+
+  isLogged() {
+    return !!localStorage.getItem("token")
   },
   roleConfig() {
 
-  const roles = {
-
-    ADMIN: {
-      title: 'Administrador',
-      subtitle: 'Panel de gestión'
-    },
-
-    CLIENTE: {
-      title: 'Cliente',
-      subtitle: 'Panel de usuario'
-    },
-
-    EMPLEADO: {
-      title: 'Estilista',
-      subtitle: 'Panel de agenda'
-    },
-
-    RECEPCIONISTA: {
-      title: 'Recepción',
-      subtitle: 'Panel operativo'
+    const roles = {
+      ADMIN: {
+        title: 'Administrador',
+        subtitle: 'Panel de gestión'
+      },
+      CLIENTE: {
+        title: 'Cliente',
+        subtitle: 'Panel de usuario'
+      },
+      EMPLEADO: {
+        title: 'Estilista',
+        subtitle: 'Panel de agenda'
+      },
+      RECEPCIONISTA: {
+        title: 'Recepción',
+        subtitle: 'Panel operativo'
+      }
     }
-
+    return roles[this.rol] || roles.CLIENTE
   }
-
-  return roles[this.rol] || roles.CLIENTE
 },
 
   methods: {

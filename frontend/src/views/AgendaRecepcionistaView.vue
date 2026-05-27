@@ -34,6 +34,7 @@
     <AgendaCalendar
       :eventos="eventos"
       @eventClick="handleEventClick"
+      @datesSet="onDatesSet"
     />
 
     <!-- MODAL -->
@@ -148,7 +149,7 @@ export default {
   data() {
 
     return {
-
+      fechaActiva: new Date(),
       empleados: [],
       clientes: [],
       servicios: [],
@@ -176,7 +177,7 @@ export default {
     this.cargarEmpleados()
     this.cargarClientes()
     this.cargarServicios()
-    this.cargarAgenda()
+    //this.cargarAgenda()
   },
 
   methods: {
@@ -200,6 +201,45 @@ export default {
       }
     )
     this.empleados = response.data
+  } catch (error) {
+    console.error(error)
+  }
+},
+onDatesSet(info) {
+  // info.view.currentStart es la fecha visible en el calendario
+  this.fechaActiva = info.view.currentStart
+  this.cargarAgenda(info.view.currentStart)
+  
+},
+
+async cargarAgenda(fecha = new Date()) {
+  if (!this.idEmpleado) return
+
+  try {
+    const token = this.getToken()
+    const anio = fecha.getFullYear()
+    const mes = String(fecha.getMonth() + 1).padStart(2, '0')
+
+    const response = await axios.get(
+      `http://localhost:8080/api/disponibilidad/${this.idEmpleado}?mes=${mes}&anio=${anio}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    )
+
+    this.eventos = response.data.map(bloque => ({
+      id: bloque.idDisponibilidad,
+      title: bloque.estado === 'ocupado'
+        ? `${bloque.cliente} - ${bloque.servicio}`
+        : 'Disponible',
+      start: `${bloque.fecha}T${bloque.horaInicio}`,
+      end: `${bloque.fecha}T${bloque.horaFin}`,
+      className: bloque.estado === 'ocupado' ? 'evento-ocupado' : 'evento-disponible',
+      extendedProps: {
+        estado: bloque.estado,
+        idDisponibilidad: bloque.idDisponibilidad,
+        cliente: bloque.cliente,
+        servicio: bloque.servicio
+      }
+    }))
   } catch (error) {
     console.error(error)
   }
@@ -251,63 +291,6 @@ async cargarServicios() {
 
     // CARGAR AGENDA
 
-    async cargarAgenda() {
-  if (!this.idEmpleado) return  // guard
-
-  try {
-    const token = this.getToken()
-    const hoy = new Date()
-    const anio = hoy.getFullYear()
-    const mes = String(hoy.getMonth() + 1).padStart(2, '0')
-
-    const response = await axios.get(
-      `http://localhost:8080/api/disponibilidad/${this.idEmpleado}?mes=${mes}&anio=${anio}`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    )
-
-    // Reemplaza solo si cambió la cantidad de bloques
-    const nuevos = response.data.map(bloque => ({
-
-      id: bloque.idDisponibilidad,
-
-      title:
-        bloque.estado === 'ocupado'
-          ? `${bloque.cliente} - ${bloque.servicio}`
-          : 'Disponible',
-
-      start:
-        `${bloque.fecha}T${bloque.horaInicio}`,
-
-      end:
-        `${bloque.fecha}T${bloque.horaFin}`,
-
-      className:
-        bloque.estado === 'ocupado'
-          ? 'evento-ocupado'
-          : 'evento-disponible',
-
-      extendedProps: {
-
-        estado:
-          bloque.estado,
-
-        idDisponibilidad:
-          bloque.idDisponibilidad,
-
-        cliente:
-          bloque.cliente,
-
-        servicio:
-          bloque.servicio
-      }
-    }))
-
-    this.eventos = nuevos
-
-  } catch (error) {
-    console.error(error)
-  }
-},
 
     // CLICK EVENTO
 
