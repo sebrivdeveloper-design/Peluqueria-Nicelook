@@ -17,15 +17,15 @@ public class HistoricoCitas {
     @Column(name = "id_historial" , nullable = false)
     private Integer idHistorial;
 
-    @ManyToOne (fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "id_cita", nullable = false)
     private Cita cita;
 
-    @ManyToOne (fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "id_cliente", nullable = false)
     private Cliente cliente;
 
-    @ManyToOne (fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "id_empleado", nullable = false)
     private Empleado empleado;
 

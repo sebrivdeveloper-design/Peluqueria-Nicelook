@@ -112,7 +112,7 @@ public class ServicioController {
                 .map(s -> {
                     s.setNombreServicio(servicio.getNombreServicio());
                     s.setDescripcion(servicio.getDescripcion());
-                    s.setDuracionMinutos(servicio.getDuracionMinutos());
+                    s.setDuracion(servicio.getDuracion());
                     s.setPrecio(servicio.getPrecio());
                     s.setCategoria(servicio.getCategoria());
                     return ResponseEntity.ok(servicioService.guardar(s));

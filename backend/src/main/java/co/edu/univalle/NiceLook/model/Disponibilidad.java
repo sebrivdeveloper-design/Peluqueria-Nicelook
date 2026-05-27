@@ -7,8 +7,6 @@ import lombok.Setter;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @Data
 @Entity
 @Getter
@@ -21,9 +19,8 @@ public class Disponibilidad {
     @Column(name = "id_disponibilidad")
     private Integer idDisponibilidad;
 
-    @ManyToOne (fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "id_empleado", nullable = false)
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Empleado empleado;
 
     @Column(name = "fecha")
