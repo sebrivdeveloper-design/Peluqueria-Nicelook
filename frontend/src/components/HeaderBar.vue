@@ -1,152 +1,105 @@
 <template>
-  <div class="header">
-    
-    <!-- Buscador -->
-    <div class="search-box">
-      <Search :size="18" class="search-icon" />
 
-      <input
-        :value="busqueda"
-        @input="$emit('update:busqueda', $event.target.value)"
-        @keyup.enter="$emit('buscar')"
-        :placeholder="placeholder"
-        maxlength="30"
-      />
+  <div class="header-bar">
 
-      <button class="btn-buscar" @click="$emit('buscar')">
-        Buscar
-      </button>
-    </div>
-
-    <!-- Botón -->
-    <button v-if="mostrarBoton" class="btn-primary" @click="$emit('crear')">
-      <Plus :size="18" />
+    <button
+      v-if="mostrarBoton"
+      class="btn-primary"
+      @click="$emit('crear')"
+    >
+      <span class="btn-icon"><Plus :size="16" /></span>
       <span>{{ textoBoton }}</span>
     </button>
 
   </div>
+
 </template>
 
 <script>
-import { Search, Plus } from 'lucide-vue-next'
+import { Plus } from 'lucide-vue-next'
 
 export default {
+
   components: {
-    Search,
     Plus
   },
+
   props: {
-    busqueda: String,
+
     textoBoton: {
       type: String,
-      default: "Crear"
+      default: 'Crear'
     },
-    placeholder: {
-      type: String,
-      default: "Vamos a buscar tu estilo..."
-    },
+
     mostrarBoton: {
       type: Boolean,
       default: true
     }
-  }
+
+  },
+
+  emits: ['crear']
+
 }
 </script>
 
 <style scoped>
-.header {
+
+.header-bar {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 10px;
-  flex-wrap: wrap;
+  justify-content: flex-end;
+  flex-shrink: 0;
 }
 
-/* 🔍 Buscador */
-.search-box {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: #ffffff;
-  border: 1px solid #d9e4da;
-  border-radius: 18px;
-  padding: 12px 16px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04);
-  transition: border 0.2s ease, box-shadow 0.2s ease;
-}
-
-.search-box:focus-within {
-  border: 1px solid #004518;
-  box-shadow: 0 10px 24px rgba(0, 69, 24, 0.12);
-}
-
-.search-icon {
-  color: #6c7c70;
-}
-
-.search-box input {
-  flex: 1;
-  border: none;
-  outline: none;
-  font-size: 14px;
-  color: #173221;
-  background: transparent;
-}
-
-.search-box input::placeholder {
-  color: #8a9b8f;
-}
-
-.btn-buscar {
-  background: #145c43;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 12px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-.btn-buscar:hover {
-  background: #004518;
-}
-
-/* 🟢 Botón principal */
 .btn-primary {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: #004518;
-  color: #ffffff;
+  background: #014421;
+  color: white;
   border: none;
-  padding: 12px 18px;
-  border-radius: 16px;
-  font-size: 14px;
+  padding: 0 20px;
+  height: 42px;
+  border-radius: 12px;
+  font-size: 13.5px;
   font-weight: 600;
+  font-family: 'Manrope', sans-serif;
   cursor: pointer;
-  transition: all 0.22s ease;
-  box-shadow: 0 10px 20px rgba(0, 69, 24, 0.18);
+  transition: all 0.2s ease;
+  box-shadow:
+    0 1px 3px rgba(1, 68, 33, 0.25),
+    0 4px 12px rgba(1, 68, 33, 0.18);
+  letter-spacing: 0.1px;
 }
 
 .btn-primary:hover {
-  background: #1f6a34;
+  background: #025c2c;
   transform: translateY(-1px);
+  box-shadow:
+    0 2px 6px rgba(1, 68, 33, 0.28),
+    0 8px 20px rgba(1, 68, 33, 0.22);
 }
 
-/* 📱 Responsive */
-@media (max-width: 600px) {
-  .header {
-    flex-direction: column;
-    align-items: stretch;
-  }
+.btn-primary:active {
+  transform: translateY(0);
+  box-shadow:
+    0 1px 3px rgba(1, 68, 33, 0.2);
+}
 
+.btn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.9;
+}
+
+@media (max-width: 600px) {
+  .header-bar {
+    justify-content: stretch;
+  }
   .btn-primary {
-    justify-content: center;
     width: 100%;
+    justify-content: center;
   }
 }
 </style>

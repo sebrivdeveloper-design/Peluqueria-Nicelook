@@ -4,7 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
-
+import org.springframework.scheduling.annotation.Async;
 import co.edu.univalle.NiceLook.model.Cita;
 
 @Service
@@ -12,7 +12,8 @@ public class EmailService {
 
     @Autowired
     private JavaMailSender mailSender;
-
+    
+    @Async
     public void enviarConfirmacionCita(Cita cita) {
         String correoCliente = cita.getCliente().getUsuario().getCorreo();
         String correoEmpleado = cita.getEmpleado().getUsuario().getCorreo();

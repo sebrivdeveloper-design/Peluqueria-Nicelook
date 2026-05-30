@@ -44,13 +44,13 @@ public class SecurityConfig {
                 .requestMatchers("/api/servicios/**").permitAll()
                 .requestMatchers("/api/categorias/categoria/**").permitAll()
                 .requestMatchers("/api/citas/**").permitAll()
-                .requestMatchers("/api/disponibilidad/**").permitAll()
+                
                 .requestMatchers("/api/empleados/**").permitAll()
 
                 // 🔒 PROTEGIDOS
                 .requestMatchers("/api/categorias/**").hasRole("ADMIN")
                 .requestMatchers("/api/clientes/**").hasAnyRole("RECEPCIONISTA", "ADMIN")
-
+                .requestMatchers("/api/disponibilidad/**").hasAnyRole("EMPLEADO", "ADMIN", "RECEPCIONISTA")
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

@@ -241,37 +241,50 @@ export default {
     },
 
     async confirmarReserva() {
-      this.guardando = true
-      this.mensajeError = ''
-      this.mensajeExito = ''
+  this.guardando = true
+  this.mensajeError = ''
+  this.mensajeExito = ''
 
-      // Obtener idCliente del token
-      const token = localStorage.getItem('token')
-      const payload = JSON.parse(atob(token.split('.')[1]))
+  const token = localStorage.getItem('token')
+  const payload = JSON.parse(atob(token.split('.')[1]))
 
-      try {
-        await citaApi.registrarCita({
-          idCliente: payload.idCliente,
-          idEmpleado: this.empleadoSeleccionado.idEmpleado,
-          fecha: this.fechaSeleccionada,
-          horaInicio: this.horarioSeleccionado.horaInicioBloque,
-          horaFin: this.horarioSeleccionado.horaFinBloque,
-          observaciones: this.observaciones
-        })
-        this.mensajeExito = '✅ ¡Cita registrada! Recibirás un correo de confirmación.'
-        setTimeout(() => {
-          this.$router.push('/cliente/servicios')
-        }, 3000)
-      } catch (error) {
-        if (error.response?.status === 409) {
-          this.mensajeError = error.response.data
-        } else {
-          this.mensajeError = 'Ocurrió un error al registrar la cita.'
-        }
-      } finally {
-        this.guardando = false
-      }
+  try {
+
+    const citaData = {
+      idCliente: payload.idCliente,
+      idEmpleado: this.empleadoSeleccionado.idEmpleado,
+      idServicio: this.servicio.idServicio,
+      idDisponibilidad: this.horarioSeleccionado.idDisponibilidad,
+      fecha: this.fechaSeleccionada,
+      horaInicio: this.horarioSeleccionado.horaInicioBloque,
+      horaFin: this.horarioSeleccionado.horaFinBloque,
+      observaciones: this.observaciones
     }
+
+    console.log("ENVIANDO:", citaData)
+
+    await citaApi.registrarCita(citaData)
+
+    this.mensajeExito = '✅ ¡Cita registrada!'
+
+    setTimeout(() => {
+      this.$router.push('/cliente/servicios')
+    }, 3000)
+
+  } catch (error) {
+
+    console.error(error)
+
+    if (error.response?.status === 409) {
+      this.mensajeError = error.response.data
+    } else {
+      this.mensajeError = 'Ocurrió un error al registrar la cita.'
+    }
+
+  } finally {
+    this.guardando = false
+  }
+}
   },
   mounted() {
     this.cargarDetalle()

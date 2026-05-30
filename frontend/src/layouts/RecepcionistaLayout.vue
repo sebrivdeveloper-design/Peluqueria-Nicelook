@@ -1,190 +1,174 @@
 <template>
   <div class="layout-container">
-    
-    <aside class="sidebar">
-      <div class="profile-section">
-        <div class="avatar-container">
-          <div class="avatar-fallback">
-            <i class="pi pi-user"></i>
+
+    <!-- SIDEBAR GLOBAL NICELOOK -->
+    <Sidebar rol="RECEPCIONISTA" />
+
+    <!-- CONTENIDO -->
+    <main class="main-content">
+      <div class="topbar">
+        <div>
+          <h1>Panel Recepcionista</h1>
+          <p>Gestión de clientes, agenda y disponibilidad</p>
+        </div>
+
+        <div class="user-box">
+          <div class="avatar">
+            {{ inicial }}
+          </div>
+
+          <div class="user-info">
+            <h4>Recepcionista</h4>
+            <span>{{ correo }}</span>
           </div>
         </div>
-        <h2 class="profile-role">RECEPCIONISTA</h2>
-        <p class="profile-email">recepcion@gmail.com</p>
       </div>
 
-      <nav class="sidebar-menu">
-        <router-link to="/recepcionista/clientes" class="menu-item" active-class="active">
-          <i class="pi pi-users icon-large"></i>
-          <span>Clientes</span>
-        </router-link>
-
-        <router-link to="/recepcionista/disponibilidad" class="menu-item" active-class="active">
-          <i class="pi pi-calendar-times icon-large"></i>
-          <span>Disponibilidad</span>
-        </router-link>
-
-        <router-link to="/recepcionista/base-diaria" class="menu-item" active-class="active">
-          <i class="pi pi-money-bill icon-large"></i>
-          <span>Base diaria</span>
-        </router-link>
-
-        <router-link to="/recepcionista/agenda" class="menu-item" active-class="active">
-          <i class="pi pi-calendar icon-large"></i>
-          <span>Agenda</span>
-        </router-link>
-
-        <router-link to="/recepcionista/perfil" class="menu-item" active-class="active">
-          <i class="pi pi-user-edit icon-large"></i>
-          <span>Mi perfil</span>
-        </router-link>
-      </nav>
-    </aside>
-
-    <main class="main-content">
-      <div class="view-wrapper">
+      <!-- VISTAS -->
+      <section class="view-wrapper">
         <router-view />
-      </div>
+      </section>
     </main>
 
   </div>
 </template>
 
 <script>
+import Sidebar from '@/components/Sidebar.vue'
+
 export default {
-  name: 'RecepcionistaLayout'
+  name: 'RecepcionistaLayout',
+
+  components: {
+    Sidebar
+  },
+
+  computed: {
+    correo() {
+      const token = localStorage.getItem('token')
+
+      if (!token) return 'recepcion@nicelook.com'
+
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]))
+        return payload.sub || 'recepcion@nicelook.com'
+      } catch {
+        return 'recepcion@nicelook.com'
+      }
+    },
+
+    inicial() {
+      return this.correo.charAt(0).toUpperCase()
+    }
+  }
 }
 </script>
 
 <style scoped>
-/* CONTENEDOR PRINCIPAL */
 .layout-container {
   display: flex;
   min-height: 100vh;
-  background-color: var(--color-background); /* Tu crema cálido de fondo */
+  background: #f5f6f8;
 }
 
-/* SIDEBAR ESTILO IDENTICO A TU CAPTURA */
-.sidebar {
-  width: 280px;
-  background-color: var(--color-primary); /* #004518 - Verde oscuro base */
-  color: #ffffff;
-  display: flex;
-  flex-direction: column;
-  padding: 40px 0;
-  box-shadow: 4px 0 10px rgba(0, 0, 0, 0.05);
-  flex-shrink: 0;
-}
+/* CONTENIDO */
 
-/* SECCIÓN DEL AVATAR */
-.profile-section {
-  text-align: center;
-  padding: 0 20px 30px 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  margin-bottom: 20px;
-}
-
-.avatar-container {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 16px;
-}
-
-/* Fallback elegante con la paleta si no usas una imagen directa */
-.avatar-fallback {
-  width: 110px;
-  height: 110px;
-  border-radius: 50%;
-  background-color: #fca374; /* Tono naranja suave de fondo de tu mockup */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border: 4px solid var(--color-primary-medium);
-}
-
-.avatar-fallback i {
-  font-size: 48px;
-  color: #1e2a22;
-}
-
-.profile-role {
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  margin: 0;
-  color: #ffffff;
-}
-
-.profile-email {
-  font-size: 13px;
-  color: var(--color-secondary-soft);
-  margin: 6px 0 0 0;
-}
-
-/* MENÚ DE OPCIONES */
-.sidebar-menu {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 0 16px;
-}
-
-.menu-item {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 14px 20px;
-  color: rgba(255, 255, 255, 0.75);
-  text-decoration: none;
-  font-size: 16px;
-  font-weight: 500;
-  border-radius: 12px;
-  transition: all 0.2s ease;
-}
-
-.menu-item:hover {
-  color: #ffffff;
-  background-color: rgba(255, 255, 255, 0.08);
-}
-
-.icon-large {
-  font-size: 20px;
-  width: 24px;
-  text-align: center;
-}
-
-/* CLASE ACTIVA */
-
-.menu-item.active {
-  color: #ffffff;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 100%);
-  border-left: 4px solid var(--color-cream); /* Detalle sutil para marcar la sección activa */
-  font-weight: 600;
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1);
-}
-
-/* CONTENIDO DINÁMICO DE LA DERECHA */
 .main-content {
-  flex-grow: 1;
-  overflow-y: auto;
+  flex: 1;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
 }
 
-.view-wrapper {
-  padding: 40px;
-  max-width: 1400px;
-  width: 100%;
-  margin: 0 auto;
+/* TOPBAR */
+
+.topbar {
+  height: 90px;
+  background: white;
+  border-bottom: 1px solid #e8ece9;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
   box-sizing: border-box;
 }
 
-/* AJUSTES RESPONSIVOS */
-@media (max-width: 1024px) {
-  .sidebar {
-    width: 240px;
+.topbar h1 {
+  margin: 0;
+  font-size: 26px;
+  color: #004518;
+  font-weight: 700;
+}
+
+.topbar p {
+  margin: 4px 0 0;
+  color: #687076;
+  font-size: 14px;
+}
+
+/* USER BOX */
+
+.user-box {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #ffffff;
+  border: 1px solid #edf1ee;
+  padding: 10px 16px;
+  border-radius: 18px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+}
+
+.avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: #004518;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.user-info h4 {
+  margin: 0;
+  color: #004518;
+  font-size: 15px;
+}
+
+.user-info span {
+  font-size: 13px;
+  color: #6c757d;
+}
+
+/* CONTENIDO DINÁMICO */
+
+.view-wrapper {
+  padding: 32px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 768px) {
+
+  .topbar {
+    padding: 16px;
+    height: auto;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
   }
+
   .view-wrapper {
-    padding: 24px;
+    padding: 20px;
+  }
+
+  .user-box {
+    width: 100%;
   }
 }
 </style>

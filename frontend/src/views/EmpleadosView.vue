@@ -1,16 +1,14 @@
 <template>
   <section class="empleados-page">
-    <HeaderBar
-      v-model:busqueda="busqueda"
-      @crear="mostrarModal = true"
-      textoBoton="Crear empleado"
-    />
-
     <div class="page-header">
       <div>
         <h1>Empleados</h1>
         <p>Consulta y administra la información del personal registrado en el sistema.</p>
       </div>
+      <HeaderBar
+        @crear="mostrarModal = true"
+        textoBoton="Crear empleado"
+      />
     </div>
 
     <div class="table-card">
@@ -78,22 +76,23 @@ export default {
     HeaderBar
   },
 
+  inject: {
+    adminSearch: { default: null }
+  },
+
   data() {
     return {
       empleados: [],
-      mostrarModal: false,
-      busqueda: ''
+      mostrarModal: false
     }
   },
 
   computed: {
     filtrados() {
+      const texto = (this.adminSearch ?? '').toLowerCase().trim()
       return this.empleados.filter(e => {
-        const texto = this.busqueda.toLowerCase()
-
         const nombre = e.usuario?.nombreCompleto?.toLowerCase() || ''
         const documento = e.documento?.toString() || ''
-
         return nombre.includes(texto) || documento.includes(texto)
       })
     }
@@ -144,6 +143,13 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 26px;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
 }
 
 .page-header h1 {

@@ -14,14 +14,15 @@ import co.edu.univalle.NiceLook.Segurity.JwtService;
 import co.edu.univalle.NiceLook.model.Cliente;
 import co.edu.univalle.NiceLook.model.Usuario;
 import co.edu.univalle.NiceLook.repository.ClienteRepository;
+import co.edu.univalle.NiceLook.repository.EmpleadoRepository;
 import co.edu.univalle.NiceLook.service.GoogleAuthService;
 import co.edu.univalle.NiceLook.service.UsuarioService;
-
+import co.edu.univalle.NiceLook.model.Empleado;
 @RestController
 @RequestMapping("/auth")
 @CrossOrigin(origins = "*")
 public class AuthController {
-
+    @Autowired private EmpleadoRepository empleadoRepository;
     @Autowired private JwtService jwtService;
     @Autowired private GoogleAuthService googleAuthService;
     @Autowired private UsuarioService usuarioService;
@@ -40,19 +41,36 @@ public class AuthController {
 
             System.out.println("ROL DEL USUARIO: " + user.getRol());
 
-            // Buscar idCliente si el rol es CLIENTE
             Integer idCliente = null;
-            String rolNombre = user.getRol().getNombreRol();
-            if (rolNombre.equals("CLIENTE")) {
-                Cliente cliente = clienteRepository
-                    .findByUsuario_Documento(user.getDocumento())
-                    .orElse(null);
-                if (cliente != null) {
-                    idCliente = cliente.getIdCliente();
-                }
-            }
+Integer idEmpleado = null;
 
-            String token = jwtService.generateToken(user, idCliente);
+String rolNombre = user.getRol().getNombreRol();
+
+// CLIENTE
+if (rolNombre.equals("CLIENTE")) {
+
+    Cliente cliente = clienteRepository
+        .findByUsuario_Documento(user.getDocumento())
+        .orElse(null);
+
+    if (cliente != null) {
+        idCliente = cliente.getIdCliente();
+    }
+}
+
+// BARBERO-EMPLEADO
+if (rolNombre.equals("EMPLEADO")) {
+
+    Empleado empleado = empleadoRepository
+        .findByUsuario_Documento(user.getDocumento())
+        .orElse(null);
+
+    if (empleado != null) {
+        idEmpleado = empleado.getIdEmpleado();
+    }
+}
+
+String token = jwtService.generateToken(user, idCliente, idEmpleado);
             return ResponseEntity.ok(token);
 
         } catch (Exception e) {

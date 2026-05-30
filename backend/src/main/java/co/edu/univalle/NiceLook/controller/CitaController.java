@@ -26,13 +26,16 @@ import co.edu.univalle.NiceLook.repository.CitaRepository;
 import co.edu.univalle.NiceLook.repository.ClienteRepository;
 import co.edu.univalle.NiceLook.repository.DisponibilidadRepository;
 import co.edu.univalle.NiceLook.repository.EmpleadoRepository;
+import co.edu.univalle.NiceLook.repository.ServicioRepository;
 import co.edu.univalle.NiceLook.service.EmailService;
+import co.edu.univalle.NiceLook.model.Servicio;
 
 @RestController
 @RequestMapping("/api/citas")
 @CrossOrigin(origins = "*")
 public class CitaController {
 
+    @Autowired private ServicioRepository servicioRepository;
     @Autowired private CitaRepository citaRepository;
     @Autowired private ClienteRepository clienteRepository;
     @Autowired private EmpleadoRepository empleadoRepository;
@@ -51,62 +54,126 @@ public class CitaController {
     }
 
     // POST registrar cita
-    @PostMapping
-    public ResponseEntity<?> registrarCita(@RequestBody RegistroCitaDTO dto) {
+@PostMapping
+public ResponseEntity<?> registrarCita(
+        @RequestBody RegistroCitaDTO dto
+) {
 
-        // Verifica si el horario ya está ocupado
-        boolean ocupado = citaRepository.existeCitaEnHorario(
-            dto.getIdEmpleado(),
-            LocalDate.parse(dto.getFecha()),
-            LocalTime.parse(dto.getHoraInicio())
+    try {
+
+        System.out.println("DTO: " + dto.getIdDisponibilidad());
+
+    // BUSCAR CLIENTE
+    Cliente cliente = clienteRepository
+        .findById(dto.getIdCliente())
+        .orElseThrow(() ->
+            new RuntimeException("Cliente no encontrado")
         );
 
-        if (ocupado) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body("El horario seleccionado ya fue reservado. Por favor elige otro.");
-        }
+    // BUSCAR EMPLEADO
+    Empleado empleado = empleadoRepository
+        .findById(dto.getIdEmpleado())
+        .orElseThrow(() ->
+            new RuntimeException("Empleado no encontrado")
+        );
 
-        // Buscar cliente y empleado
-        Cliente cliente = clienteRepository.findById(dto.getIdCliente())
-            .orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
-        Empleado empleado = empleadoRepository.findById(dto.getIdEmpleado())
-            .orElseThrow(() -> new RuntimeException("Empleado no encontrado"));
+    // BUSCAR SERVICIO
+    Servicio servicio = servicioRepository
+        .findById(dto.getIdServicio())
+        .orElseThrow(() ->
+            new RuntimeException("Servicio no encontrado")
+        );
+        
+System.out.println("DTO RECIBIDO");
+System.out.println(dto.getIdCliente());
+System.out.println(dto.getIdEmpleado());
+System.out.println(dto.getIdServicio());
+System.out.println(dto.getIdDisponibilidad());
 
-        // Crear la cita
-        Cita cita = new Cita();
-        cita.setCliente(cliente);
-        cita.setEmpleado(empleado);
-        cita.setFechaCita(LocalDate.parse(dto.getFecha()));
-        cita.setHoraInicio(LocalTime.parse(dto.getHoraInicio()));
-        cita.setHoraFin(LocalTime.parse(dto.getHoraFin()));
-        cita.setEstadoCita("pendiente");
-        cita.setObservaciones(dto.getObservaciones());
-        cita.setFechaCreacion(LocalDateTime.now());
-        Cita citaGuardada = citaRepository.save(cita);
-
-        // Marcar bloque como ocupado
-        List<Disponibilidad> bloques = disponibilidadRepository
-            .findByEmpleado_IdEmpleadoAndFechaAndEstadoBloque(
-                dto.getIdEmpleado(),
-                LocalDate.parse(dto.getFecha()),
-                "disponible"
+    // BUSCAR DISPONIBILIDAD
+    Disponibilidad bloque =
+        disponibilidadRepository
+            .findById(dto.getIdDisponibilidad())
+            .orElseThrow(() ->
+                new RuntimeException(
+                    "Bloque no encontrado"
+                )
             );
-        bloques.stream()
-            .filter(b -> b.getHoraInicioBloque().equals(LocalTime.parse(dto.getHoraInicio())))
-            .findFirst()
-            .ifPresent(b -> {
-                b.setEstadoBloque("ocupado");
-                disponibilidadRepository.save(b);
-            });
 
-        // Enviar correos
-        try {
-            emailService.enviarConfirmacionCita(citaGuardada);
-        } catch (Exception e) {
-            System.err.println("Error enviando correo: " + e.getMessage());
-        }
+    // VALIDAR SI YA ESTÁ OCUPADO
+    if (
+        bloque.getEstadoBloque()
+            .equalsIgnoreCase("ocupado")
+    ) {
 
-        return ResponseEntity.status(HttpStatus.CREATED)
-            .body("Cita registrada exitosamente.");
+        return ResponseEntity
+            .status(HttpStatus.CONFLICT)
+            .body("Horario ocupado");
     }
+    // CREAR CITA
+    Cita cita = new Cita();
+
+    cita.setCliente(cliente);
+
+    cita.setEmpleado(empleado);
+
+    cita.setServicio(servicio);
+
+    cita.setFechaCita(
+        bloque.getFecha()
+    );
+
+    cita.setHoraInicio(
+        bloque.getHoraInicioBloque()
+    );
+
+    cita.setHoraFin(
+        bloque.getHoraFinBloque()
+    );
+
+    cita.setEstadoCita("pendiente");
+
+    cita.setFechaCreacion(
+        LocalDateTime.now()
+    );
+
+    // GUARDAR CITA
+    Cita citaGuardada =
+        citaRepository.save(cita);
+
+    // MARCAR BLOQUE COMO OCUPADO
+    bloque.setEstadoBloque("ocupado");
+
+    disponibilidadRepository.save(bloque);
+
+    // ENVIAR CORREO
+    try {
+
+        emailService
+            .enviarConfirmacionCita(
+                citaGuardada
+            );
+
+    } catch (Exception e) {
+
+        System.err.println(
+            "Error enviando correo: "
+            + e.getMessage()
+        );
+    }
+
+    return ResponseEntity
+        .status(HttpStatus.CREATED)
+        .body("Cita registrada exitosamente.");
+}
+
+   catch (Exception e) {
+
+        e.printStackTrace();
+
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(e.getMessage());
+    }
+}
 }

@@ -1,77 +1,257 @@
 <template>
   <section class="servicios-page">
-    <HeaderBar
-      v-model:busqueda="busqueda"
-      @crear="mostrarForm = true"
-      @buscar="recargar"
-      textoBoton="Crear servicio"
-      placeholder="Buscar servicio"
-    />
 
     <div class="page-header">
+
       <div>
         <h1>Servicios</h1>
         <p>Administra los servicios disponibles en el sistema.</p>
       </div>
+
+      <HeaderBar
+        @crear="mostrarForm = true"
+        textoBoton="Crear servicio"
+      />
+
     </div>
 
-    <div v-if="filtrados.length > 0">
-      <div v-for="(servs, categoria) in agrupados" :key="categoria">
-        <h2 class="titulo-categoria">{{ categoria }}</h2>
+    <!-- PESTAÑAS -->
 
-        <div class="grid">
-          <div 
-            class="card" 
-            :class="{ inactivo: s.estado === 'inactivo' }"
-            v-for="s in servs" 
+    <div class="tabs-bar">
+      <button
+        class="tab"
+        :class="{ active: tabActiva === 'todos' }"
+        @click="tabActiva = 'todos'"
+      >
+        Todos
+        <span class="tab-count">{{ servicios.length }}</span>
+      </button>
+
+      <button
+        class="tab"
+        :class="{ active: tabActiva === 'activos' }"
+        @click="tabActiva = 'activos'"
+      >
+        Activos
+        <span class="tab-count activos">{{ servicios.filter(s => s.estado === 'activo').length }}</span>
+      </button>
+
+      <button
+        class="tab"
+        :class="{ active: tabActiva === 'inactivos' }"
+        @click="tabActiva = 'inactivos'"
+      >
+        Inactivos
+        <span class="tab-count inactivos">{{ servicios.filter(s => s.estado !== 'activo').length }}</span>
+      </button>
+    </div>
+
+    <!-- TABLA -->
+
+    <div v-if="filtrados.length > 0" class="tabla-wrapper">
+
+      <table class="tabla-servicios">
+
+        <thead>
+
+          <tr>
+            <th>SERVICIO</th>
+            <th>CATEGORÍA</th>
+            <th>DURACIÓN</th>
+            <th>PRECIO</th>
+            <th>ESTADO</th>
+            <th>ACCIONES</th>
+          </tr>
+
+        </thead>
+
+        <tbody>
+
+          <tr
+            v-for="s in filtrados"
             :key="s.idServicio"
-            @click="irDetalle(s.idServicio)"
+            :class="{ filaInactiva: s.estado === 'inactivo' }"
           >
-            <h3>{{ s.nombreServicio }}</h3>
-            <p>{{ s.descripcion }}</p>
 
-            <div class="info">
-              <span>⏱ {{ s.duracion }}</span>
-              <span>💲 {{ s.precio }}</span>
-            </div>
+            <!-- SERVICIO -->
 
-            <div class="categoria-label">
-             🏷️ {{ s.categoria?.nombreCategoria || 'Sin categoría' }}
-            </div>
+            <td>
 
-            <span 
-              class="badge-estado"
-              :class="s.estado === 'activo' ? 'activo' : 'inactivo'"
-            >
-              {{ s.estado === 'activo' ? 'Activo' : 'Inactivo' }}
-            </span>
+              <div class="servicio-info">
 
-            <button 
-              class="btn-estado"
-              :class="s.estado === 'activo' ? 'btn-danger' : 'btn-success'"
-              @click.stop="toggleEstado(s)"
-            >
-              {{ s.estado === 'activo' ? 'Desactivar' : 'Activar' }}
-            </button>
-          </div>
-        </div>
-      </div>
+                <div class="servicio-avatar">
+
+                  {{ s.nombreServicio.charAt(0).toUpperCase() }}
+
+                </div>
+
+                <div>
+
+                  <h3>{{ s.nombreServicio }}</h3>
+
+                  <p>{{ s.descripcion }}</p>
+
+                </div>
+
+              </div>
+
+            </td>
+
+            <!-- CATEGORIA -->
+
+            <td>
+
+              <span class="badge categoria">
+
+                {{ s.categoria?.nombreCategoria || 'Sin categoría' }}
+
+              </span>
+
+            </td>
+
+            <!-- DURACION -->
+
+            <td>
+
+              <div class="icon-text">
+
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <circle cx="12" cy="12" r="10"/>
+                  <polyline points="12 6 12 12 16 14"/>
+                </svg>
+
+                {{ s.duracion }}
+
+              </div>
+
+            </td>
+
+            <!-- PRECIO -->
+
+            <td class="precio">
+
+              ${{ s.precio }}
+
+            </td>
+
+            <!-- ESTADO -->
+
+            <td>
+
+              <span
+                class="badge-estado"
+                :class="s.estado === 'activo' ? 'activo' : 'inactivo'"
+              >
+
+                {{ s.estado === 'activo' ? 'Activo' : 'Inactivo' }}
+
+              </span>
+
+            </td>
+
+            <!-- ACCIONES -->
+
+            <td>
+
+              <div class="acciones">
+
+                <!-- ICONO EDITAR -->
+
+                <button
+                  class="btn-icon"
+                  @click.stop="servicioEditar = s"
+                >
+
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path d="M12 20h9"/>
+                    <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>
+                  </svg>
+
+                </button>
+
+                <!-- SWITCH -->
+
+                <label class="switch">
+
+                  <input
+                    type="checkbox"
+                    :checked="s.estado === 'activo'"
+                    @change="toggleEstado(s)"
+                  />
+
+                  <span class="slider"></span>
+
+                </label>
+
+              </div>
+
+            </td>
+
+          </tr>
+
+        </tbody>
+
+      </table>
+
     </div>
 
-    <div v-if="servicios.length === 0" class="empty">
-      <h3>No hay servicios registrados</h3>
-      <p>Comienza creando uno nuevo con el botón superior.</p>
+    <!-- EMPTY -->
+
+    <div v-if="filtrados.length === 0" class="empty">
+
+      <template v-if="servicios.length === 0">
+        <h3>No hay servicios registrados</h3>
+        <p>Comienza creando uno nuevo con el botón superior.</p>
+      </template>
+
+      <template v-else-if="busquedaActual">
+        <h3>Sin resultados para "{{ busquedaActual }}"</h3>
+        <p>Intenta con otro término o limpia la búsqueda.</p>
+      </template>
+
+      <template v-else-if="tabActiva === 'activos'">
+        <h3>No hay servicios activos</h3>
+        <p>Activa un servicio usando el interruptor en la tabla.</p>
+      </template>
+
+      <template v-else-if="tabActiva === 'inactivos'">
+        <h3>No hay servicios inactivos</h3>
+        <p>Todos los servicios están activos.</p>
+      </template>
+
     </div>
 
-    <div v-else-if="filtrados.length === 0" class="empty">
-      <h3>No se encontraron resultados</h3>
-      <p>No hay servicios que coincidan con "{{ busqueda }}"</p>
-    </div>
+    <!-- FORM CREAR -->
 
     <ServicioForm
       v-if="mostrarForm"
       @cerrar="mostrarForm = false"
       @guardado="recargar"
+    />
+
+    <!-- FORM EDITAR -->
+
+    <ServicioForm
+      v-if="servicioEditar"
+      :servicio="servicioEditar"
+      @cerrar="servicioEditar = null"
+      @guardado="onEditarGuardado"
     />
 
   </section>
@@ -83,196 +263,626 @@ import servicioService from '@/services/servicioService'
 import ServicioForm from '@/components/ServicioForm.vue'
 
 export default {
-  components: { 
-    HeaderBar, 
-    ServicioForm 
+
+  components: {
+    HeaderBar,
+    ServicioForm
+  },
+
+  inject: {
+    adminSearch: { default: null }
   },
 
   data() {
+
     return {
+
       servicios: [],
+
       mostrarForm: false,
-      busqueda: ""
+
+      servicioEditar: null,
+
+      tabActiva: 'todos'
+
     }
+
   },
 
   computed: {
-    // Filtrado en tiempo real por nombre
-    filtrados() {
-      if (!this.busqueda) return this.servicios
-      const query = this.busqueda.toLowerCase()
-      return this.servicios.filter(s =>
-        (s.nombreServicio || "").toLowerCase().includes(query)
-      )
+
+    busquedaActual() {
+      return (this.adminSearch ?? '').toLowerCase().trim()
     },
-    
-    // Agrupación de los servicios filtrados por su categoría
-    agrupados() {
-      const grupos = {}
-      this.filtrados.forEach(s => {
-        const nombreCat = s.categoria?.nombreCategoria || "Sin categoría"
-        if (!grupos[nombreCat]) {
-          grupos[nombreCat] = []
-        }
-        grupos[nombreCat].push(s)
-      })
-      return grupos
+
+    filtrados() {
+
+      // 1. Filtrar por pestaña
+      let lista = this.servicios
+      if (this.tabActiva === 'activos') {
+        lista = lista.filter(s => s.estado === 'activo')
+      } else if (this.tabActiva === 'inactivos') {
+        lista = lista.filter(s => s.estado !== 'activo')
+      }
+
+      // 2. Filtrar por búsqueda del topbar
+      const q = this.busquedaActual
+      if (!q) return lista
+
+      return lista.filter(s =>
+        (s.nombreServicio || '').toLowerCase().includes(q) ||
+        (s.descripcion || '').toLowerCase().includes(q) ||
+        (s.categoria?.nombreCategoria || '').toLowerCase().includes(q)
+      )
+
     }
+
   },
 
-  watch: {
-    // Restringe la entrada a 30 caracteres alfabéticos con tildes
-    busqueda(nuevoVal) {
-      let filtrado = nuevoVal.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, "");
-      if (filtrado.length > 30) {
-        filtrado = filtrado.substring(0, 30);
-      }
-      if (filtrado !== nuevoVal) {
-        this.busqueda = filtrado;
-      }
-    }
-  },
 
   methods: {
+
     async recargar() {
+
       try {
-        const res = await servicioService.getServiciosAdmin()
+
+        const res =
+          await servicioService.getServiciosAdmin()
+
+        // MOSTRAR TODOS
         this.servicios = res.data
+
         this.mostrarForm = false
+
       } catch (error) {
-        console.error("Error al cargar servicios:", error)
+
+        console.error(
+          "Error al cargar servicios:",
+          error
+        )
+
       }
+
     },
 
-    irDetalle(id) {
-      this.$router.push({
-        name: 'ServicioDetalle',
-        params: { id }
-      })
+    onEditarGuardado() {
+      this.servicioEditar = null
+      this.recargar()
     },
 
     async toggleEstado(s) {
+
       try {
-        const nuevoEstado = s.estado === "activo" ? "desactivar" : "activar"
-        const ok = confirm(`¿Deseas ${nuevoEstado} este servicio?`)
+
+        const nuevoEstado =
+          s.estado === "activo"
+            ? "desactivar"
+            : "activar"
+
+        const ok = confirm(
+          `¿Deseas ${nuevoEstado} este servicio?`
+        )
+
         if (!ok) return
 
         if (s.estado === "activo") {
-          await servicioService.deshabilitar(s.idServicio)
+
+          await servicioService.deshabilitar(
+            s.idServicio
+          )
+
         } else {
-          await servicioService.activar(s.idServicio)
+
+          await servicioService.activar(
+            s.idServicio
+          )
+
         }
-        
-        alert(`✅ Servicio actualizado correctamente`)
+
+        alert(
+          `✅ Servicio actualizado correctamente`
+        )
+
         this.recargar()
+
       } catch (error) {
+
         console.error(error)
-        alert("❌ Error al cambiar el estado")
+
+        alert(
+          "❌ Error al cambiar el estado"
+        )
+
       }
+
     }
+
   },
 
   mounted() {
+
     this.recargar()
+
   }
+
 }
 </script>
 
 <style scoped>
+
 .servicios-page {
+
   display: flex;
+
   flex-direction: column;
+
   gap: 24px;
 }
 
+/* HEADER */
+
+.page-header {
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 16px;
+}
+
 .page-header h1 {
-  font-size: 38px;
-  color: #173221;
-  margin: 0;
+
+  font-size: 42px;
+
+  font-weight: 700;
+
+  color: #101828;
+
+  letter-spacing: -1px;
 }
 
 .page-header p {
-  color: #5f6f63;
-  margin: 8px 0 0;
+
+  margin-top: 8px;
+
+  color: #667085;
+
+  font-size: 15px;
 }
 
-.titulo-categoria {
-  margin: 30px 0 15px;
-  color: #173221;
-  border-bottom: 2px solid #d9e4da;
-  padding-bottom: 8px;
-}
+/* PESTAÑAS */
 
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 20px;
-}
-
-.card {
-  background: #ffffff;
-  border: 1px solid #d9e4da;
-  border-radius: 18px;
-  padding: 20px;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  position: relative;
-}
-
-.card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 20px rgba(0,0,0,0.05);
-}
-
-.card.inactivo {
-  opacity: 0.7;
-  filter: grayscale(40%);
-  background: #f9f9f9;
-}
-
-.info {
+.tabs-bar {
   display: flex;
-  justify-content: space-between;
-  margin: 15px 0;
-  font-weight: 600;
-  color: #145c43;
+  gap: 4px;
+  background: #f2f4f3;
+  padding: 5px;
+  border-radius: 14px;
+  width: fit-content;
 }
 
-.categoria-label {
-  font-size: 13px;
-  color: #5f6f63;
-  margin-bottom: 10px;
-}
-
-.badge-estado {
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-.badge-estado.activo { background: #e6f4ea; color: #1b5e20; }
-.badge-estado.inactivo { background: #fdecea; color: #b42318; }
-
-.btn-estado {
-  margin-top: 15px;
-  width: 100%;
-  padding: 10px;
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
   border-radius: 10px;
   border: none;
-  font-weight: 600;
+  background: transparent;
+  color: #667085;
+  font-size: 13.5px;
+  font-weight: 500;
+  font-family: 'Manrope', sans-serif;
   cursor: pointer;
+  transition: all 0.18s ease;
+  white-space: nowrap;
 }
 
-.btn-danger { background: #ffe5e5; color: #b42318; }
-.btn-success { background: #e6f4ea; color: #1b5e20; }
+.tab:hover {
+  background: rgba(255, 255, 255, 0.65);
+  color: #344054;
+}
+
+.tab.active {
+  background: #ffffff;
+  color: #101828;
+  font-weight: 600;
+  box-shadow:
+    0 1px 4px rgba(0, 0, 0, 0.08),
+    0 0 0 1px rgba(0, 0, 0, 0.04);
+}
+
+.tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 20px;
+  padding: 0 7px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 700;
+  background: #e4e7e4;
+  color: #667085;
+  transition: all 0.18s ease;
+}
+
+.tab.active .tab-count {
+  background: #e8eaea;
+  color: #344054;
+}
+
+.tab.active .tab-count.activos {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.tab.active .tab-count.inactivos {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* TABLA */
+
+.tabla-wrapper {
+
+  background: white;
+
+  border-radius: 24px;
+
+  overflow: hidden;
+
+  border: 1px solid #eaecf0;
+
+  box-shadow:
+    0 4px 20px rgba(0,0,0,0.04);
+}
+
+.tabla-servicios {
+
+  width: 100%;
+
+  border-collapse: collapse;
+}
+
+.tabla-servicios thead {
+
+  background: #f9fafb;
+}
+
+.tabla-servicios th {
+
+  text-align: left;
+
+  padding: 18px 24px;
+
+  color: #667085;
+
+  font-size: 14px;
+
+  font-weight: 600;
+}
+
+.tabla-servicios td {
+
+  padding: 20px 24px;
+
+  border-top: 1px solid #f2f4f7;
+
+  vertical-align: middle;
+}
+
+.filaInactiva {
+
+  opacity: 0.65;
+}
+
+/* SERVICIO */
+
+.servicio-info {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 16px;
+}
+
+.servicio-avatar {
+
+  width: 58px;
+
+  height: 58px;
+
+  border-radius: 16px;
+
+  background: #ecfdf3;
+
+  color: #027a48;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  font-size: 22px;
+
+  font-weight: 700;
+}
+
+.servicio-info h3 {
+
+  margin: 0;
+
+  font-size: 16px;
+
+  color: #101828;
+
+  font-weight: 700;
+}
+
+.servicio-info p {
+
+  margin-top: 6px;
+
+  color: #667085;
+
+  font-size: 13px;
+}
+
+/* BADGES */
+
+.badge {
+
+  display: inline-flex;
+
+  align-items: center;
+
+  padding: 7px 12px;
+
+  border-radius: 999px;
+
+  font-size: 12px;
+
+  font-weight: 600;
+
+  background: #f4f4f5;
+
+  color: #344054;
+}
+
+.badge.categoria {
+
+  background: #fefce8;
+
+  color: #854d0e;
+
+  border: 1px solid #fde68a;
+}
+
+/* DURACION */
+
+.icon-text {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 8px;
+
+  color: #475467;
+
+  font-size: 14px;
+}
+
+/* PRECIO */
+
+.precio {
+
+  color: #027a48;
+
+  font-weight: 700;
+}
+
+/* ESTADO */
+
+.badge-estado {
+
+  display: inline-flex;
+
+  align-items: center;
+
+  padding: 7px 12px;
+
+  border-radius: 999px;
+
+  font-size: 12px;
+
+  font-weight: 700;
+}
+
+.badge-estado.activo {
+
+  background: #ecfdf3;
+
+  color: #027a48;
+}
+
+.badge-estado.inactivo {
+
+  background: #fef3f2;
+
+  color: #b42318;
+}
+
+/* ACCIONES */
+
+.acciones {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 14px;
+}
+
+.btn-icon {
+
+  width: 36px;
+
+  height: 36px;
+
+  border: 1px solid #d0d5dd;
+
+  border-radius: 10px;
+
+  background: white;
+
+  cursor: pointer;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  transition: 0.2s;
+}
+
+.btn-icon:hover {
+
+  background: #f9fafb;
+}
+
+/* SWITCH */
+
+.switch {
+
+  position: relative;
+
+  display: inline-block;
+
+  width: 44px;
+
+  height: 24px;
+}
+
+.switch input {
+
+  opacity: 0;
+
+  width: 0;
+
+  height: 0;
+}
+
+.slider {
+
+  position: absolute;
+
+  cursor: pointer;
+
+  top: 0;
+
+  left: 0;
+
+  right: 0;
+
+  bottom: 0;
+
+  background-color: #d0d5dd;
+
+  transition: .3s;
+
+  border-radius: 999px;
+}
+
+.slider:before {
+
+  position: absolute;
+
+  content: "";
+
+  height: 18px;
+
+  width: 18px;
+
+  left: 3px;
+
+  bottom: 3px;
+
+  background-color: white;
+
+  transition: .3s;
+
+  border-radius: 50%;
+}
+
+.switch input:checked + .slider {
+
+  background-color: #16a34a;
+}
+
+.switch input:checked + .slider:before {
+
+  transform: translateX(20px);
+}
+
+/* EMPTY */
 
 .empty {
+
+  background:
+    rgba(255,255,255,0.92);
+
+  border:
+    1px solid rgba(0,0,0,0.04);
+
+  border-radius: 30px;
+
+  padding: 70px 30px;
+
   text-align: center;
-  padding: 50px;
-  background: white;
-  border-radius: 20px;
-  border: 1px dashed #d9e4da;
+
+  box-shadow:
+    0 4px 20px rgba(16,24,40,0.04);
+}
+
+.empty h3 {
+
+  color: #101828;
+
+  margin-bottom: 8px;
+
+  font-size: 22px;
+}
+
+.empty p {
+
+  color: #667085;
+}
+
+/* MOBILE */
+
+@media (max-width: 900px) {
+
+  .tabla-wrapper {
+
+    overflow-x: auto;
+  }
+
+  .tabla-servicios {
+
+    min-width: 900px;
+  }
+
+  .page-header h1 {
+
+    font-size: 32px;
+  }
+
 }
 </style>

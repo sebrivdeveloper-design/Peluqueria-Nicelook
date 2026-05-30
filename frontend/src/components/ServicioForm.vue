@@ -57,9 +57,21 @@
 import servicioService from '@/services/servicioService'
 
 export default {
+
+  props: {
+    // Si se pasa un servicio, el modal trabaja en modo edición
+    servicio: {
+      type: Object,
+      default: null
+    }
+  },
+
+  emits: ['cerrar', 'guardado'],
+
   data() {
     return {
       categorias: [],
+      guardando: false,
       form: {
         nombreServicio: '',
         descripcion: '',
@@ -77,6 +89,12 @@ export default {
     },
 
     async guardar() {
+      if (!this.form.nombreServicio || !this.form.idCategoria) {
+        alert('El nombre y la categoría son obligatorios.')
+        return
+      }
+
+      this.guardando = true
       try {
         const payload = {
           nombreServicio: this.form.nombreServicio,
@@ -86,19 +104,34 @@ export default {
           categoria: { idCategoria: this.form.idCategoria }
         }
 
-        await servicioService.crearServicio(payload)
+        if (this.modoEdicion) {
+          await servicioService.actualizar(this.servicio.idServicio, payload)
+        } else {
+          await servicioService.crearServicio(payload)
+        }
 
-        this.$emit("guardado")
+        this.$emit('guardado')
 
       } catch (error) {
         console.error(error)
-        alert("Error al guardar")
+        alert('Error al guardar el servicio.')
+      } finally {
+        this.guardando = false
       }
     }
   },
 
   mounted() {
     this.cargarCategorias()
+
+    // Si es edición, pre-cargar los datos del servicio en el form
+    if (this.servicio) {
+      this.form.nombreServicio = this.servicio.nombreServicio || ''
+      this.form.descripcion    = this.servicio.descripcion    || ''
+      this.form.duracion       = this.servicio.duracion       || ''
+      this.form.precio         = this.servicio.precio         || ''
+      this.form.idCategoria    = this.servicio.categoria?.idCategoria || ''
+    }
   }
 }
 </script>
