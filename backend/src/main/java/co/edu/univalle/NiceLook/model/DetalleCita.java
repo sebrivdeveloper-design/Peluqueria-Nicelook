@@ -17,7 +17,7 @@ public class DetalleCita {
     @Column(name = "id_detalle_cita", nullable = false)
     private Integer idDetalleCita;
 
-    @ManyToOne (fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "id_cita", nullable = false)
     private Cita cita;
 

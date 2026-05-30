@@ -1,25 +1,161 @@
-/* Importar fuente desde Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap');
 
-/* Variables globales de color */
 :root {
-  --color-primary: #004518;
-  --color-primary-medium: #2d6a4f;
-  --color-secondary-soft: #a8c5a0;
-  --color-background: #f9f6f1;
-  --color-cream: #f5f0e8;
+
+  /* COLORS */
+
+  --primary: #014421;
+  --primary-light: #0b5d31;
+
+  --primary-soft: #e9f5ee;
+
+  --background: #f7f8f7;
+
+  --card: rgba(255,255,255,0.92);
+
+  --text: #101828;
+
+  --text-soft: #667085;
+
+  --border: rgba(0,0,0,0.05);
+
+  --shadow-soft:
+    0 4px 20px rgba(16,24,40,0.04);
+
+  --shadow-medium:
+    0 10px 30px rgba(16,24,40,0.08);
+
+  --radius-lg: 20px;
+  --radius-xl: 28px;
 }
 
-/* Reset básico + fuente global */
+/* RESET */
+
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: 'Poppins', sans-serif;
 }
 
-/* Mejora de renderizado */
+/* GLOBAL */
+
+html {
+  scroll-behavior: smooth;
+}
+
 body {
+
+  font-family: 'Manrope', sans-serif;
+
+  background: var(--background);
+
+  color: var(--text);
+
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  overflow-x: hidden;
+}
+
+/* TYPOGRAPHY */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  letter-spacing: -0.5px;
+}
+
+p {
+  line-height: 1.6;
+}
+
+/* BUTTONS */
+
+button {
+  font-family: 'Manrope', sans-serif;
+}
+
+input,
+textarea,
+select {
+  font-family: 'Manrope', sans-serif;
+}
+
+/* SCROLLBAR */
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+
+  background: rgba(1,68,33,0.16);
+
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(1,68,33,0.28);
+}
+
+/* LINKS */
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* UTILITIES */
+
+.glass-card {
+
+  background: rgba(255,255,255,0.92);
+
+  backdrop-filter: blur(12px);
+
+  border: 1px solid var(--border);
+
+  box-shadow: var(--shadow-soft);
+
+  border-radius: var(--radius-xl);
+}
+
+.soft-hover {
+  transition: 0.25s ease;
+}
+
+.soft-hover:hover {
+
+  transform: translateY(-3px);
+
+  box-shadow: var(--shadow-medium);
+}
+
+/* PAGE TRANSITIONS */
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.25s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* MOBILE */
+
+@media (max-width: 768px) {
+
+  body {
+    font-size: 14px;
+  }
+
 }

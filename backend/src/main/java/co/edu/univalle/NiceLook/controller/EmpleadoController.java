@@ -30,7 +30,7 @@ public class EmpleadoController {
 
     @GetMapping
     public List<Empleado> listar() {
-    return service.listarSoloEmpleados();
-    }
+    return service.listar();
+}
 
 }

@@ -24,7 +24,6 @@
       :selectable="true"
       @select="handleSelect"
       @eventClick="handleEventClick"
-      @datesSet="handleDatesSet"
     />
 
     <!-- MODAL -->
@@ -149,8 +148,7 @@ export default {
       mostrarModal: false,
 
       eventos: [],
-      mesActual: new Date().getMonth() + 1,
-      anioActual: new Date().getFullYear(),
+
       form: {
 
         idDisponibilidad: null,
@@ -293,19 +291,6 @@ export default {
       this.mostrarModal = true
     },
 
-    handleDatesSet(info) {
-
-    const fecha = info.start
-
-    this.mesActual =
-    fecha.getMonth() + 1
-
-    this.anioActual =
-    fecha.getFullYear()
-
-    this.cargarDisponibilidad()
-    },
-
     // CARGAR DISPONIBILIDAD
 
     async cargarDisponibilidad() {
@@ -317,8 +302,13 @@ export default {
 
     if (!idEmpleado) return
 
-    const mes = this.mesActual
-    const anio = this.anioActual
+    const hoy = new Date()
+
+    const anio = hoy.getFullYear()
+
+    const mes =
+      String(hoy.getMonth() + 1)
+        .padStart(2, '0')
 
     const response =
       await getDisponibilidad(

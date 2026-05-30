@@ -21,11 +21,7 @@
 
       <div class="form-group">
         <label>Duración</label>
-        <input
-        v-model.number="form.duracionMinutos"
-        type="number"
-        placeholder="Ej. 30"
-      />
+        <input v-model="form.duracion" placeholder="Ej. 30 min" />
       </div>
 
       <div class="form-group">
@@ -61,13 +57,25 @@
 import servicioService from '@/services/servicioService'
 
 export default {
+
+  props: {
+    // Si se pasa un servicio, el modal trabaja en modo edición
+    servicio: {
+      type: Object,
+      default: null
+    }
+  },
+
+  emits: ['cerrar', 'guardado'],
+
   data() {
     return {
       categorias: [],
+      guardando: false,
       form: {
         nombreServicio: '',
         descripcion: '',
-        duracionMinutos: '',
+        duracion: '',
         precio: '',
         idCategoria: ''
       }
@@ -81,64 +89,49 @@ export default {
     },
 
     async guardar() {
+      if (!this.form.nombreServicio || !this.form.idCategoria) {
+        alert('El nombre y la categoría son obligatorios.')
+        return
+      }
 
-  if (!this.form.nombreServicio.trim()) {
-    alert("Ingrese el nombre")
-    return
-  }
+      this.guardando = true
+      try {
+        const payload = {
+          nombreServicio: this.form.nombreServicio,
+          descripcion: this.form.descripcion,
+          duracion: this.form.duracion,
+          precio: this.form.precio,
+          categoria: { idCategoria: this.form.idCategoria }
+        }
 
-  if (!this.form.descripcion.trim()) {
-    alert("Ingrese la descripción")
-    return
-  }
+        if (this.modoEdicion) {
+          await servicioService.actualizar(this.servicio.idServicio, payload)
+        } else {
+          await servicioService.crearServicio(payload)
+        }
 
-  if (!this.form.duracionMinutos) {
-    alert("Ingrese la duración")
-    return
-  }
+        this.$emit('guardado')
 
-  if (!this.form.precio) {
-    alert("Ingrese el precio")
-    return
-  }
-
-  if (!this.form.idCategoria) {
-    alert("Seleccione una categoría")
-    return
-  }
-
-  try {
-
-    const payload = {
-      nombreServicio: this.form.nombreServicio.trim(),
-
-      descripcion: this.form.descripcion.trim(),
-
-      duracionMinutos: Number(this.form.duracionMinutos),
-
-      precio: Number(this.form.precio),
-
-      categoria: {
-        idCategoria: this.form.idCategoria
+      } catch (error) {
+        console.error(error)
+        alert('Error al guardar el servicio.')
+      } finally {
+        this.guardando = false
       }
     }
-
-    console.log(payload)
-
-    await servicioService.crearServicio(payload)
-
-    this.$emit("guardado")
-
-  } catch (error) {
-
-    console.error(error)
-
-    alert("Error al guardar")
-  }
-}},
+  },
 
   mounted() {
     this.cargarCategorias()
+
+    // Si es edición, pre-cargar los datos del servicio en el form
+    if (this.servicio) {
+      this.form.nombreServicio = this.servicio.nombreServicio || ''
+      this.form.descripcion    = this.servicio.descripcion    || ''
+      this.form.duracion       = this.servicio.duracion       || ''
+      this.form.precio         = this.servicio.precio         || ''
+      this.form.idCategoria    = this.servicio.categoria?.idCategoria || ''
+    }
   }
 }
 </script>
