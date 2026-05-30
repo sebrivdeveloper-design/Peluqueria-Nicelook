@@ -2,7 +2,8 @@
   <div class="admin-layout">
 
     <!-- SIDEBAR -->
-    <Sidebar />
+    <!-- DESPUÉS -->
+    <Sidebar rol="ADMIN" />
 
     <!-- MAIN -->
     <div class="admin-main">
