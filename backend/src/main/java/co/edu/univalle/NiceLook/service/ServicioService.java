@@ -88,7 +88,7 @@ public class ServicioService {
 
         existente.setNombreServicio(datos.getNombreServicio());
         existente.setDescripcion(datos.getDescripcion());
-        existente.setDuracion(datos.getDuracion());
+        existente.setDuracionMinutos(datos.getDuracionMinutos());
         existente.setPrecio(datos.getPrecio());
 
         if (datos.getPorcentajeEmpleado() != null) {

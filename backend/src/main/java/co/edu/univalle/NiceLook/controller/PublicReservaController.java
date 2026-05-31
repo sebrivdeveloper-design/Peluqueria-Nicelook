@@ -63,7 +63,7 @@ public class PublicReservaController {
                     m.put("idServicio", s.getIdServicio());
                     m.put("nombreServicio", s.getNombreServicio());
                     m.put("descripcion", s.getDescripcion());
-                    m.put("duracion", s.getDuracion());
+                    m.put("duracion", s.getDuracionMinutos());
                     m.put("precio", s.getPrecio());
                     m.put("categoria", s.getCategoria() != null ? s.getCategoria().getNombreCategoria() : "");
                     return m;

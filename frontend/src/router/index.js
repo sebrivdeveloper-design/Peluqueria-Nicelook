@@ -16,6 +16,7 @@ import CategoriaDetalle from '@/views/CategoriaDetalle.vue'
 import EmpleadosView from '@/views/EmpleadosView.vue'
 import AgendaEmpleadoView from '@/views/AgendaEmpleadoView.vue'
 import AgendaRecepcionistaView from '@/views/AgendaRecepcionistaView.vue'
+import BaseDiariaView from '@/views/BaseDiariaView.vue'
 
 const routes = [
   // LOGIN (staff)
@@ -114,6 +115,11 @@ const routes = [
         path: 'pagos',
         name: 'Pagos',
         component: () => import('@/views/PagosView.vue')
+      },
+    {
+        path: 'base-diaria',
+        name: 'BaseDiaria',
+        component: BaseDiariaView
       }
     ]
   },

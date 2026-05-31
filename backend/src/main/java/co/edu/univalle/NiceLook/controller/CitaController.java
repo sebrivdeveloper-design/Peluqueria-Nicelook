@@ -77,7 +77,7 @@ public class CitaController {
             m.put("estadoCita", c.getEstadoCita());
             m.put("servicio", c.getServicio().getNombreServicio());
             m.put("idServicio", c.getServicio().getIdServicio());
-            m.put("duracion", c.getServicio().getDuracion());
+            m.put("duracion", c.getServicio().getDuracionMinutos());
             m.put("precio", c.getServicio().getPrecio());
             m.put("empleado", c.getEmpleado().getUsuario() != null
                     ? c.getEmpleado().getUsuario().getNombreCompleto() : "");
@@ -215,7 +215,7 @@ public class CitaController {
             }
 
             LocalTime horaInicio = LocalTime.parse(dto.getHoraInicio());
-            int duracionMin = parseDuracionMinutos(cita.getServicio().getDuracion());
+            int duracionMin = cita.getServicio().getDuracionMinutos();
             LocalTime horaFin = horaInicio.plusMinutes(duracionMin);
 
             if (horaInicio.isBefore(bloqueNuevo.getHoraInicioBloque())

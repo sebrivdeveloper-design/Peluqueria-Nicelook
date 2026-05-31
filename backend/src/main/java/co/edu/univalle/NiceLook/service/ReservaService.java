@@ -66,7 +66,7 @@ public class ReservaService {
         }
 
         LocalTime horaInicio = LocalTime.parse(dto.getHoraInicio());
-        int duracionMin = parseDuracionMinutos(servicio.getDuracion());
+        int duracionMin = servicio.getDuracionMinutos();
         LocalTime horaFin = horaInicio.plusMinutes(duracionMin);
 
         if (horaInicio.isBefore(bloque.getHoraInicioBloque())

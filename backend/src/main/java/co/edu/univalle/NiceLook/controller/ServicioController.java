@@ -118,7 +118,16 @@ public class ServicioController {
     @PutMapping("/{id}")
     public ResponseEntity<?> actualizar(@PathVariable Integer id, @Valid @RequestBody Servicio servicio) {
         try {
-            return ResponseEntity.ok(servicioService.actualizar(id, servicio));
+            return servicioRepository.findById(id)
+                .map(s -> {
+                    s.setNombreServicio(servicio.getNombreServicio());
+                    s.setDescripcion(servicio.getDescripcion());
+                    s.setDuracionMinutos(servicio.getDuracionMinutos());
+                    s.setPrecio(servicio.getPrecio());
+                    s.setCategoria(servicio.getCategoria());
+                    return ResponseEntity.ok(servicioService.guardar(s));
+                })
+                .orElse(ResponseEntity.notFound().build());
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
