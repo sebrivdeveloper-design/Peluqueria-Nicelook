@@ -43,10 +43,9 @@ public class Servicio {
     private String descripcion;
 
     // CAMBIO IMPORTANTE
-    @NotBlank
-    @Size(max = 30)
-    @Column(name = "duracion", nullable = false)
-    private String duracion;
+    @NotNull
+    @Column(name = "duracion_minutos", nullable = false)
+    private Integer duracionMinutos;
 
     // CAMBIO PRO
     @NotNull

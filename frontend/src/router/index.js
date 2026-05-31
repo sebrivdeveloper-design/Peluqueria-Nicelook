@@ -18,6 +18,7 @@ import CategoriaDetalle from '@/views/CategoriaDetalle.vue'
 import EmpleadosView from '@/views/EmpleadosView.vue'
 import AgendaEmpleadoView from '@/views/AgendaEmpleadoView.vue'
 import AgendaRecepcionistaView from '@/views/AgendaRecepcionistaView.vue'
+import BaseDiariaView from '@/views/BaseDiariaView.vue'
 
 const routes = [
   // LOGIN
@@ -99,6 +100,11 @@ const routes = [
         path: 'agenda',
         name: 'AgendaRecepcionista',
         component: AgendaRecepcionistaView
+      },
+      {
+        path: 'base-diaria',
+        name: 'BaseDiaria',
+        component: BaseDiariaView
       }
       // Aquí podrás añadir las demás cuando las crees:
       // { path: 'disponibilidad', component: DisponibilidadView },
