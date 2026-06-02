@@ -18,11 +18,11 @@ public class Cita {
     @Column(name = "id_cita", nullable = false)
     private Integer idCita;
 
-    @ManyToOne (fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "id_cliente", nullable = false)
     private Cliente cliente;
 
-    @ManyToOne (fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "id_empleado", nullable = false)
     private Empleado empleado;
 

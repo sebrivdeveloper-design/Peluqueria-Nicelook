@@ -42,7 +42,7 @@ public class CitaController {
     @Autowired private DisponibilidadRepository disponibilidadRepository;
     @Autowired private EmailService emailService;
 
-    // GET horarios disponibles de un empleado en una fecha
+    // GET horarios disponibles de un barbero en una fecha
     @GetMapping("/disponibilidad/{idEmpleado}")
     public ResponseEntity<?> getDisponibilidad(
             @PathVariable Integer idEmpleado,
@@ -53,134 +53,127 @@ public class CitaController {
         return ResponseEntity.ok(bloques);
     }
 
-    @GetMapping("/horarios-disponibles")
-    public ResponseEntity<?> getHorariosDisponibles(
-            @RequestParam Integer idEmpleado,
-            @RequestParam String fecha,
-            @RequestParam Integer idServicio) {
-        try {
-            Servicio servicio = servicioRepository
-                    .findById(idServicio)
-                    .orElseThrow(() -> new RuntimeException("Servicio no encontrado"));
-
-            Integer duracionMinutos = servicio.getDuracionMinutos();
-            int bloquesNecesarios = duracionMinutos / 30;
-            LocalDate localFecha = LocalDate.parse(fecha);
-
-            List<Disponibilidad> bloques = disponibilidadRepository
-                    .findByEmpleado_IdEmpleadoAndFechaAndEstadoBloque(idEmpleado, localFecha, "disponible");
-
-            List<Disponibilidad> horariosValidos = new java.util.ArrayList<>();
-
-            for (int i = 0; i < bloques.size(); i++) {
-                boolean disponible = true;
-                for (int j = 0; j < bloquesNecesarios; j++) {
-                    if (i + j >= bloques.size()) {
-                        disponible = false;
-                        break;
-                    }
-                    Disponibilidad actual = bloques.get(i + j);
-                    if (j > 0) {
-                        Disponibilidad anterior = bloques.get(i + j - 1);
-                        if (!anterior.getHoraFinBloque().equals(actual.getHoraInicioBloque())) {
-                            disponible = false;
-                            break;
-                        }
-                    }
-                }
-                if (disponible) {
-                    horariosValidos.add(bloques.get(i));
-                }
-            }
-            return ResponseEntity.ok(horariosValidos);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
-        }
-    }
-
     // POST registrar cita
-    @PostMapping
-    public ResponseEntity<?> registrarCita(@RequestBody RegistroCitaDTO dto) {
-        try {
-            // BUSCAR ENTIDADES
-            Cliente cliente = clienteRepository
-                    .findById(dto.getIdCliente())
-                    .orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
+@PostMapping
+public ResponseEntity<?> registrarCita(
+        @RequestBody RegistroCitaDTO dto
+) {
 
-            Empleado empleado = empleadoRepository
-                    .findById(dto.getIdEmpleado())
-                    .orElseThrow(() -> new RuntimeException("Empleado no encontrado"));
+    try {
 
-            Servicio servicio = servicioRepository
-                    .findById(dto.getIdServicio())
-                    .orElseThrow(() -> new RuntimeException("Servicio no encontrado"));
+        System.out.println("DTO: " + dto.getIdDisponibilidad());
 
-            Disponibilidad bloque = disponibilidadRepository
-                    .findById(dto.getIdDisponibilidad())
-                    .orElseThrow(() -> new RuntimeException("Bloque no encontrado"));
+    // BUSCAR CLIENTE
+    Cliente cliente = clienteRepository
+        .findById(dto.getIdCliente())
+        .orElseThrow(() ->
+            new RuntimeException("Cliente no encontrado")
+        );
 
-            // VALIDAR SI YA ESTÁ OCUPADO
-            if (bloque.getEstadoBloque().equalsIgnoreCase("ocupado")) {
-                return ResponseEntity.status(HttpStatus.CONFLICT).body("Horario ocupado");
-            }
+    // BUSCAR EMPLEADO
+    Empleado empleado = empleadoRepository
+        .findById(dto.getIdEmpleado())
+        .orElseThrow(() ->
+            new RuntimeException("Empleado no encontrado")
+        );
 
-            // CALCULAR HORARIOS
-            LocalTime horaInicio = bloque.getHoraInicioBloque();
-            LocalTime horaFin = horaInicio.plusMinutes(servicio.getDuracionMinutos());
+    // BUSCAR SERVICIO
+    Servicio servicio = servicioRepository
+        .findById(dto.getIdServicio())
+        .orElseThrow(() ->
+            new RuntimeException("Servicio no encontrado")
+        );
+        
+System.out.println("DTO RECIBIDO");
+System.out.println(dto.getIdCliente());
+System.out.println(dto.getIdEmpleado());
+System.out.println(dto.getIdServicio());
+System.out.println(dto.getIdDisponibilidad());
 
-            if (horaFin.isAfter(bloque.getHoraFinBloque())) {
-                return ResponseEntity.badRequest().body("El servicio excede el tiempo disponible.");
-            }
+    // BUSCAR DISPONIBILIDAD
+    Disponibilidad bloque =
+        disponibilidadRepository
+            .findById(dto.getIdDisponibilidad())
+            .orElseThrow(() ->
+                new RuntimeException(
+                    "Bloque no encontrado"
+                )
+            );
 
-            // CREAR Y GUARDAR CITA
-            Cita cita = new Cita();
-            cita.setCliente(cliente);
-            cita.setEmpleado(empleado);
-            cita.setServicio(servicio);
-            cita.setFechaCita(bloque.getFecha());
-            cita.setHoraInicio(horaInicio);
-            cita.setHoraFin(horaFin);
-            cita.setEstadoCita("pendiente");
-            cita.setFechaCreacion(LocalDateTime.now());
+    // VALIDAR SI YA ESTÁ OCUPADO
+    if (
+        bloque.getEstadoBloque()
+            .equalsIgnoreCase("ocupado")
+    ) {
 
-            Cita citaGuardada = citaRepository.save(cita);
-
-            // ✅ FIX: Siempre marca el bloque original como ocupado
-            // con la hora de inicio ORIGINAL para que el mapeo en
-            // DisponibilidadController encuentre la cita correctamente.
-            bloque.setEstadoBloque("ocupado");
-            disponibilidadRepository.save(bloque);
-
-            // ✅ FIX: Solo crear bloque restante si sobran >= 30 minutos completos.
-            // Sobras menores de 30 min no sirven para ningún servicio y generan
-            // bloques diminutos que se ven cortados en el calendario.
-            long minutosRestantes = java.time.Duration
-                    .between(horaFin, bloque.getHoraFinBloque())
-                    .toMinutes();
-
-            if (minutosRestantes >= 30) {
-                Disponibilidad bloqueRestante = new Disponibilidad();
-                bloqueRestante.setEmpleado(bloque.getEmpleado());
-                bloqueRestante.setFecha(bloque.getFecha());
-                bloqueRestante.setHoraInicioBloque(horaFin);
-                bloqueRestante.setHoraFinBloque(bloque.getHoraFinBloque());
-                bloqueRestante.setEstadoBloque("disponible");
-                disponibilidadRepository.save(bloqueRestante);
-            }
-
-            // ENVIAR CORREO
-            try {
-                emailService.enviarConfirmacionCita(citaGuardada);
-            } catch (Exception e) {
-                System.err.println("Error enviando correo: " + e.getMessage());
-            }
-
-            return ResponseEntity.status(HttpStatus.CREATED).body("Cita registrada exitosamente.");
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
-        }
+        return ResponseEntity
+            .status(HttpStatus.CONFLICT)
+            .body("Horario ocupado");
     }
+    // CREAR CITA
+    Cita cita = new Cita();
+
+    cita.setCliente(cliente);
+
+    cita.setEmpleado(empleado);
+
+    cita.setServicio(servicio);
+
+    cita.setFechaCita(
+        bloque.getFecha()
+    );
+
+    cita.setHoraInicio(
+        bloque.getHoraInicioBloque()
+    );
+
+    cita.setHoraFin(
+        bloque.getHoraFinBloque()
+    );
+
+    cita.setEstadoCita("pendiente");
+
+    cita.setFechaCreacion(
+        LocalDateTime.now()
+    );
+
+    // GUARDAR CITA
+    Cita citaGuardada =
+        citaRepository.save(cita);
+
+    // MARCAR BLOQUE COMO OCUPADO
+    bloque.setEstadoBloque("ocupado");
+
+    disponibilidadRepository.save(bloque);
+
+    // ENVIAR CORREO
+    try {
+
+        emailService
+            .enviarConfirmacionCita(
+                citaGuardada
+            );
+
+    } catch (Exception e) {
+
+        System.err.println(
+            "Error enviando correo: "
+            + e.getMessage()
+        );
+    }
+
+    return ResponseEntity
+        .status(HttpStatus.CREATED)
+        .body("Cita registrada exitosamente.");
+}
+
+   catch (Exception e) {
+
+        e.printStackTrace();
+
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(e.getMessage());
+    }
+}
 }

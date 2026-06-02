@@ -2,11 +2,8 @@ package co.edu.univalle.NiceLook.model;
 
 import java.math.BigDecimal;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -24,7 +21,6 @@ import lombok.Setter;
 @Getter
 @Setter
 @Table(name = "servicio")
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Servicio {
 
     @Id
@@ -32,7 +28,7 @@ public class Servicio {
     @Column(name = "id_servicio", nullable = false)
     private Integer idServicio;
 
-    @ManyToOne (fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "id_categoria", nullable = false)
     private CategoriaServicios categoria;
 
@@ -47,7 +43,6 @@ public class Servicio {
     private String descripcion;
 
     // CAMBIO IMPORTANTE
-    @NotNull
     @NotNull
     @Column(name = "duracion_minutos", nullable = false)
     private Integer duracionMinutos;

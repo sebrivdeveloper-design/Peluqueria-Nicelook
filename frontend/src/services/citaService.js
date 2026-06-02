@@ -4,7 +4,7 @@ const API = 'http://localhost:8080/api'
 
 function getAuthHeader() {
   const token = localStorage.getItem("token")
-  
+  console.log("TOKEN:", token)
   if (!token) return {}
   return {
     headers: {
@@ -30,20 +30,5 @@ export default {
   // Registrar una cita
   registrarCita(data) {
     return axios.post(`${API}/citas`, data, getAuthHeader())
-  },
-
-  getHorariosDisponibles(idEmpleado, fecha, idServicio) {
-
-  return axios.get(
-    `${API}/citas/horarios-disponibles`,
-    {
-      params: {
-        idEmpleado,
-        fecha,
-        idServicio
-      },
-      ...getAuthHeader()
-    }
-  )
-}
+  }
 }
