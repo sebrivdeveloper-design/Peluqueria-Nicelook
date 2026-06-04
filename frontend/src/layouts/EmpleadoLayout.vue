@@ -1,14 +1,40 @@
 <template>
   <div class="layout-container">
 
-    <!-- SIDEBAR GLOBAL -->
+    <!-- SIDEBAR -->
     <Sidebar rol="EMPLEADO" />
 
     <!-- CONTENIDO -->
     <main class="main-content">
-      <div class="view-wrapper">
-        <router-view />
+
+      <!-- TOPBAR -->
+      <div class="topbar">
+
+        <div>
+          <h1>Panel Estilista</h1>
+          <p>Gestión de citas, servicios y clientes asignados</p>
+        </div>
+
+        <div class="user-box">
+
+          <div class="avatar">
+            {{ inicial }}
+          </div>
+
+          <div class="user-info">
+            <h4>Estilista</h4>
+            <span>{{ correo }}</span>
+          </div>
+
+        </div>
+
       </div>
+
+      <!-- VISTAS -->
+      <section class="view-wrapper">
+        <router-view />
+      </section>
+
     </main>
 
   </div>
@@ -26,8 +52,21 @@ export default {
 
   computed: {
 
-    rolUsuario() {
-      return localStorage.getItem('rol') || 'CLIENTE'
+    correo() {
+      const token = localStorage.getItem('token')
+
+      if (!token) return 'estilista@nicelook.com'
+
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]))
+        return payload.sub || 'estilista@nicelook.com'
+      } catch {
+        return 'estilista@nicelook.com'
+      }
+    },
+
+    inicial() {
+      return this.correo.charAt(0).toUpperCase()
     }
 
   }
@@ -35,40 +74,112 @@ export default {
 </script>
 
 <style scoped>
+
 .layout-container {
   display: flex;
   min-height: 100vh;
-  background: #f6f8f5;
+  background: #f5f6f8;
 }
 
 /* CONTENIDO */
+
 .main-content {
   flex: 1;
-  overflow-y: auto;
-  min-width: 0;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
 }
 
-/* WRAPPER GENERAL */
+/* TOPBAR */
+
+.topbar {
+  height: 90px;
+  background: white;
+  border-bottom: 1px solid #e8ece9;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  box-sizing: border-box;
+}
+
+.topbar h1 {
+  margin: 0;
+  font-size: 26px;
+  color: #004518;
+  font-weight: 700;
+}
+
+.topbar p {
+  margin: 4px 0 0;
+  color: #687076;
+  font-size: 14px;
+}
+
+/* USER BOX */
+
+.user-box {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #ffffff;
+  border: 1px solid #edf1ee;
+  padding: 10px 16px;
+  border-radius: 18px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+}
+
+.avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: #004518;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.user-info h4 {
+  margin: 0;
+  color: #004518;
+  font-size: 15px;
+}
+
+.user-info span {
+  font-size: 13px;
+  color: #6c757d;
+}
+
+/* CONTENIDO DINÁMICO */
+
 .view-wrapper {
-  width: 100%;
-  max-width: 1600px;
-  margin: 0 auto;
   padding: 32px;
+  width: 100%;
   box-sizing: border-box;
 }
 
 /* RESPONSIVE */
-@media (max-width: 1024px) {
-  .view-wrapper {
-    padding: 22px;
-  }
-}
 
 @media (max-width: 768px) {
-  .view-wrapper {
-    padding: 18px;
+
+  .topbar {
+    padding: 16px;
+    height: auto;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
   }
+
+  .view-wrapper {
+    padding: 20px;
+  }
+
+  .user-box {
+    width: 100%;
+  }
+
 }
 </style>
