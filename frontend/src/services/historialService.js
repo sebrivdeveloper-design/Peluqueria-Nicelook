@@ -10,3 +10,11 @@ export const getHistorial = async (idCliente) => {
         }
     })
 }
+
+export const cancelarCita = async (idCita) => {
+    return await axios.put(`http://localhost:8080/api/citas/${idCita}/cancelar`, {}, {
+        headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`
+        }
+    })
+}

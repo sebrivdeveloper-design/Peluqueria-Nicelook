@@ -251,43 +251,21 @@ export default {
 }
 
 :deep(.evento-disponible) {
-  background: #e7f4ea !important;
-  border-left: 3px solid #1d7a3a !important;
-  color: #014421 !important;
+  background-color: #28a745 !important;
+  border-color: #28a745 !important;
 }
 
 :deep(.evento-disponible .fc-event-main) {
-  color: #014421 !important;
+  color: white !important;
 }
 
 :deep(.evento-ocupado) {
-  background: #fdecec !important;
-  border-left: 3px solid #c0392b !important;
-  color: #8c1d12 !important;
+  background-color: #dc3545 !important;
+  border-color: #dc3545 !important;
 }
 
 :deep(.evento-ocupado .fc-event-main) {
-  color: #8c1d12 !important;
-}
-
-:deep(.evento-finalizado) {
-  background: #eef1ef !important;
-  border-left: 3px solid #8a9b8f !important;
-  color: #5f6f66 !important;
-}
-
-:deep(.evento-finalizado .fc-event-main) {
-  color: #5f6f66 !important;
-}
-
-:deep(.evento-bloqueado) {
-  background: #f3eef7 !important;
-  border-left: 3px solid #6b5b95 !important;
-  color: #4a3d6b !important;
-}
-
-:deep(.evento-bloqueado .fc-event-main) {
-  color: #4a3d6b !important;
+  color: white !important;
 }
 
 :deep(.fc-day-today) {

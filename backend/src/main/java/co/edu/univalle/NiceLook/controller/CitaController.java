@@ -3,8 +3,6 @@ package co.edu.univalle.NiceLook.controller;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -157,260 +155,49 @@ public class CitaController {
 
         if (cita == null) return ResponseEntity.notFound().build();
 
-        String estado = cita.getEstadoCita().toLowerCase();
-        if (!estado.equals("pendiente") && !estado.equals("confirmada")) {
-            return ResponseEntity
-                    .status(HttpStatus.CONFLICT)
-                    .body("Solo se pueden finalizar citas pendientes o confirmadas. Estado actual: "
-                            + cita.getEstadoCita());
-        }
-
-        cita.setEstadoCita("finalizada");
-        citaRepository.save(cita);
-
-        return ResponseEntity.ok("Cita finalizada. Quedó disponible para registro de pago.");
-    }
-
-    // PUT reprogramar cita (cliente)
-    @PutMapping("/{id}/reprogramar")
-    @Transactional
-    public ResponseEntity<?> reprogramarCita(
-            @PathVariable Integer id,
-            @RequestBody RegistroCitaDTO dto) {
-
-        try {
-
-            Cita cita = citaRepository.findById(id).orElse(null);
-
-            if (cita == null) return ResponseEntity.notFound().build();
-
-            String estado = cita.getEstadoCita().toLowerCase();
-            if (!estado.equals("pendiente") && !estado.equals("confirmada")) {
-                return ResponseEntity
-                        .status(HttpStatus.CONFLICT)
-                        .body("No se puede reprogramar una cita " + cita.getEstadoCita() + ".");
-            }
-
-            // Menos de 1 hora de anticipación → no se permite
-            LocalDateTime inicioActual = LocalDateTime.of(cita.getFechaCita(), cita.getHoraInicio());
-            if (Duration.between(LocalDateTime.now(), inicioActual).toMinutes() < 60) {
-                return ResponseEntity
-                        .badRequest()
-                        .body("Falta menos de 1 hora para la cita. Comuníquese con el establecimiento.");
-            }
-
-            // Nuevo bloque destino
-            Disponibilidad bloqueNuevo = disponibilidadRepository
-                    .findById(dto.getIdDisponibilidad())
-                    .orElseThrow(() -> new RuntimeException("Horario no encontrado"));
-
-            if (!"disponible".equalsIgnoreCase(bloqueNuevo.getEstadoBloque())) {
-                return ResponseEntity
-                        .status(HttpStatus.CONFLICT)
-                        .body("El horario seleccionado ya no está disponible.");
-            }
-
-            if (dto.getHoraInicio() == null || dto.getHoraInicio().isBlank()) {
-                return ResponseEntity.badRequest().body("Debes indicar la nueva hora de inicio.");
-            }
-
-            LocalTime horaInicio = LocalTime.parse(dto.getHoraInicio());
-            int duracionMin = cita.getServicio().getDuracionMinutos();
-            LocalTime horaFin = horaInicio.plusMinutes(duracionMin);
-
-            if (horaInicio.isBefore(bloqueNuevo.getHoraInicioBloque())
-                    || horaFin.isAfter(bloqueNuevo.getHoraFinBloque())
-                    || !horaFin.isAfter(horaInicio)) {
-                return ResponseEntity
-                        .badRequest()
-                        .body("El servicio (" + duracionMin + " min) no cabe en el nuevo horario.");
-            }
-
-            // 1. Liberar el horario anterior (con fusión de bloques contiguos)
-            liberarBloqueDeCita(cita);
-
-            // 2. Ocupar el nuevo horario
-            dividirBloque(bloqueNuevo, horaInicio, horaFin);
-
-            // 3. Actualizar la cita
-            cita.setFechaCita(bloqueNuevo.getFecha());
-            cita.setHoraInicio(horaInicio);
-            cita.setHoraFin(horaFin);
-            citaRepository.save(cita);
-
-            // Correo con la información actualizada (simula WhatsApp)
-            try {
-                emailService.enviarConfirmacionCita(cita);
-            } catch (Exception e) {
-                System.err.println("Error enviando correo: " + e.getMessage());
-            }
-
-            notificacionService.notificarStaff(
-                    "info",
-                    "Cita reprogramada",
-                    cita.getCliente().getUsuario().getNombreCompleto() + " · "
-                            + cita.getServicio().getNombreServicio() + " · "
-                            + cita.getFechaCita() + " " + horaInicio);
-
-            return ResponseEntity.ok("Cita reprogramada exitosamente.");
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(e.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(e.getMessage());
         }
     }
 
-    // DELETE cancelar cita
-    @DeleteMapping("/{id}")
-    @Transactional
-    public ResponseEntity<?> cancelarCita(@PathVariable Integer id) {
+// PUT cancelar cita
+    @PutMapping("/{idCita}/cancelar")
+    public ResponseEntity<?> cancelarCita(@PathVariable Integer idCita) {
 
         try {
 
-            Cita cita = citaRepository.findById(id)
-                    .orElse(null);
+            Cita cita = citaRepository
+                .findById(idCita)
+                .orElseThrow(() -> new RuntimeException("Cita no encontrada"));
 
-            if (cita == null) {
-                return ResponseEntity.notFound().build();
-            }
-
-            String estado = cita.getEstadoCita().toLowerCase();
-
-            if (estado.equals("cancelada")) {
+            if (!"pendiente".equalsIgnoreCase(cita.getEstadoCita())) {
                 return ResponseEntity
-                        .status(HttpStatus.CONFLICT)
-                        .body("La cita ya estaba cancelada.");
-            }
-
-            if (estado.equals("finalizada")) {
-                return ResponseEntity
-                        .status(HttpStatus.CONFLICT)
-                        .body("No se puede cancelar una cita finalizada.");
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body("Solo se pueden cancelar citas pendientes.");
             }
 
             cita.setEstadoCita("cancelada");
             citaRepository.save(cita);
 
-            liberarBloqueDeCita(cita);
+            Disponibilidad bloque = disponibilidadRepository
+                .findByEmpleado_IdEmpleadoAndFechaAndHoraInicioBloque(
+                    cita.getEmpleado().getIdEmpleado(),
+                    cita.getFechaCita(),
+                    cita.getHoraInicio()
+                )
+                .orElseThrow(() -> new RuntimeException("Bloque de disponibilidad no encontrado"));
 
-            notificacionService.notificarStaff(
-                    "warning",
-                    "Cita cancelada",
-                    cita.getCliente().getUsuario().getNombreCompleto() + " · "
-                            + cita.getServicio().getNombreServicio() + " · "
-                            + cita.getFechaCita());
+            bloque.setEstadoBloque("disponible");
+            disponibilidadRepository.save(bloque);
 
             return ResponseEntity.ok("Cita cancelada exitosamente.");
 
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(e.getMessage());
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(e.getMessage());
         }
-    }
-
-    // ─────────────────────────────────────────────
-    // HELPERS DE BLOQUES DE DISPONIBILIDAD
-    // ─────────────────────────────────────────────
-
-    /**
-     * Divide un bloque disponible: el tramo [horaInicio, horaFin] queda ocupado
-     * y los tramos sobrantes (antes/después) permanecen disponibles.
-     */
-    private void dividirBloque(Disponibilidad bloque, LocalTime horaInicio, LocalTime horaFin) {
-
-        LocalTime inicioBloque = bloque.getHoraInicioBloque();
-        LocalTime finBloque = bloque.getHoraFinBloque();
-        Empleado empleado = bloque.getEmpleado();
-
-        if (horaInicio.equals(inicioBloque)) {
-            bloque.setHoraFinBloque(horaFin);
-            bloque.setEstadoBloque("ocupado");
-            disponibilidadRepository.save(bloque);
-        } else {
-            bloque.setHoraFinBloque(horaInicio);
-            disponibilidadRepository.save(bloque);
-
-            Disponibilidad ocupado = new Disponibilidad();
-            ocupado.setEmpleado(empleado);
-            ocupado.setFecha(bloque.getFecha());
-            ocupado.setHoraInicioBloque(horaInicio);
-            ocupado.setHoraFinBloque(horaFin);
-            ocupado.setEstadoBloque("ocupado");
-            disponibilidadRepository.save(ocupado);
-        }
-
-        if (horaFin.isBefore(finBloque)) {
-            Disponibilidad resto = new Disponibilidad();
-            resto.setEmpleado(empleado);
-            resto.setFecha(bloque.getFecha());
-            resto.setHoraInicioBloque(horaFin);
-            resto.setHoraFinBloque(finBloque);
-            resto.setEstadoBloque("disponible");
-            disponibilidadRepository.save(resto);
-        }
-    }
-
-    /**
-     * Libera el bloque ocupado por una cita y lo fusiona con los bloques
-     * disponibles contiguos (antes y después) para no fragmentar la agenda.
-     */
-    private void liberarBloqueDeCita(Cita cita) {
-
-        Integer idEmpleado = cita.getEmpleado().getIdEmpleado();
-        LocalDate fecha = cita.getFechaCita();
-
-        Disponibilidad bloque = disponibilidadRepository
-                .findByEmpleado_IdEmpleadoAndFechaAndHoraInicioBloqueAndHoraFinBloqueAndEstadoBloque(
-                        idEmpleado,
-                        fecha,
-                        cita.getHoraInicio(),
-                        cita.getHoraFin(),
-                        "ocupado")
-                .orElse(null);
-
-        if (bloque == null) return;
-
-        bloque.setEstadoBloque("disponible");
-
-        List<Disponibilidad> antes = disponibilidadRepository
-                .findByEmpleado_IdEmpleadoAndFechaAndHoraFinBloqueAndEstadoBloque(
-                        idEmpleado, fecha,
-                        bloque.getHoraInicioBloque(),
-                        "disponible");
-
-        if (!antes.isEmpty()) {
-            bloque.setHoraInicioBloque(antes.get(0).getHoraInicioBloque());
-            disponibilidadRepository.delete(antes.get(0));
-        }
-
-        List<Disponibilidad> despues = disponibilidadRepository
-                .findByEmpleado_IdEmpleadoAndFechaAndHoraInicioBloqueAndEstadoBloque(
-                        idEmpleado, fecha,
-                        bloque.getHoraFinBloque(),
-                        "disponible");
-
-        if (!despues.isEmpty()) {
-            bloque.setHoraFinBloque(despues.get(0).getHoraFinBloque());
-            disponibilidadRepository.delete(despues.get(0));
-        }
-
-        disponibilidadRepository.save(bloque);
-    }
-
-    // La duración del servicio se guarda como texto libre ("30 min", "1 hora")
-    private int parseDuracionMinutos(String duracion) {
-        if (duracion == null) return 60;
-        String d = duracion.toLowerCase().trim();
-        java.util.regex.Matcher m = java.util.regex.Pattern.compile("\\d+").matcher(d);
-        if (!m.find()) return 60;
-        int valor = Integer.parseInt(m.group());
-        if (d.contains("hora") || (d.contains("h") && !d.contains("min"))) {
-            valor *= 60;
-        }
-        return Math.max(valor, 5);
     }
 }

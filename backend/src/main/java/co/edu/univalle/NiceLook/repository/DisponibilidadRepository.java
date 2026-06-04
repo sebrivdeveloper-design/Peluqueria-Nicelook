@@ -3,6 +3,7 @@ package co.edu.univalle.NiceLook.repository;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -48,31 +49,16 @@ public interface DisponibilidadRepository
         LocalTime horaInicio
     );
 
-    // BUSCAR BLOQUE EXACTO (para restaurar al cancelar cita)
-    java.util.Optional<Disponibilidad>
-    findByEmpleado_IdEmpleadoAndFechaAndHoraInicioBloqueAndHoraFinBloqueAndEstadoBloque(
-        Integer idEmpleado,
-        LocalDate fecha,
-        LocalTime horaInicio,
-        LocalTime horaFin,
-        String estadoBloque
-    );
-
-    // BLOQUE CONTIGUO ANTERIOR (termina donde inicia otro)
-    List<Disponibilidad>
-    findByEmpleado_IdEmpleadoAndFechaAndHoraFinBloqueAndEstadoBloque(
-        Integer idEmpleado,
-        LocalDate fecha,
-        LocalTime horaFinBloque,
-        String estadoBloque
-    );
-
-    // BLOQUE CONTIGUO SIGUIENTE (inicia donde termina otro)
-    List<Disponibilidad>
-    findByEmpleado_IdEmpleadoAndFechaAndHoraInicioBloqueAndEstadoBloque(
-        Integer idEmpleado,
-        LocalDate fecha,
-        LocalTime horaInicioBloque,
-        String estadoBloque
+    // CANCELACIÓN: buscar bloque exacto para liberarlo
+    @Query("""
+        SELECT d FROM Disponibilidad d
+        WHERE d.empleado.idEmpleado = :idEmpleado
+        AND d.fecha = :fecha
+        AND d.horaInicioBloque = :horaInicio
+    """)
+    Optional<Disponibilidad> findByEmpleado_IdEmpleadoAndFechaAndHoraInicioBloque(
+        @Param("idEmpleado") Integer idEmpleado,
+        @Param("fecha") LocalDate fecha,
+        @Param("horaInicio") LocalTime horaInicio
     );
 }
