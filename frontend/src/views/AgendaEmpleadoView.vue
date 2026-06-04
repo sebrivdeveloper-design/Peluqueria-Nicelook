@@ -488,7 +488,8 @@ export default {
 }
 </script>
 
-<style scoped>
+<!-- SIN scoped para que los estilos lleguen a los eventos de FullCalendar -->
+<style>
 
 .agenda-view {
   display: flex;
@@ -658,6 +659,20 @@ export default {
   .modal-card {
     width: 92%;
   }
+}
+
+/* EVENTOS FULLCALENDAR */
+
+.evento-disponible {
+  background-color: #004518 !important;
+  border-color: #004518 !important;
+  color: white !important;
+}
+
+.evento-ocupado {
+  background-color: #b91c1c !important;
+  border-color: #b91c1c !important;
+  color: white !important;
 }
 
 </style>

@@ -7,7 +7,10 @@ import lombok.Data;
 @AllArgsConstructor
 public class HistorialCitaDTO {
 
+    private Integer idCita;
     private String fecha;
+    private String horaInicio;
+    private String horaFin;
     private String servicio;
     private String barbero;
     private String estado;

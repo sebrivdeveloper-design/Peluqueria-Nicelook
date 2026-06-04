@@ -18,20 +18,17 @@ public class HistorialService {
 
     public List<HistorialCitaDTO> obtenerHistorial(Integer idCliente) {
 
-        List<Cita> citas =
-                citaRepository.findByCliente_IdCliente(idCliente);
+        List<Cita> citas = citaRepository.findByCliente_IdCliente(idCliente);
 
         List<HistorialCitaDTO> historial = new ArrayList<>();
 
         for (Cita cita : citas) {
 
-            // SOLO COMPLETADAS
-            if (!"completada".equalsIgnoreCase(cita.getEstadoCita())) {
-                continue;
-            }
-
             HistorialCitaDTO dto = new HistorialCitaDTO(
+                    cita.getIdCita(),
                     cita.getFechaCita().toString(),
+                    cita.getHoraInicio().toString(),
+                    cita.getHoraFin().toString(),
                     cita.getServicio().getNombreServicio(),
                     cita.getEmpleado().getUsuario().getNombreCompleto(),
                     cita.getEstadoCita()

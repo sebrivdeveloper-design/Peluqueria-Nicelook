@@ -90,11 +90,12 @@ public class DisponibilidadController {
             if (bloque.getEstadoBloque()
                     .equalsIgnoreCase("ocupado")) {
 
-                Cita cita = citaRepository
-                        .findByEmpleadoAndHorario(
-                                idEmpleado,
-                                bloque.getFecha(),
-                                bloque.getHoraInicioBloque());
+                List<Cita> citas = citaRepository.findByEmpleadoAndHorario(
+                        idEmpleado,
+                        bloque.getFecha(),
+                        bloque.getHoraInicioBloque());
+
+                Cita cita = citas.isEmpty() ? null : citas.get(0);
 
                 if (cita != null) {
 
