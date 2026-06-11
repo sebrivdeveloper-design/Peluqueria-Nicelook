@@ -2,7 +2,6 @@ package co.edu.univalle.NiceLook.controller;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +11,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -174,6 +174,46 @@ System.out.println(dto.getIdDisponibilidad());
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(e.getMessage());
+        }
     }
-}
+
+// PUT cancelar cita
+    @PutMapping("/{idCita}/cancelar")
+    public ResponseEntity<?> cancelarCita(@PathVariable Integer idCita) {
+
+        try {
+
+            Cita cita = citaRepository
+                .findById(idCita)
+                .orElseThrow(() -> new RuntimeException("Cita no encontrada"));
+
+            if (!"pendiente".equalsIgnoreCase(cita.getEstadoCita())) {
+                return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body("Solo se pueden cancelar citas pendientes.");
+            }
+
+            cita.setEstadoCita("cancelada");
+            citaRepository.save(cita);
+
+            Disponibilidad bloque = disponibilidadRepository
+                .findByEmpleado_IdEmpleadoAndFechaAndHoraInicioBloque(
+                    cita.getEmpleado().getIdEmpleado(),
+                    cita.getFechaCita(),
+                    cita.getHoraInicio()
+                )
+                .orElseThrow(() -> new RuntimeException("Bloque de disponibilidad no encontrado"));
+
+            bloque.setEstadoBloque("disponible");
+            disponibilidadRepository.save(bloque);
+
+            return ResponseEntity.ok("Cita cancelada exitosamente.");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(e.getMessage());
+        }
+    }
 }

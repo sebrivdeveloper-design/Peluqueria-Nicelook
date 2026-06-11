@@ -3,6 +3,7 @@ package co.edu.univalle.NiceLook.repository;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -40,11 +41,24 @@ public interface DisponibilidadRepository
         @Param("fin") LocalDate fin
     );
 
-    // 🔥 VALIDAR CRUCE DE HORARIOS
+    // VALIDAR CRUCE DE HORARIOS
     boolean existsByEmpleado_IdEmpleadoAndFechaAndHoraInicioBloqueLessThanAndHoraFinBloqueGreaterThan(
         Integer idEmpleado,
         LocalDate fecha,
         LocalTime horaFin,
         LocalTime horaInicio
+    );
+
+    // CANCELACIÓN: buscar bloque exacto para liberarlo
+    @Query("""
+        SELECT d FROM Disponibilidad d
+        WHERE d.empleado.idEmpleado = :idEmpleado
+        AND d.fecha = :fecha
+        AND d.horaInicioBloque = :horaInicio
+    """)
+    Optional<Disponibilidad> findByEmpleado_IdEmpleadoAndFechaAndHoraInicioBloque(
+        @Param("idEmpleado") Integer idEmpleado,
+        @Param("fecha") LocalDate fecha,
+        @Param("horaInicio") LocalTime horaInicio
     );
 }

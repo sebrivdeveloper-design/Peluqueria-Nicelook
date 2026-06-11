@@ -44,6 +44,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/servicios/**").permitAll()
                 .requestMatchers("/api/categorias/categoria/**").permitAll()
                 .requestMatchers("/api/citas/**").permitAll()
+                .requestMatchers("/api/historial/**").permitAll()
                 
                 .requestMatchers("/api/empleados/**").permitAll()
 

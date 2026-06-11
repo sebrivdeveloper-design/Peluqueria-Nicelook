@@ -48,9 +48,12 @@ public interface CitaRepository extends JpaRepository<Cita, Integer> {
                 AND c.fechaCita = :fecha
                 AND c.horaInicio = :horaInicio
                 AND c.estadoCita != 'cancelada'
-            """)
-    Cita findByEmpleadoAndHorario(
-            @Param("idEmpleado") Integer idEmpleado,
-            @Param("fecha") LocalDate fecha,
-            @Param("horaInicio") LocalTime horaInicio);
+                """)
+        List<Cita> findByEmpleadoAndHorario(
+                @Param("idEmpleado") Integer idEmpleado,
+                @Param("fecha") LocalDate fecha,
+                @Param("horaInicio") LocalTime horaInicio);
+
+        // 🔥 HISTORIAL
+    List<Cita> findByCliente_IdCliente(Integer idCliente);
 }

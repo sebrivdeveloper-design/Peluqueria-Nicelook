@@ -146,11 +146,21 @@ export default {
 }
 
 :deep(.evento-disponible) {
-  background: #28a745 !important;
+  background-color: #28a745 !important;
+  border-color: #28a745 !important;
+}
+
+:deep(.evento-disponible .fc-event-main) {
+  color: white !important;
 }
 
 :deep(.evento-ocupado) {
-  background: #dc3545 !important;
+  background-color: #dc3545 !important;
+  border-color: #dc3545 !important;
+}
+
+:deep(.evento-ocupado .fc-event-main) {
+  color: white !important;
 }
 
 :deep(.fc-day-today) {
