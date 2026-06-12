@@ -6,8 +6,8 @@
       </button>
 
       <div class="modal-header">
-        <h3>Registrar empleado</h3>
-        <p>Completa la información del colaborador para registrarlo en el sistema.</p>
+        <h3>{{ empleado ? 'Editar empleado' : 'Registrar empleado' }}</h3>
+        <p>{{ empleado ? 'Modifica la información del colaborador.' : 'Completa la información del colaborador para registrarlo en el sistema.' }}</p>
       </div>
 
       <div class="form-grid">
@@ -101,7 +101,7 @@
         </button>
 
         <button class="btn-guardar" @click="guardar">
-          Guardar empleado
+          {{ empleado ? 'Guardar cambios' : 'Guardar empleado' }}
         </button>
       </div>
     </div>
@@ -117,13 +117,21 @@
 </template>
 
 <script>
-import { crearEmpleado } from '../services/empleadoService'
+import { crearEmpleado, editarEmpleado } from '../services/empleadoService'
 import AppToast from '../components/AppToast.vue'
 
 export default {
-  components: {
-    AppToast
+  components: { AppToast },
+
+  props: {
+    // Si se pasa un empleado, el modal está en modo edición
+    empleado: {
+      type: Object,
+      default: null
+    }
   },
+
+  emits: ['cerrar', 'actualizar'],
 
   data() {
     return {
@@ -150,58 +158,59 @@ export default {
     }
   },
 
+  mounted() {
+    // Si viene un empleado, prellenar el formulario
+    if (this.empleado) {
+      this.form = {
+        nombreCompleto: this.empleado.usuario?.nombreCompleto || '',
+        correo:         this.empleado.usuario?.correo        || '',
+        telefono:       this.empleado.usuario?.telefono      || '',
+        rol:            this.empleado.usuario?.rol?.nombreRol || '',
+        documento:      this.empleado.documento              || '',
+        especialidad:   this.empleado.especialidad           || '',
+        salario:        this.empleado.salario                || ''
+      }
+    }
+  },
+
   methods: {
     mostrarToast(type, title, message) {
-      this.toast = {
-        visible: true,
-        type,
-        title,
-        message
-      }
-
-      setTimeout(() => {
-        this.toast.visible = false
-      }, 3200)
+      this.toast = { visible: true, type, title, message }
+      setTimeout(() => { this.toast.visible = false }, 3200)
     },
 
     limpiarErrores() {
-      this.errors = {
-        nombreCompleto: false,
-        correo: false,
-        rol: false
-      }
+      this.errors = { nombreCompleto: false, correo: false, rol: false }
     },
 
     async guardar() {
       try {
         this.form.nombreCompleto = this.form.nombreCompleto.trim()
-        this.form.correo = this.form.correo.trim()
-        this.form.telefono = this.form.telefono.trim()
-        this.form.documento = this.form.documento.trim()
-        this.form.especialidad = this.form.especialidad.trim()
+        this.form.correo         = this.form.correo.trim()
+        this.form.telefono       = this.form.telefono.trim()
+        this.form.documento      = this.form.documento.trim()
+        this.form.especialidad   = this.form.especialidad.trim()
 
         this.limpiarErrores()
 
         this.errors.nombreCompleto = !this.form.nombreCompleto
-        this.errors.correo = !this.form.correo
-        this.errors.rol = !this.form.rol
+        this.errors.correo         = !this.form.correo
+        this.errors.rol            = !this.form.rol
 
         if (this.errors.nombreCompleto || this.errors.correo || this.errors.rol) {
-          this.mostrarToast(
-            'warning',
-            'Campos incompletos',
-            'Debes completar nombre, correo y rol.'
-          )
+          this.mostrarToast('warning', 'Campos incompletos', 'Debes completar nombre, correo y rol.')
           return
         }
 
-        await crearEmpleado(this.form)
-
-        this.mostrarToast(
-          'success',
-          'Empleado registrado',
-          'El empleado fue creado correctamente.'
-        )
+        if (this.empleado) {
+          // MODO EDICIÓN
+          await editarEmpleado(this.empleado.idEmpleado, this.form)
+          this.mostrarToast('success', 'Empleado actualizado', 'Los cambios fueron guardados correctamente.')
+        } else {
+          // MODO CREACIÓN
+          await crearEmpleado(this.form)
+          this.mostrarToast('success', 'Empleado registrado', 'El empleado fue creado correctamente.')
+        }
 
         setTimeout(() => {
           this.$emit('cerrar')
@@ -210,11 +219,10 @@ export default {
 
       } catch (error) {
         console.error(error)
-
         this.mostrarToast(
           'error',
-          'No se pudo registrar',
-          error.response?.data || 'Error al crear empleado'
+          this.empleado ? 'No se pudo actualizar' : 'No se pudo registrar',
+          error.response?.data || 'Error inesperado'
         )
       }
     }
@@ -297,7 +305,7 @@ export default {
   font-size: 15px;
   color: #173221;
   outline: none;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
   box-sizing: border-box;
   font-family: inherit;
 }

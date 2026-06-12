@@ -30,16 +30,6 @@
         ></textarea>
       </div>
 
-      <div class="form-group">
-        <label for="imagen">Imagen URL</label>
-        <input
-          id="imagen"
-          v-model="categoria.imagen"
-          type="text"
-          placeholder="https://..."
-        />
-      </div>
-
       <div class="acciones">
         <button class="btn-secundario" @click="$emit('cerrar')">
           Cancelar
@@ -64,6 +54,7 @@
 <script>
 import { crearCategoria } from '../services/categoriaServices'
 import AppToast from '../components/AppToast.vue'
+import { useNotificacionesStore } from '../stores/notificacionesStore'
 
 export default {
   components: {
@@ -74,8 +65,7 @@ export default {
     return {
       categoria: {
         nombreCategoria: '',
-        descripcion: '',
-        imagen: ''
+        descripcion: ''
       },
       toast: {
         visible: false,
@@ -122,6 +112,7 @@ export default {
 
         await crearCategoria(this.categoria)
 
+        useNotificacionesStore().agregar('success', 'Categoría creada', `"${this.categoria.nombreCategoria}" fue registrada`)
         this.mostrarToast('success', 'Categoría creada', 'La categoría se creó correctamente.')
 
         setTimeout(() => {

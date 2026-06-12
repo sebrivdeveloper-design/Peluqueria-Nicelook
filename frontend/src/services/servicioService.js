@@ -1,70 +1,42 @@
-import axios from 'axios'
-
-const API = 'http://localhost:8080/api'
-
-function getAuthHeader() {
-  const token = localStorage.getItem("token")
-  
-  if (!token) {
-    return {}; 
-  }
-  
-  return {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  }
-}
+import api from './axiosInstance'
 
 export default {
 
-  
   buscarServicios(texto) {
-    
-    return axios.get(`${API}/servicios/buscar`, {
-      params: { texto: texto },
-      ...getAuthHeader()
-    });
+    return api.get('/servicios/buscar', {
+      params: { texto }
+    })
   },
 
-  //MÉTODOS PARA CLIENTES
-
-  
   getServicios() {
-    return axios.get(`${API}/servicios`, getAuthHeader())
+    return api.get('/servicios')
   },
 
-  // Obtener el detalle de un servicio específico por su ID
   getById(id) {
-    return axios.get(`${API}/servicios/${id}`, getAuthHeader())
+    return api.get(`/servicios/${id}`)
   },
-
-  // --- MÉTODOS PARA ADMINISTRADORES ---
 
   getServiciosAdmin() {
-    return axios.get(`${API}/servicios/admin`, getAuthHeader())
+    return api.get('/servicios/admin')
   },
 
   crearServicio(data) {
-    return axios.post(`${API}/servicios`, data, getAuthHeader())
+    return api.post('/servicios', data)
   },
 
   actualizar(id, data) {
-    return axios.put(`${API}/servicios/${id}`, data, getAuthHeader())
+    return api.put(`/servicios/${id}`, data)
   },
 
-  
   deshabilitar(id) {
-    return axios.delete(`${API}/servicios/${id}`, getAuthHeader())
+    return api.delete(`/servicios/${id}`)
   },
 
-  
   activar(id) {
-    return axios.put(`${API}/servicios/activar/${id}`, {}, getAuthHeader())
+    return api.put(`/servicios/activar/${id}`, {})
   },
 
-   
   getCategorias() {
-    return axios.get(`${API}/categorias`, getAuthHeader())
+    return api.get('/categorias')
   }
 }

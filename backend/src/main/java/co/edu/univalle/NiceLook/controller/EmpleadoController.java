@@ -28,9 +28,20 @@ public class EmpleadoController {
         }
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<?> editar(
+            @PathVariable Integer id,
+            @RequestBody EmpleadoRequest request) {
+        try {
+            Empleado empleado = service.editarEmpleado(id, request);
+            return ResponseEntity.ok(empleado);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
     @GetMapping
     public List<Empleado> listar() {
-    return service.listar();
-}
-
+        return service.listar();
+    }
 }

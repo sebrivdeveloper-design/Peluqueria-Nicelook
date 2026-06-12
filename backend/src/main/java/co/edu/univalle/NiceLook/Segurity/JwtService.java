@@ -24,6 +24,7 @@ public class JwtService {
     return Jwts.builder()
             .setSubject(user.getCorreo())
             .claim("rol", user.getRol().getNombreRol())
+            .claim("nombreCompleto", user.getNombreCompleto())
             .claim("idCliente", idCliente)
             .claim("idEmpleado", idEmpleado)
             .setIssuedAt(new Date())

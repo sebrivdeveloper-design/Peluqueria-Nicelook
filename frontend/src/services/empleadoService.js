@@ -1,19 +1,10 @@
-import axios from 'axios'
-
-const API = 'http://localhost:8080/api/empleados'
-
-function getAuthHeader() {
-  const token = localStorage.getItem("token")
-
-  return {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  }
-}
+import api from './axiosInstance'
 
 export const crearEmpleado = (data) =>
-  axios.post(API, data, getAuthHeader())
+  api.post('/empleados', data)
+
+export const editarEmpleado = (id, data) =>
+  api.put(`/empleados/${id}`, data)
 
 export const getEmpleados = () =>
-  axios.get(API, getAuthHeader())
+  api.get('/empleados')

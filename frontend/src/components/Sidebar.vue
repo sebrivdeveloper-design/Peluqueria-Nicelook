@@ -110,9 +110,9 @@
 
       <span v-if="!isCollapsed" class="section-label">Cuenta</span>
 
-      <button class="nav-item">
-        <span class="nav-icon"><Settings :size="17" /></span>
-        <transition name="fade"><span v-if="!isCollapsed" class="nav-text">Configuración</span></transition>
+      <button class="nav-item" @click="modalPerfilAbierto = true">
+        <span class="nav-icon"><User :size="17" /></span>
+        <transition name="fade"><span v-if="!isCollapsed" class="nav-text">Editar perfil</span></transition>
       </button>
 
       <button class="nav-item logout-item" @click="cerrarSesion">
@@ -122,10 +122,10 @@
 
       <!-- PROFILE -->
       <div class="profile-card">
-        <div class="profile-avatar">{{ roleConfig.avatar }}</div>
+        <div class="profile-avatar">{{ usuarioInicial }}</div>
         <transition name="fade">
           <div v-if="!isCollapsed" class="profile-info">
-            <span class="profile-name">{{ roleConfig.title }}</span>
+            <span class="profile-name">{{ usuarioNombre }}</span>
             <span class="profile-status">
               <span class="status-dot"></span>
               En línea
@@ -136,6 +136,8 @@
 
     </div>
 
+    <EditarPerfilModal v-if="modalPerfilAbierto" @cerrar="modalPerfilAbierto = false" />
+
   </aside>
 </template>
 
@@ -144,11 +146,13 @@ import {
   LayoutGrid,
   BriefcaseBusiness,
   Users,
-  Settings,
+  User,
   LogOut,
   PanelLeftClose,
   PanelLeftOpen
 } from 'lucide-vue-next'
+import EditarPerfilModal from './EditarPerfilModal.vue'
+import { useUsuarioStore } from '../stores/usuarioStore'
 
 export default {
   name: 'Sidebar',
@@ -164,15 +168,17 @@ export default {
     LayoutGrid,
     BriefcaseBusiness,
     Users,
-    Settings,
+    User,
     LogOut,
     PanelLeftClose,
-    PanelLeftOpen
+    PanelLeftOpen,
+    EditarPerfilModal
   },
 
   data() {
     return {
-      isCollapsed: false
+      isCollapsed: false,
+      modalPerfilAbierto: false
     }
   },
 
@@ -188,6 +194,13 @@ export default {
         RECEPCIONISTA: { title: 'Recepción',       subtitle: 'Panel operativo',    avatar: 'R' }
       }
       return roles[this.rol] || roles.CLIENTE
+    },
+    usuarioNombre() {
+      const nombre = useUsuarioStore().nombreCompleto
+      return nombre || this.roleConfig.title
+    },
+    usuarioInicial() {
+      return (this.usuarioNombre[0] || '?').toUpperCase()
     }
   },
 
@@ -214,6 +227,7 @@ export default {
 
   mounted() {
     window.addEventListener('resize', this.handleResize)
+    useUsuarioStore().init()
   },
   beforeUnmount() {
     window.removeEventListener('resize', this.handleResize)

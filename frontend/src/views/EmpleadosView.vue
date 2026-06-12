@@ -6,7 +6,7 @@
         <p>Consulta y administra la información del personal registrado en el sistema.</p>
       </div>
       <HeaderBar
-        @crear="mostrarModal = true"
+        @crear="abrirModalCrear"
         textoBoton="Crear empleado"
       />
     </div>
@@ -21,6 +21,7 @@
               <th>Documento</th>
               <th>Especialidad</th>
               <th>Salario</th>
+              <th>Acciones</th>
             </tr>
           </thead>
 
@@ -30,7 +31,6 @@
                 <div class="avatar">
                   {{ obtenerInicial(emp.usuario?.nombreCompleto) }}
                 </div>
-
                 <div class="empleado-info">
                   <strong>{{ emp.usuario?.nombreCompleto }}</strong>
                   <span>{{ emp.usuario?.telefono || 'Sin teléfono' }}</span>
@@ -45,10 +45,15 @@
                 </span>
               </td>
               <td class="salary">{{ formatearMoneda(emp.salario) }}</td>
+              <td>
+                <button class="btn-editar" @click="abrirModalEditar(emp)">
+                  ✏️ Editar
+                </button>
+              </td>
             </tr>
 
             <tr v-if="filtrados.length === 0">
-              <td colspan="5" class="empty-row">
+              <td colspan="6" class="empty-row">
                 No se encontraron empleados con esa búsqueda.
               </td>
             </tr>
@@ -59,7 +64,8 @@
 
     <EmpleadoModal
       v-if="mostrarModal"
-      @cerrar="mostrarModal = false"
+      :empleado="empleadoSeleccionado"
+      @cerrar="cerrarModal"
       @actualizar="cargarEmpleados"
     />
   </section>
@@ -83,7 +89,8 @@ export default {
   data() {
     return {
       empleados: [],
-      mostrarModal: false
+      mostrarModal: false,
+      empleadoSeleccionado: null
     }
   },
 
@@ -113,21 +120,31 @@ export default {
       }
     },
 
+    abrirModalCrear() {
+      this.empleadoSeleccionado = null
+      this.mostrarModal = true
+    },
+
+    abrirModalEditar(emp) {
+      this.empleadoSeleccionado = emp
+      this.mostrarModal = true
+    },
+
+    cerrarModal() {
+      this.mostrarModal = false
+      this.empleadoSeleccionado = null
+    },
+
     obtenerInicial(nombre) {
       if (!nombre) return 'E'
-
       const partes = nombre.trim().split(' ')
-
       return partes.length > 1
         ? (partes[0][0] + partes[1][0]).toUpperCase()
         : partes[0][0].toUpperCase()
     },
 
     formatearMoneda(valor) {
-      if (valor === null || valor === undefined || valor === '') {
-        return 'Sin salario'
-      }
-
+      if (valor === null || valor === undefined || valor === '') return 'Sin salario'
       return new Intl.NumberFormat('es-CO', {
         style: 'currency',
         currency: 'COP',
@@ -183,7 +200,7 @@ export default {
 .empleados-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 900px;
+  min-width: 960px;
 }
 
 .empleados-table thead {
@@ -265,23 +282,35 @@ export default {
   color: #004518;
 }
 
+.btn-editar {
+  background: #eef5ee;
+  border: 1px solid #c6d9c6;
+  color: #2a4d32;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-editar:hover {
+  background: #004518;
+  color: #ffffff;
+  border-color: #004518;
+}
+
 .empty-row {
   text-align: center;
   padding: 28px !important;
   color: #6a7b6d;
 }
 
-/* Tablet */
 @media (max-width: 1024px) {
-  .page-header h1 {
-    font-size: 32px;
-  }
+  .page-header h1 { font-size: 32px; }
 }
 
-/* Mobile */
 @media (max-width: 640px) {
-  .page-header h1 {
-    font-size: 28px;
-  }
+  .page-header h1 { font-size: 28px; }
 }
 </style>

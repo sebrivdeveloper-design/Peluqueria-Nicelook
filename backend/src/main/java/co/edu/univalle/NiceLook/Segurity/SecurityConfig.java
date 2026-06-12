@@ -3,6 +3,7 @@ package co.edu.univalle.NiceLook.Segurity;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -18,10 +19,13 @@ public class SecurityConfig {
     @Autowired
     private JwtFilter jwtFilter;
 
+    @Value("${app.frontend.url:http://localhost:5173}")
+    private String frontendUrl;
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:5173"));
+        config.setAllowedOrigins(List.of(frontendUrl));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
@@ -39,15 +43,14 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(auth -> auth
 
-                // 🔥 PÚBLICOS
+                // PÚBLICOS
                 .requestMatchers("/auth/**").permitAll()
                 .requestMatchers("/api/servicios/**").permitAll()
                 .requestMatchers("/api/categorias/categoria/**").permitAll()
                 .requestMatchers("/api/citas/**").permitAll()
-                
                 .requestMatchers("/api/empleados/**").permitAll()
 
-                // 🔒 PROTEGIDOS
+                // PROTEGIDOS
                 .requestMatchers("/api/categorias/**").hasRole("ADMIN")
                 .requestMatchers("/api/clientes/**").hasAnyRole("RECEPCIONISTA", "ADMIN")
                 .requestMatchers("/api/disponibilidad/**").hasAnyRole("EMPLEADO", "ADMIN", "RECEPCIONISTA")

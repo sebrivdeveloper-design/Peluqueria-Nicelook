@@ -73,7 +73,7 @@ window.handleCredentialResponse = async (response) => {
     const tokenGoogle = response.credential;
 
     const res = await axios.post(
-      "http://localhost:8080/auth/google",
+      `${import.meta.env.VITE_API_URL.replace('/api', '')}/auth/google`,
       {
         token: tokenGoogle
       }

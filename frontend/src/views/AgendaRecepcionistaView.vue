@@ -13,20 +13,18 @@
       </div>
 
       <!-- SELECT EMPLEADO -->
-      <!-- DESPUÉS -->
-<select v-model="idEmpleado" @change="cargarAgenda" class="select-estilista">
-  <option disabled value="" >
-    Selecciona un estilista
-  </option>
-  <option
-    v-for="emp in empleados"
-    :key="emp.idEmpleado"
-    :value="emp.idEmpleado"
-    
-  >
-  {{ emp.usuario?.nombreCompleto }}
-  </option>
-</select>
+      <select v-model="idEmpleado" @change="cargarAgenda" class="select-estilista">
+        <option disabled value="">
+          Selecciona un estilista
+        </option>
+        <option
+          v-for="emp in empleados"
+          :key="emp.idEmpleado"
+          :value="emp.idEmpleado"
+        >
+          {{ emp.usuario?.nombreCompleto }}
+        </option>
+      </select>
 
     </div>
 
@@ -72,7 +70,6 @@
              v-for="cliente in clientes"
              :key="cliente.idCliente"
                 :value="cliente.idCliente"
-           
                 >
                 {{ cliente.nombreCompleto }}
             </option>
@@ -88,14 +85,13 @@
 
           <select v-model="form.idServicio">
 
-            <option disabled value="" >
+            <option disabled value="">
                 Selecciona un servicio
             </option>
             <option
             v-for="servicio in servicios"
             :key="servicio.idServicio"
             :value="servicio.idServicio"
-            
             >
             {{ servicio.nombreServicio }}
             </option>
@@ -132,10 +128,8 @@
 </template>
 
 <script>
-import axios from 'axios'
-
-import AgendaCalendar
-from '@/components/AgendaCalendar.vue'
+import api from '@/services/axiosInstance'
+import AgendaCalendar from '@/components/AgendaCalendar.vue'
 
 export default {
 
@@ -181,241 +175,151 @@ export default {
 
   methods: {
 
-    getToken() {
-
-      return localStorage.getItem('token')
+    // EMPLEADOS
+    async cargarEmpleados() {
+      try {
+        const response = await api.get('/empleados')
+        this.empleados = response.data
+      } catch (error) {
+        console.error(error)
+      }
     },
 
-    // EMPLEADOS
-
-    async cargarEmpleados() {
-  try {
-    const token = this.getToken()
-    const response = await axios.get(
-      'http://localhost:8080/api/empleados',
-      {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      }
-    )
-    this.empleados = response.data
-  } catch (error) {
-    console.error(error)
-  }
-},
-
     // CLIENTES
-
     async cargarClientes() {
-
-  try {
-
-    const token = this.getToken()
-
-    const response = await axios.get(
-      'http://localhost:8080/api/clientes',
-      {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+      try {
+        const response = await api.get('/clientes')
+        this.clientes = response.data
+      } catch (error) {
+        console.error(error)
       }
-    )
+    },
 
-    console.log(response.data)
-
-    this.clientes = response.data
-
-  } catch (error) {
-
-    console.error(error)
-  }
-},
-
-async cargarServicios() {
-  try {
-    const token = this.getToken()
-    const response = await axios.get(
-      'http://localhost:8080/api/servicios',
-      {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+    // SERVICIOS
+    async cargarServicios() {
+      try {
+        const response = await api.get('/servicios')
+        this.servicios = response.data
+      } catch (error) {
+        console.error(error)
       }
-    )
-    this.servicios = response.data
-  } catch (error) {
-    console.error(error)
-  }
-},
+    },
 
     // CARGAR AGENDA
-
     async cargarAgenda() {
-  if (!this.idEmpleado) return  // guard
+      if (!this.idEmpleado) return
 
-  try {
-    const token = this.getToken()
-    const hoy = new Date()
-    const anio = hoy.getFullYear()
-    const mes = String(hoy.getMonth() + 1).padStart(2, '0')
+      try {
+        const hoy = new Date()
+        const anio = hoy.getFullYear()
+        const mes = String(hoy.getMonth() + 1).padStart(2, '0')
 
-    const response = await axios.get(
-      `http://localhost:8080/api/disponibilidad/${this.idEmpleado}?mes=${mes}&anio=${anio}`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    )
+        const response = await api.get(
+          `/disponibilidad/${this.idEmpleado}`,
+          { params: { mes, anio } }
+        )
 
-    // Reemplaza solo si cambió la cantidad de bloques
-    const nuevos = response.data.map(bloque => ({
+        const nuevos = response.data.map(bloque => ({
 
-      id: bloque.idDisponibilidad,
+          id: bloque.idDisponibilidad,
 
-      title:
-        bloque.estado === 'ocupado'
-          ? `${bloque.cliente} - ${bloque.servicio}`
-          : 'Disponible',
+          title:
+            bloque.estado === 'ocupado'
+              ? `${bloque.cliente} - ${bloque.servicio}`
+              : 'Disponible',
 
-      start:
-        `${bloque.fecha}T${bloque.horaInicio}`,
+          start:
+            `${bloque.fecha}T${bloque.horaInicio}`,
 
-      end:
-        `${bloque.fecha}T${bloque.horaFin}`,
+          end:
+            `${bloque.fecha}T${bloque.horaFin}`,
 
-      className:
-        bloque.estado === 'ocupado'
-          ? 'evento-ocupado'
-          : 'evento-disponible',
+          className:
+            bloque.estado === 'ocupado'
+              ? 'evento-ocupado'
+              : 'evento-disponible',
 
-      extendedProps: {
+          extendedProps: {
 
-        estado:
-          bloque.estado,
+            estado:
+              bloque.estado,
 
-        idDisponibilidad:
-          bloque.idDisponibilidad,
+            idDisponibilidad:
+              bloque.idDisponibilidad,
 
-        cliente:
-          bloque.cliente,
+            cliente:
+              bloque.cliente,
 
-        servicio:
-          bloque.servicio
+            servicio:
+              bloque.servicio
+          }
+        }))
+
+        this.eventos = nuevos
+
+      } catch (error) {
+        console.error(error)
       }
-    }))
-
-    this.eventos = nuevos
-
-  } catch (error) {
-    console.error(error)
-  }
-},
+    },
 
     // CLICK EVENTO
-
     handleEventClick(info) {
 
       const evento = info.event
 
-      // SI ESTÁ OCUPADO
-
-      if (
-        evento.extendedProps.estado === 'ocupado'
-      ) {
-
+      if (evento.extendedProps.estado === 'ocupado') {
         alert('Horario ocupado')
-
         return
       }
 
-      // DISPONIBLE
-
       this.bloqueSeleccionado = evento
-
       this.mostrarModal = true
     },
 
     cerrarModal() {
-
       this.mostrarModal = false
     },
 
     // GUARDAR CITA
-
     async guardarCita() {
 
-  try {
+      try {
 
-    if (
-      !this.form.idCliente ||
-      !this.form.idServicio
-    ) {
-
-      alert('Completa todos los campos')
-      return
-    }
-
-    const token = this.getToken()
-
-    const inicio =
-      this.bloqueSeleccionado.start
-
-    const fin =
-      this.bloqueSeleccionado.end
-
-    const fecha =
-      inicio.toISOString().split('T')[0]
-
-    const horaInicio =
-      inicio.toTimeString().slice(0, 8)
-
-    const horaFin =
-      fin.toTimeString().slice(0, 8)
-
-    await axios.post(
-      'http://localhost:8080/api/citas',
-      {
-
-        idCliente: this.form.idCliente,
-
-        idEmpleado: this.idEmpleado,
-
-        idServicio: this.form.idServicio,
-     
-        idDisponibilidad: this.bloqueSeleccionado.extendedProps.idDisponibilidad,
-        fecha,
-
-        horaInicio,
-
-        horaFin,
-
-        observaciones: ''
-
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`
+        if (!this.form.idCliente || !this.form.idServicio) {
+          alert('Completa todos los campos')
+          return
         }
+
+        const inicio = this.bloqueSeleccionado.start
+        const fin    = this.bloqueSeleccionado.end
+
+        const fecha      = inicio.toISOString().split('T')[0]
+        const horaInicio = inicio.toTimeString().slice(0, 8)
+        const horaFin    = fin.toTimeString().slice(0, 8)
+
+        await api.post('/citas', {
+          idCliente:        this.form.idCliente,
+          idEmpleado:       this.idEmpleado,
+          idServicio:       this.form.idServicio,
+          idDisponibilidad: this.bloqueSeleccionado.extendedProps.idDisponibilidad,
+          fecha,
+          horaInicio,
+          horaFin,
+          observaciones:    ''
+        })
+
+        alert('Cita agendada')
+
+        this.form = { idCliente: '', idServicio: '' }
+        this.cerrarModal()
+        this.bloqueSeleccionado.setProp('title', 'Reservado')
+        this.bloqueSeleccionado.setProp('classNames', ['evento-ocupado'])
+
+      } catch (error) {
+        console.error(error)
+        alert('Error agendando cita')
       }
-    )
-
-    alert('Cita agendada')
-
-    this.form = {
-      idCliente: '',
-      idServicio: ''
     }
-
-    this.cerrarModal()
-
-    this.bloqueSeleccionado.setProp('title', 'Reservado')
-    this.bloqueSeleccionado.setProp('classNames', ['evento-ocupado'])
-
-  } catch (error) {
-
-    console.error(error)
-
-    alert('Error agendando cita')
-  }
-}
   }
 }
 </script>
@@ -486,14 +390,13 @@ async cargarServicios() {
   box-shadow: 0 0 0 4px rgba(0, 69, 24, 0.08);
 }
 
-/* Quitar background/color fijo en <option> — el navegador los renderiza de forma nativa */
 .select-estilista option {
   font-weight: 500;
 }
 
 .select-estilista,
 .form-group select {
-  color-scheme: light; /* fuerza tema claro en el dropdown nativo */
+  color-scheme: light;
 }
 /* =========================
    MODAL
@@ -651,8 +554,6 @@ async cargarServicios() {
   box-shadow:
     0 0 0 4px rgba(0, 69, 24, 0.08);
 }
-
-/* OPCIONES MODAL */
 
 .form-group select option {
   font-weight: 500;

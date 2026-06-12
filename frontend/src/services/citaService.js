@@ -1,34 +1,20 @@
-import axios from 'axios'
-
-const API = 'http://localhost:8080/api'
-
-function getAuthHeader() {
-  const token = localStorage.getItem("token")
-  console.log("TOKEN:", token)
-  if (!token) return {}
-  return {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  }
-}
+import api from './axiosInstance'
 
 export default {
-  // Obtener horarios disponibles de un barbero en una fecha
+  // Horarios disponibles de un barbero en una fecha
   getDisponibilidad(idEmpleado, fecha) {
-    return axios.get(`${API}/citas/disponibilidad/${idEmpleado}`, {
-      params: { fecha },
-      ...getAuthHeader()
+    return api.get(`/citas/disponibilidad/${idEmpleado}`, {
+      params: { fecha }
     })
   },
 
-  // Obtener todos los empleados (barberos)
+  // Todos los empleados (barberos)
   getEmpleados() {
-    return axios.get(`${API}/empleados`, getAuthHeader())
+    return api.get('/empleados')
   },
 
   // Registrar una cita
   registrarCita(data) {
-    return axios.post(`${API}/citas`, data, getAuthHeader())
+    return api.post('/citas', data)
   }
 }
