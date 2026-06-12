@@ -120,6 +120,14 @@
 
     </div>
 
+    <AppToast
+      :visible="toast.visible"
+      :type="toast.type"
+      :title="toast.title"
+      :message="toast.message"
+      @close="toast.visible = false"
+    />
+
   </section>
 </template>
 
@@ -133,12 +141,15 @@ import {
 import AgendaCalendar
 from '@/components/AgendaCalendar.vue'
 
+import AppToast from '@/components/AppToast.vue'
+
 export default {
 
   name: 'AgendaEmpleadoView',
 
   components: {
-    AgendaCalendar
+    AgendaCalendar,
+    AppToast
   },
 
   data() {
@@ -158,7 +169,9 @@ export default {
         horaInicio: '',
 
         horaFin: ''
-      }
+      },
+
+      toast: { visible: false, type: 'info', title: '', message: '' }
     }
   },
 
@@ -168,6 +181,11 @@ export default {
   },
 
   methods: {
+
+    mostrarToast(type, title, message) {
+      this.toast = { visible: true, type, title, message }
+      setTimeout(() => { this.toast.visible = false }, 3000)
+    },
 
     // TOKEN
 
@@ -263,9 +281,7 @@ export default {
         evento.extendedProps.estado === 'ocupado'
       ) {
 
-        alert(
-          'Este horario tiene citas agendadas'
-        )
+        this.mostrarToast('warning', 'Horario ocupado', 'Este horario tiene citas agendadas.')
 
         return
       }
@@ -376,9 +392,7 @@ export default {
           !this.form.horaFin
         ) {
 
-          alert(
-            'Completa todos los campos'
-          )
+          this.mostrarToast('warning', 'Campos incompletos', 'Completa la fecha y las horas del horario.')
 
           return
         }
@@ -392,9 +406,7 @@ export default {
 
         if (this.form.fecha < hoy) {
 
-          alert(
-            'No puedes registrar horarios en fechas pasadas'
-          )
+          this.mostrarToast('warning', 'Fecha inválida', 'No puedes registrar horarios en fechas pasadas.')
 
           return
         }
@@ -406,9 +418,7 @@ export default {
           this.form.horaInicio
         ) {
 
-          alert(
-            'La hora fin debe ser mayor a la hora inicio'
-          )
+          this.mostrarToast('warning', 'Horas inválidas', 'La hora fin debe ser mayor a la hora inicio.')
 
           return
         }
@@ -459,10 +469,10 @@ export default {
 
     this.cerrarModal()
 
-    alert(
-      esEdicion
-        ? 'Horario actualizado correctamente'
-        : 'Horario registrado correctamente'
+    this.mostrarToast(
+      'success',
+      esEdicion ? 'Horario actualizado' : 'Horario registrado',
+      esEdicion ? 'Los cambios fueron guardados.' : 'Tu horario quedó registrado.'
     )
 
       } catch (error) {
@@ -474,13 +484,14 @@ export default {
 
         if (error.response) {
 
-          alert(error.response.data)
+          const msg = typeof error.response.data === 'string'
+            ? error.response.data
+            : 'No se pudo guardar el horario.'
+          this.mostrarToast('error', 'Error al guardar', msg)
 
         } else {
 
-          alert(
-            'Error de conexión con el servidor'
-          )
+          this.mostrarToast('error', 'Sin conexión', 'No hay conexión con el servidor. Intenta de nuevo.')
         }
       }
     }
@@ -657,6 +668,14 @@ export default {
   }
   .modal-card {
     width: 92%;
+  }
+  :deep(.fc-header-toolbar) {
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+  }
+  :deep(.fc-toolbar-title) {
+    font-size: 18px;
   }
 }
 

@@ -51,6 +51,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/empleados/**").permitAll()
 
                 // PROTEGIDOS
+                .requestMatchers("/api/usuarios/me").authenticated()
                 .requestMatchers("/api/categorias/**").hasRole("ADMIN")
                 .requestMatchers("/api/clientes/**").hasAnyRole("RECEPCIONISTA", "ADMIN")
                 .requestMatchers("/api/disponibilidad/**").hasAnyRole("EMPLEADO", "ADMIN", "RECEPCIONISTA")

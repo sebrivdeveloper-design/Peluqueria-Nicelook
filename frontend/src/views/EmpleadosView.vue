@@ -68,6 +68,14 @@
       @cerrar="cerrarModal"
       @actualizar="cargarEmpleados"
     />
+
+    <AppToast
+      :visible="toast.visible"
+      :type="toast.type"
+      :title="toast.title"
+      :message="toast.message"
+      @close="toast.visible = false"
+    />
   </section>
 </template>
 
@@ -75,11 +83,13 @@
 import HeaderBar from '../components/HeaderBar.vue'
 import { getEmpleados } from '../services/empleadoService'
 import EmpleadoModal from '../components/EmpleadoModal.vue'
+import AppToast from '../components/AppToast.vue'
 
 export default {
   components: {
     EmpleadoModal,
-    HeaderBar
+    HeaderBar,
+    AppToast
   },
 
   inject: {
@@ -90,7 +100,8 @@ export default {
     return {
       empleados: [],
       mostrarModal: false,
-      empleadoSeleccionado: null
+      empleadoSeleccionado: null,
+      toast: { visible: false, type: 'info', title: '', message: '' }
     }
   },
 
@@ -110,13 +121,18 @@ export default {
   },
 
   methods: {
+    mostrarToast(type, title, message) {
+      this.toast = { visible: true, type, title, message }
+      setTimeout(() => { this.toast.visible = false }, 3000)
+    },
+
     async cargarEmpleados() {
       try {
         const res = await getEmpleados()
         this.empleados = res.data
       } catch (error) {
         console.error(error)
-        alert('Error cargando empleados')
+        this.mostrarToast('error', 'Error de carga', 'No se pudieron cargar los empleados. Revisa tu conexión.')
       }
     },
 
@@ -186,9 +202,11 @@ export default {
 
 .table-card {
   background: #ffffff;
-  border: 1px solid #d9e4da;
-  border-radius: 24px;
-  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.04);
+  border: 1px solid #d9e8db;
+  border-radius: 18px;
+  box-shadow:
+    0 2px 8px rgba(1, 68, 33, 0.06),
+    0 1px 2px rgba(1, 68, 33, 0.04);
   overflow: hidden;
 }
 
@@ -200,34 +218,39 @@ export default {
 .empleados-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 960px;
+  min-width: 820px;
 }
 
 .empleados-table thead {
-  background: #f2f7f2;
+  background: #f0f7f1;
 }
 
 .empleados-table th {
   text-align: left;
-  padding: 18px 20px;
-  font-size: 13px;
+  padding: 14px 20px;
+  font-size: 10px;
   font-weight: 700;
-  color: #48604d;
+  color: #4a7c59;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  border-bottom: 1px solid #e0e8e1;
+  letter-spacing: 1.3px;
+  white-space: nowrap;
+  border-bottom: 1px solid #e8f0e9;
 }
 
 .empleados-table td {
-  padding: 18px 20px;
+  padding: 16px 20px;
   font-size: 14px;
   color: #173221;
-  border-bottom: 1px solid #edf2ed;
+  border-bottom: 1px solid #edf2ee;
   vertical-align: middle;
 }
 
+.empleados-table tbody tr {
+  transition: background 0.15s ease;
+}
+
 .empleados-table tbody tr:hover {
-  background: #fafcf9;
+  background: #f6fbf7;
 }
 
 .empleado-cell {
@@ -311,6 +334,10 @@ export default {
 }
 
 @media (max-width: 640px) {
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
   .page-header h1 { font-size: 28px; }
 }
 </style>

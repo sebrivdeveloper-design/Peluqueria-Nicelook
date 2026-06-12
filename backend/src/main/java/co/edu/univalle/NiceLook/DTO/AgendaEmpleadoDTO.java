@@ -4,6 +4,8 @@ public class AgendaEmpleadoDTO {
 
     private Integer idDisponibilidad;
 
+    private Integer idCita;
+
     private String fecha;
 
     private String horaInicio;
@@ -18,6 +20,14 @@ public class AgendaEmpleadoDTO {
 
     public Integer getIdDisponibilidad() {
         return idDisponibilidad;
+    }
+
+    public Integer getIdCita() {
+        return idCita;
+    }
+
+    public void setIdCita(Integer idCita) {
+        this.idCita = idCita;
     }
 
     public String getFecha() {

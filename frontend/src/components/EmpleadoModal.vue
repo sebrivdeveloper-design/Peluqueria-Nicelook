@@ -119,6 +119,7 @@
 <script>
 import { crearEmpleado, editarEmpleado } from '../services/empleadoService'
 import AppToast from '../components/AppToast.vue'
+import { useNotificacionesStore } from '../stores/notificacionesStore'
 
 export default {
   components: { AppToast },
@@ -205,10 +206,12 @@ export default {
         if (this.empleado) {
           // MODO EDICIÓN
           await editarEmpleado(this.empleado.idEmpleado, this.form)
+          useNotificacionesStore().agregar('success', 'Empleado actualizado', `"${this.form.nombreCompleto}" fue actualizado`)
           this.mostrarToast('success', 'Empleado actualizado', 'Los cambios fueron guardados correctamente.')
         } else {
           // MODO CREACIÓN
           await crearEmpleado(this.form)
+          useNotificacionesStore().agregar('success', 'Empleado registrado', `"${this.form.nombreCompleto}" fue registrado`)
           this.mostrarToast('success', 'Empleado registrado', 'El empleado fue creado correctamente.')
         }
 

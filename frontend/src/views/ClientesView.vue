@@ -1,16 +1,18 @@
 <template>
   <section class="clientes-page">
     
-    <HeaderBar
-      v-model:busqueda="textoBusqueda"
-      :mostrarBoton="true"
-      textoBoton="Registrar cliente"
-      placeholder="Buscar cliente por nombre o documento..."
-      @crear="abrirModalRegistro"
-    />
-
     <div class="page-header">
-      <h1>CLIENTES</h1>
+      <div>
+        <h1>Clientes</h1>
+        <p>Consulta y registra los clientes del salón.</p>
+      </div>
+      <HeaderBar
+        v-model:busqueda="textoBusqueda"
+        :mostrarBoton="true"
+        textoBoton="Registrar cliente"
+        placeholder="Buscar cliente por nombre o documento..."
+        @crear="abrirModalRegistro"
+      />
     </div>
 
     <div v-if="loading" class="loading-state">
@@ -22,10 +24,10 @@
       <table class="clientes-table">
         <thead>
           <tr>
-            <th class="text-center" style="width: 20%;">ID Documento</th>
-            <th style="width: 35%;">Nombre Completo</th>
-            <th style="width: 20%;">Teléfono</th>
-            <th style="width: 25%;">Correo</th>
+            <th class="th-documento">ID Documento</th>
+            <th class="th-nombre">Nombre Completo</th>
+            <th class="th-telefono">Teléfono</th>
+            <th class="th-correo">Correo</th>
           </tr>
         </thead>
         <tbody>
@@ -248,73 +250,90 @@ export default {
   gap: 20px;
 }
 
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
 .page-header h1 {
-  font-size: 34px;
+  margin: 0;
+  font-size: 38px;
   font-weight: 700;
-  color: #004518;
-  text-align: center;
-  margin: 10px 0 20px 0;
-  letter-spacing: 0.5px;
+  color: #173221;
+  line-height: 1.1;
+}
+
+.page-header p {
+  margin: 8px 0 0;
+  font-size: 15px;
+  color: #5f6f63;
 }
 
 .table-container {
+  width: 100%;
   background: #ffffff;
-  border: 1px solid #d9e4da;
-  border-radius: 4px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
-  overflow: hidden;
+  border: 1px solid #d9e8db;
+  border-radius: 18px;
+  box-shadow:
+    0 2px 8px rgba(1, 68, 33, 0.06),
+    0 1px 2px rgba(1, 68, 33, 0.04);
+  overflow-x: auto;
 }
 
 .clientes-table {
   width: 100%;
+  min-width: 640px;
   border-collapse: collapse;
-  font-size: 15px;
+  font-size: 14px;
   color: #173221;
 }
 
 .clientes-table th {
-  background-color: #d1ded2;
-  color: #1a3321;
-  padding: 16px;
+  background: #f0f7f1;
+  color: #4a7c59;
+  padding: 14px 20px;
   font-weight: 700;
   text-transform: uppercase;
-  font-size: 14px;
-  border: 1px solid #b8c7ba;
+  font-size: 10px;
+  letter-spacing: 1.3px;
+  text-align: left;
+  white-space: nowrap;
+  border-bottom: 1px solid #e8f0e9;
 }
 
 .clientes-table td {
   padding: 16px 20px;
-  border: 1px solid #e3ece4;
+  border-top: 1px solid #edf2ee;
   vertical-align: middle;
 }
 
+.th-documento { width: 20%; }
+.th-nombre    { width: 35%; }
+.th-telefono  { width: 20%; }
+.th-correo    { width: 25%; }
+
 .table-row {
-  transition: background-color 0.2s ease;
+  transition: background-color 0.15s ease;
 }
 
 .table-row:hover {
-  background-color: #f4f8f5;
+  background-color: #f6fbf7;
 }
 
 .col-documento {
-  background-color: #7fa482;
-  color: #ffffff;
-  font-weight: 600;
-  text-align: center;
+  font-weight: 700;
+  color: #014421;
 }
 
 .col-nombre {
   font-weight: 600;
   color: #2c3e31;
-  text-transform: uppercase;
 }
 
 .col-telefono, .col-correo {
   color: #4f5d52;
-}
-
-.text-center {
-  text-align: center;
 }
 
 .empty-row {
@@ -349,32 +368,35 @@ export default {
 
 .modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.4);
+  inset: 0;
+  background: rgba(17, 24, 19, 0.45);
+  backdrop-filter: blur(4px);
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: 24px;
   z-index: 1000;
 }
 
 .modal-content {
-  background: white;
-  padding: 30px;
-  border-radius: 8px;
-  width: 500px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+  background: #f7faf5;
+  border: 1px solid #d7e3d6;
+  padding: 28px;
+  border-radius: 28px;
+  width: 100%;
+  max-width: 520px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.14);
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 .modal-content h2 {
-  color: #004518;
+  color: #173221;
   margin-top: 0;
   margin-bottom: 20px;
-  font-size: 24px;
-  border-bottom: 2px solid #f0f4f1;
-  padding-bottom: 10px;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.1;
 }
 
 .modal-form {
@@ -407,18 +429,22 @@ export default {
 .modal-form input,
 .modal-form select,
 .modal-form textarea {
-  padding: 10px 12px;
-  border: 1px solid #d9e4da;
-  border-radius: 4px;
+  padding: 12px 16px;
+  border: 1px solid #d5dfd4;
+  background: #ffffff;
+  border-radius: 14px;
   font-size: 14px;
   outline: none;
   color: #173221;
+  font-family: inherit;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .modal-form input:focus,
 .modal-form select:focus,
 .modal-form textarea:focus {
-  border-color: #004518;
+  border-color: #739c76;
+  box-shadow: 0 0 0 4px rgba(115, 156, 118, 0.16);
 }
 
 .modal-actions {
@@ -429,51 +455,101 @@ export default {
 }
 
 .btn-cancelar {
-  background: #f1f5f2;
-  border: none;
-  color: #4f5d52;
-  padding: 11px 20px;
-  border-radius: 4px;
+  background: #eef3ea;
+  border: 1px solid #d7e3d6;
+  color: #35513b;
+  padding: 12px 18px;
+  border-radius: 14px;
   cursor: pointer;
   font-weight: 600;
-}
-
-.btn-guardar {
-  background: #004518;
-  color: white;
-  border: none;
-  padding: 11px 20px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 600;
+  font-family: inherit;
   transition: background 0.2s;
 }
 
+.btn-cancelar:hover {
+  background: #e5ede1;
+}
+
+.btn-guardar {
+  background: #014421;
+  color: white;
+  border: none;
+  padding: 12px 18px;
+  border-radius: 14px;
+  cursor: pointer;
+  font-weight: 600;
+  font-family: inherit;
+  box-shadow: 0 8px 20px rgba(1, 68, 33, 0.2);
+  transition: all 0.22s ease;
+}
+
 .btn-guardar:hover {
-  background: #145c43;
+  background: #1f6a34;
+  transform: translateY(-1px);
 }
 
 .alerta-exito {
-  background: #d4edda;
-  color: #155724;
-  padding: 10px 14px;
-  border-radius: 4px;
+  background: #e0f2e5;
+  color: #1b5e20;
+  padding: 12px 14px;
+  border-radius: 12px;
   margin-bottom: 14px;
   font-weight: 600;
+  font-size: 14px;
 }
 
 .alerta-error {
-  background: #f8d7da;
-  color: #721c24;
-  padding: 10px 14px;
-  border-radius: 4px;
+  background: #ffe5e5;
+  color: #b42318;
+  padding: 12px 14px;
+  border-radius: 12px;
   margin-bottom: 14px;
   font-weight: 600;
+  font-size: 14px;
 }
 
 .error-campo {
-  color: #c0392b;
+  color: #b42318;
   font-size: 12px;
   margin-top: 3px;
+}
+
+/* ── Responsive ── */
+@media (max-width: 1024px) {
+  .page-header h1 { font-size: 32px; }
+}
+
+@media (max-width: 640px) {
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .page-header h1 { font-size: 28px; }
+
+  .modal-overlay {
+    padding: 16px;
+    align-items: flex-end;
+  }
+
+  .modal-content {
+    max-width: 100%;
+    padding: 22px 18px;
+    border-radius: 24px 24px 18px 18px;
+  }
+
+  .form-row {
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+  }
+
+  .btn-cancelar,
+  .btn-guardar {
+    width: 100%;
+  }
 }
 </style>

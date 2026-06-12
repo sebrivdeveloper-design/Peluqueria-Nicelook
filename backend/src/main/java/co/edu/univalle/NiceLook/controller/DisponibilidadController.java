@@ -106,6 +106,8 @@ public class DisponibilidadController {
                     dto.setServicio(
                             cita.getServicio()
                                     .getNombreServicio());
+
+                    dto.setIdCita(cita.getIdCita());
                 }
             }
 

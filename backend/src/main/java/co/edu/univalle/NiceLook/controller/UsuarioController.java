@@ -27,10 +27,10 @@ public class UsuarioController {
         if (user == null) return ResponseEntity.notFound().build();
         return ResponseEntity.ok(Map.of(
             "idUsuario",      user.getIdUsuario(),
-            "nombreCompleto", user.getNombreCompleto(),
-            "correo",         user.getCorreo(),
+            "nombreCompleto", user.getNombreCompleto() != null ? user.getNombreCompleto() : "",
+            "correo",         user.getCorreo() != null ? user.getCorreo() : "",
             "telefono",       user.getTelefono() != null ? user.getTelefono() : "",
-            "documento",      user.getDocumento()
+            "documento",      user.getDocumento() != null ? user.getDocumento() : ""
         ));
     }
 
@@ -42,14 +42,30 @@ public class UsuarioController {
         String nombre = body.get("nombreCompleto");
         String telefono = body.get("telefono");
 
-        if (nombre != null && !nombre.isBlank()) user.setNombreCompleto(nombre.trim());
-        if (telefono != null) user.setTelefono(telefono.trim());
+        if (nombre == null || nombre.isBlank()) {
+            return ResponseEntity.badRequest().body("El nombre no puede estar vacío");
+        }
+        nombre = nombre.trim();
+        if (nombre.length() > 100) {
+            return ResponseEntity.badRequest().body("El nombre no puede superar los 100 caracteres");
+        }
 
+        if (telefono != null && !telefono.isBlank()) {
+            telefono = telefono.trim();
+            if (!telefono.matches("^[0-9+\\s-]{7,20}$")) {
+                return ResponseEntity.badRequest().body("El teléfono solo puede contener números, espacios, + o - (7 a 20 caracteres)");
+            }
+            user.setTelefono(telefono);
+        } else {
+            user.setTelefono(null);
+        }
+
+        user.setNombreCompleto(nombre);
         usuarioService.guardar(user);
 
         return ResponseEntity.ok(Map.of(
             "nombreCompleto", user.getNombreCompleto(),
-            "correo",         user.getCorreo(),
+            "correo",         user.getCorreo() != null ? user.getCorreo() : "",
             "telefono",       user.getTelefono() != null ? user.getTelefono() : ""
         ));
     }

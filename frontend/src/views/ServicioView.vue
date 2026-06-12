@@ -254,6 +254,22 @@
       @guardado="onEditarGuardado"
     />
 
+    <AppConfirmModal
+      :visible="confirmModal.visible"
+      :title="confirmModal.titulo"
+      :message="confirmModal.mensaje"
+      @confirm="ejecutarToggle"
+      @cancel="cancelarToggle"
+    />
+
+    <AppToast
+      :visible="toast.visible"
+      :type="toast.type"
+      :title="toast.title"
+      :message="toast.message"
+      @close="toast.visible = false"
+    />
+
   </section>
 </template>
 
@@ -261,12 +277,17 @@
 import HeaderBar from '@/components/HeaderBar.vue'
 import servicioService from '@/services/servicioService'
 import ServicioForm from '@/components/ServicioForm.vue'
+import AppConfirmModal from '@/components/AppConfirmModal.vue'
+import AppToast from '@/components/AppToast.vue'
+import { useNotificacionesStore } from '@/stores/notificacionesStore'
 
 export default {
 
   components: {
     HeaderBar,
-    ServicioForm
+    ServicioForm,
+    AppConfirmModal,
+    AppToast
   },
 
   inject: {
@@ -283,7 +304,11 @@ export default {
 
       servicioEditar: null,
 
-      tabActiva: 'todos'
+      tabActiva: 'todos',
+
+      confirmModal: { visible: false, titulo: '', mensaje: '', servicio: null },
+
+      toast: { visible: false, type: 'info', title: '', message: '' }
 
     }
 
@@ -350,51 +375,46 @@ export default {
       this.recargar()
     },
 
-    async toggleEstado(s) {
+    mostrarToast(type, title, message) {
+      this.toast = { visible: true, type, title, message }
+      setTimeout(() => { this.toast.visible = false }, 3000)
+    },
 
-      try {
-
-        const nuevoEstado =
-          s.estado === "activo"
-            ? "desactivar"
-            : "activar"
-
-        const ok = confirm(
-          `¿Deseas ${nuevoEstado} este servicio?`
-        )
-
-        if (!ok) return
-
-        if (s.estado === "activo") {
-
-          await servicioService.deshabilitar(
-            s.idServicio
-          )
-
-        } else {
-
-          await servicioService.activar(
-            s.idServicio
-          )
-
-        }
-
-        alert(
-          `✅ Servicio actualizado correctamente`
-        )
-
-        this.recargar()
-
-      } catch (error) {
-
-        console.error(error)
-
-        alert(
-          "❌ Error al cambiar el estado"
-        )
-
+    toggleEstado(s) {
+      const accion = s.estado === 'activo' ? 'Desactivar' : 'Activar'
+      this.confirmModal = {
+        visible: true,
+        titulo: `${accion} servicio`,
+        mensaje: `¿${accion} "${s.nombreServicio}"?`,
+        servicio: s
       }
+    },
 
+    cancelarToggle() {
+      this.confirmModal.visible = false
+      this.recargar() // restaura el switch a su posición real
+    },
+
+    async ejecutarToggle() {
+      const s = this.confirmModal.servicio
+      try {
+        if (s.estado === 'activo') {
+          await servicioService.deshabilitar(s.idServicio)
+          useNotificacionesStore().agregar('warning', 'Servicio desactivado', `"${s.nombreServicio}" fue desactivado`)
+          this.mostrarToast('success', 'Servicio desactivado', `"${s.nombreServicio}" ya no está disponible.`)
+        } else {
+          await servicioService.activar(s.idServicio)
+          useNotificacionesStore().agregar('success', 'Servicio activado', `"${s.nombreServicio}" está activo nuevamente`)
+          this.mostrarToast('success', 'Servicio activado', `"${s.nombreServicio}" está disponible.`)
+        }
+        this.recargar()
+      } catch (error) {
+        console.error(error)
+        this.mostrarToast('error', 'Error', 'No se pudo cambiar el estado del servicio.')
+        this.recargar()
+      } finally {
+        this.confirmModal.visible = false
+      }
     }
 
   },
@@ -527,51 +547,50 @@ export default {
 /* TABLA */
 
 .tabla-wrapper {
-
-  background: white;
-
-  border-radius: 24px;
-
-  overflow: hidden;
-
-  border: 1px solid #eaecf0;
-
+  width: 100%;
+  background: #ffffff;
+  border-radius: 18px;
+  overflow-x: auto;
+  border: 1px solid #d9e8db;
   box-shadow:
-    0 4px 20px rgba(0,0,0,0.04);
+    0 2px 8px rgba(1, 68, 33, 0.06),
+    0 1px 2px rgba(1, 68, 33, 0.04);
 }
 
 .tabla-servicios {
-
   width: 100%;
-
+  min-width: 760px;
   border-collapse: collapse;
 }
 
 .tabla-servicios thead {
-
-  background: #f9fafb;
+  background: #f0f7f1;
 }
 
 .tabla-servicios th {
-
   text-align: left;
-
-  padding: 18px 24px;
-
-  color: #667085;
-
-  font-size: 14px;
-
-  font-weight: 600;
+  padding: 14px 20px;
+  color: #4a7c59;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.3px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  border-bottom: 1px solid #e8f0e9;
 }
 
 .tabla-servicios td {
-
-  padding: 20px 24px;
-
-  border-top: 1px solid #f2f4f7;
-
+  padding: 16px 20px;
+  border-top: 1px solid #edf2ee;
   vertical-align: middle;
+}
+
+.tabla-servicios tbody tr {
+  transition: background 0.15s ease;
+}
+
+.tabla-servicios tbody tr:hover {
+  background: #f6fbf7;
 }
 
 .filaInactiva {
@@ -867,21 +886,39 @@ export default {
 
 /* MOBILE */
 
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
 
-  .tabla-wrapper {
-
-    overflow-x: auto;
+  .page-header h1 {
+    font-size: 32px;
   }
 
-  .tabla-servicios {
+}
 
-    min-width: 900px;
+@media (max-width: 640px) {
+
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .page-header h1 {
+    font-size: 28px;
+  }
 
-    font-size: 32px;
+  .tabs-bar {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .servicio-avatar {
+    width: 44px;
+    height: 44px;
+    font-size: 18px;
+    border-radius: 12px;
+  }
+
+  .empty {
+    padding: 48px 20px;
   }
 
 }

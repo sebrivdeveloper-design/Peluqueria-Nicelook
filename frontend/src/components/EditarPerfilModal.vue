@@ -24,6 +24,7 @@
           id="ep-nombre"
           v-model="form.nombreCompleto"
           type="text"
+          maxlength="100"
           placeholder="Tu nombre completo"
           @keydown.enter="guardar"
         />
@@ -36,6 +37,7 @@
           id="ep-telefono"
           v-model="form.telefono"
           type="tel"
+          maxlength="20"
           placeholder="Ej. 3001234567"
           @keydown.enter="guardar"
         />
@@ -101,20 +103,32 @@ export default {
     },
 
     async guardar() {
-      if (!this.form.nombreCompleto.trim()) {
+      const nombre = this.form.nombreCompleto.trim()
+      const telefono = this.form.telefono.trim()
+
+      if (!nombre) {
         this.mostrarToast('warning', 'Campo requerido', 'El nombre no puede estar vacío.')
         return
       }
+      if (nombre.length > 100) {
+        this.mostrarToast('warning', 'Nombre muy largo', 'Máximo 100 caracteres.')
+        return
+      }
+      if (telefono && !/^[0-9+\s-]{7,20}$/.test(telefono)) {
+        this.mostrarToast('warning', 'Teléfono inválido', 'Solo números, espacios, + o - (7 a 20 caracteres).')
+        return
+      }
+
       this.guardando = true
       try {
-        await this.store.actualizarPerfil({
-          nombreCompleto: this.form.nombreCompleto.trim(),
-          telefono: this.form.telefono.trim()
-        })
+        await this.store.actualizarPerfil({ nombreCompleto: nombre, telefono })
         this.mostrarToast('success', 'Perfil actualizado', 'Tus datos fueron guardados.')
         setTimeout(() => this.$emit('cerrar'), 900)
       } catch (e) {
-        this.mostrarToast('error', 'Error', 'No se pudo actualizar el perfil.')
+        const msg = typeof e.response?.data === 'string'
+          ? e.response.data
+          : 'No se pudo actualizar el perfil. Intenta de nuevo.'
+        this.mostrarToast('error', 'Error al guardar', msg)
       } finally {
         this.guardando = false
       }

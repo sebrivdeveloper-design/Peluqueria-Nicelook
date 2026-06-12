@@ -18,6 +18,13 @@ export const useUsuarioStore = defineStore('usuario', () => {
     } catch (e) {
       console.error('Error al decodificar JWT', e)
     }
+    // El JWT puede tener el nombre desactualizado si el perfil fue editado:
+    // refrescar con los datos reales del servidor.
+    api.get('/usuarios/me')
+      .then(res => {
+        if (res.data?.nombreCompleto) nombreCompleto.value = res.data.nombreCompleto
+      })
+      .catch(() => {})
   }
 
   async function actualizarPerfil(data) {
