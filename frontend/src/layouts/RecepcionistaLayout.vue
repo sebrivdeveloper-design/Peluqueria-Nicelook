@@ -12,14 +12,47 @@
           <p>Gestión de clientes, agenda y disponibilidad</p>
         </div>
 
-        <div class="user-box">
-          <div class="avatar">
-            {{ inicial }}
+        <div class="topbar-right">
+
+          <!-- NOTIFICACIONES -->
+          <div class="notif-wrap" @click.stop>
+            <button class="notif-btn" @click="togglePanel" title="Notificaciones">
+              <Bell :size="18" />
+              <span v-if="noLeidas > 0" class="notif-badge">{{ noLeidas > 9 ? '9+' : noLeidas }}</span>
+            </button>
+            <transition name="panel-drop">
+              <div v-if="panelNotifAbierto" class="notif-panel">
+                <div class="notif-panel-head">
+                  <span class="notif-panel-title">Notificaciones</span>
+                </div>
+                <p v-if="listaNotif.length === 0" class="notif-empty">Sin notificaciones recientes</p>
+                <ul v-else class="notif-list">
+                  <li
+                    v-for="n in listaNotif"
+                    :key="n.id"
+                    class="notif-item"
+                    :class="[`notif-tipo-${n.tipo}`, { nueva: !n.leida }]"
+                  >
+                    <span class="notif-acento"></span>
+                    <div class="notif-body">
+                      <p class="notif-titulo">{{ n.titulo }}</p>
+                      <p class="notif-msg">{{ n.mensaje }}</p>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            </transition>
           </div>
 
-          <div class="user-info">
-            <h4>Recepcionista</h4>
-            <span>{{ correo }}</span>
+          <div class="user-box">
+            <div class="avatar">
+              {{ inicial }}
+            </div>
+
+            <div class="user-info">
+              <h4>Recepcionista</h4>
+              <span>{{ correo }}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -35,12 +68,21 @@
 
 <script>
 import Sidebar from '@/components/Sidebar.vue'
+import { Bell } from 'lucide-vue-next'
+import { useNotificacionesStore } from '@/stores/notificacionesStore'
 
 export default {
   name: 'RecepcionistaLayout',
 
   components: {
-    Sidebar
+    Sidebar,
+    Bell
+  },
+
+  data() {
+    return {
+      panelNotifAbierto: false
+    }
   },
 
   computed: {
@@ -59,7 +101,27 @@ export default {
 
     inicial() {
       return this.correo.charAt(0).toUpperCase()
-    }
+    },
+
+    listaNotif() { return useNotificacionesStore().lista },
+    noLeidas()   { return useNotificacionesStore().noLeidas }
+  },
+
+  mounted() {
+    document.addEventListener('click', this.cerrarPanel)
+    useNotificacionesStore().cargar()
+  },
+
+  beforeUnmount() {
+    document.removeEventListener('click', this.cerrarPanel)
+  },
+
+  methods: {
+    togglePanel() {
+      this.panelNotifAbierto = !this.panelNotifAbierto
+      if (this.panelNotifAbierto) useNotificacionesStore().marcarTodasLeidas()
+    },
+    cerrarPanel() { this.panelNotifAbierto = false }
   }
 }
 </script>
@@ -105,6 +167,140 @@ export default {
   color: #687076;
   font-size: 14px;
 }
+
+/* TOPBAR RIGHT + NOTIFICACIONES */
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.notif-wrap {
+  position: relative;
+}
+
+.notif-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid #e8ece9;
+  background: #f7f8f7;
+  color: #4f5d52;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.18s ease;
+}
+
+.notif-btn:hover {
+  background: #ffffff;
+  color: #014421;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.notif-badge {
+  position: absolute;
+  top: 6px;
+  right: 5px;
+  min-width: 17px;
+  height: 17px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 0 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #ffffff;
+  line-height: 1;
+}
+
+.notif-panel {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  width: 310px;
+  background: #ffffff;
+  border: 1px solid #d9e8db;
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(1, 68, 33, 0.13);
+  z-index: 300;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.notif-panel-head {
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid #edf2ee;
+}
+
+.notif-panel-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0d2117;
+}
+
+.notif-empty {
+  padding: 28px 16px;
+  text-align: center;
+  font-size: 13px;
+  color: #8fa895;
+  margin: 0;
+}
+
+.notif-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.notif-item {
+  display: flex;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid #edf2ee;
+}
+
+.notif-item:last-child { border-bottom: none; }
+.notif-item.nueva { background: #f6fbf7; }
+
+.notif-acento {
+  width: 3px;
+  border-radius: 2px;
+  flex-shrink: 0;
+  align-self: stretch;
+  min-height: 32px;
+  background: #014421;
+}
+
+.notif-tipo-warning .notif-acento { background: #b45309; }
+.notif-tipo-error   .notif-acento { background: #b42318; }
+
+.notif-body { flex: 1; min-width: 0; }
+
+.notif-titulo {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0d2117;
+  margin: 0 0 2px;
+}
+
+.notif-msg {
+  font-size: 12px;
+  color: #56675a;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.panel-drop-enter-active { transition: opacity 0.18s ease, transform 0.18s ease; }
+.panel-drop-leave-active { transition: opacity 0.14s ease, transform 0.14s ease; }
+.panel-drop-enter-from,
+.panel-drop-leave-to { opacity: 0; transform: translateY(-6px); }
 
 /* USER BOX */
 

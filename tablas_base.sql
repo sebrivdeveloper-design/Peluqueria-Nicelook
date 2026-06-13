@@ -85,7 +85,7 @@ CREATE TABLE cita (
   hora_inicio TIME NOT NULL,
   hora_fin TIME NOT NULL,
   estado_cita TEXT DEFAULT 'pendiente'
-    CHECK (estado_cita IN ('pendiente','confirmada','cancelada','completada','no_asistio')),
+    CHECK (estado_cita IN ('pendiente','confirmada','cancelada','completada','no_asistio','finalizada')),
   observaciones TEXT,
   fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (id_cliente) REFERENCES cliente(id_cliente),
@@ -136,7 +136,7 @@ CREATE TABLE pago (
   metodo_pago TEXT CHECK (metodo_pago IN ('efectivo','tarjeta','transferencia','billetera_digital')),
   referencia VARCHAR(100),
   estado_pago TEXT DEFAULT 'pendiente'
-    CHECK (estado_pago IN ('pendiente','pagado','anulado','reembolsado')),
+    CHECK (estado_pago IN ('pendiente','pagado','anulado','reembolsado','completado')),
   fecha_pago TIMESTAMP,
   FOREIGN KEY (id_cita) REFERENCES cita(id_cita) ON DELETE CASCADE
 );

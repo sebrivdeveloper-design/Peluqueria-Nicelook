@@ -11,20 +11,22 @@
       </div>
 
       <div class="form-group">
-        <label for="nombre">Nombre</label>
+        <label for="nombre">Nombre <small class="contador">{{ categoria.nombreCategoria.length }}/20</small></label>
         <input
           id="nombre"
           v-model="categoria.nombreCategoria"
           type="text"
+          maxlength="20"
           placeholder="Ej. Barbería"
         />
       </div>
 
       <div class="form-group">
-        <label for="descripcion">Descripción</label>
+        <label for="descripcion">Descripción <small class="contador">{{ categoria.descripcion.length }}/150</small></label>
         <textarea
           id="descripcion"
           v-model="categoria.descripcion"
+          maxlength="150"
           placeholder="Describe brevemente esta categoría"
           rows="4"
         ></textarea>
@@ -95,8 +97,8 @@ export default {
           return
         }
 
-        if (this.categoria.nombreCategoria.length > 255) {
-          this.mostrarToast('warning', 'Nombre inválido', 'Máximo 255 caracteres en el nombre.')
+        if (this.categoria.nombreCategoria.length > 20) {
+          this.mostrarToast('warning', 'Nombre inválido', 'Máximo 20 caracteres en el nombre.')
           return
         }
 
@@ -105,8 +107,8 @@ export default {
           return
         }
 
-        if (this.categoria.descripcion.length > 255) {
-          this.mostrarToast('warning', 'Descripción inválida', 'Máximo 255 caracteres en la descripción.')
+        if (this.categoria.descripcion.length > 150) {
+          this.mostrarToast('warning', 'Descripción inválida', 'Máximo 150 caracteres en la descripción.')
           return
         }
 
@@ -187,6 +189,15 @@ export default {
   font-size: 14px;
   font-weight: 600;
   color: #1d3524;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.contador {
+  font-size: 11px;
+  color: #90a08f;
+  font-weight: 500;
 }
 
 .form-group input,

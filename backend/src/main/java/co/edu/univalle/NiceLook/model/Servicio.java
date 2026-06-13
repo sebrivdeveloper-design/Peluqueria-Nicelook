@@ -56,4 +56,10 @@ public class Servicio {
 
     @Column(name = "estado", nullable = false)
     private String estado = "activo";
+
+    // % del precio que recibe el empleado por realizar el servicio (HU-29).
+    // Nullable a nivel de BD para no romper filas existentes al evolucionar el esquema;
+    // el default 50 se aplica en la capa Java para registros nuevos.
+    @Column(name = "porcentaje_empleado")
+    private Integer porcentajeEmpleado = 50;
 }

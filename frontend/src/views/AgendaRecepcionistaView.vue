@@ -26,6 +26,52 @@
 
     </div>
 
+    <!-- ═══ CITAS DEL DÍA (todos los barberos) ═══ -->
+    <div class="dia-card">
+
+      <div class="dia-header">
+        <h2>Citas del día</h2>
+        <input
+          type="date"
+          v-model="fechaDia"
+          class="dia-fecha"
+          @change="cargarCitasDia"
+        />
+      </div>
+
+      <div v-if="citasDia.length === 0" class="dia-vacio">
+        No hay citas registradas para este día.
+      </div>
+
+      <div v-else class="dia-tabla-wrap">
+        <table class="dia-tabla">
+          <thead>
+            <tr>
+              <th>Horario</th>
+              <th>Cliente</th>
+              <th>Servicio</th>
+              <th>Estilista</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="c in citasDia" :key="c.idCita">
+              <td class="dia-hora">{{ horaCorta(c.horaInicio) }} – {{ horaCorta(c.horaFin) }}</td>
+              <td class="dia-cliente">{{ c.cliente }}</td>
+              <td>{{ c.servicio }}</td>
+              <td>{{ c.empleado }}</td>
+              <td>
+                <span class="estado-badge" :class="`estado-${c.estadoCita}`">
+                  {{ etiquetaEstado(c.estadoCita) }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+
     <!-- CALENDARIO -->
     <AgendaCalendar
       :eventos="eventos"
@@ -236,6 +282,9 @@ export default {
 
       cancelando: false,
 
+      fechaDia: new Date().toISOString().split('T')[0],
+      citasDia: [],
+
       toast: { visible: false, type: 'info', title: '', message: '' }
     }
   },
@@ -243,10 +292,11 @@ export default {
   computed: {
 
     empleadosOpts() {
-      return this.empleados.map(e => ({
+      const opts = this.empleados.map(e => ({
         value: e.idEmpleado,
         label: e.usuario?.nombreCompleto || 'Sin nombre'
       }))
+      return [{ value: 'todos', label: '👥 Todos los estilistas' }, ...opts]
     },
 
     clientesOpts() {
@@ -309,6 +359,7 @@ export default {
     this.cargarEmpleados()
     this.cargarClientes()
     this.cargarServicios()
+    this.cargarCitasDia()
   },
 
   methods: {
@@ -335,10 +386,36 @@ export default {
       })
     },
 
+    horaCorta(hora) {
+      if (!hora) return ''
+      const [h, m] = String(hora).split(':').map(Number)
+      const d = new Date()
+      d.setHours(h, m)
+      return d.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', hour12: true })
+    },
+
+    etiquetaEstado(estado) {
+      const map = {
+        pendiente: 'Programada',
+        confirmada: 'Confirmada',
+        finalizada: 'Finalizada'
+      }
+      return map[estado] || estado
+    },
+
+    async cargarCitasDia() {
+      try {
+        const res = await api.get('/citas/dia', { params: { fecha: this.fechaDia } })
+        this.citasDia = res.data
+      } catch (e) {
+        console.error(e)
+      }
+    },
+
     async cargarEmpleados() {
       try {
         const res = await api.get('/empleados')
-        this.empleados = res.data
+        this.empleados = res.data.filter(e => e.estadoLaboral !== 'inactivo')
       } catch (e) { console.error(e) }
     },
 
@@ -356,6 +433,35 @@ export default {
       } catch (e) { console.error(e) }
     },
 
+    mapearBloque(b, idEmpleado, nombreEmpleado) {
+      const esTodos = this.idEmpleado === 'todos'
+      const prefijo = esTodos && nombreEmpleado ? `${nombreEmpleado.split(' ')[0]} · ` : ''
+      let className = 'evento-disponible'
+      if (b.estado === 'ocupado') {
+        className = b.estadoCita === 'finalizada' ? 'evento-finalizado' : 'evento-ocupado'
+      }
+      return {
+        id: `${idEmpleado}-${b.idDisponibilidad}`,
+        title: b.estado === 'ocupado'
+          ? `${prefijo}${b.cliente} · ${b.servicio}`
+          : `${prefijo}Disponible`,
+        start: `${b.fecha}T${b.horaInicio}`,
+        end:   `${b.fecha}T${b.horaFin}`,
+        className,
+        extendedProps: {
+          estado: b.estado,
+          estadoCita: b.estadoCita,
+          idDisponibilidad: b.idDisponibilidad,
+          idEmpleado,
+          idCita: b.idCita,
+          cliente: b.cliente,
+          servicio: b.servicio,
+          horaInicio: b.horaInicio,
+          horaFin: b.horaFin
+        }
+      }
+    },
+
     async cargarAgenda() {
       if (!this.idEmpleado) return
       try {
@@ -363,27 +469,27 @@ export default {
         const anio = hoy.getFullYear()
         const mes = String(hoy.getMonth() + 1).padStart(2, '0')
 
+        if (this.idEmpleado === 'todos') {
+          // Disponibilidad de TODOS los barberos en paralelo (HU-9)
+          const resultados = await Promise.all(
+            this.empleados.map(e =>
+              api.get(`/disponibilidad/${e.idEmpleado}`, { params: { mes, anio } })
+                .then(r => ({ emp: e, data: r.data }))
+                .catch(() => ({ emp: e, data: [] }))
+            )
+          )
+          this.eventos = resultados.flatMap(({ emp, data }) =>
+            data.map(b => this.mapearBloque(b, emp.idEmpleado, emp.usuario?.nombreCompleto))
+          )
+          return
+        }
+
         const res = await api.get(
           `/disponibilidad/${this.idEmpleado}`,
           { params: { mes, anio } }
         )
 
-        this.eventos = res.data.map(b => ({
-          id: b.idDisponibilidad,
-          title: b.estado === 'ocupado' ? `${b.cliente} · ${b.servicio}` : 'Disponible',
-          start: `${b.fecha}T${b.horaInicio}`,
-          end:   `${b.fecha}T${b.horaFin}`,
-          className: b.estado === 'ocupado' ? 'evento-ocupado' : 'evento-disponible',
-          extendedProps: {
-            estado: b.estado,
-            idDisponibilidad: b.idDisponibilidad,
-            idCita: b.idCita,
-            cliente: b.cliente,
-            servicio: b.servicio,
-            horaInicio: b.horaInicio,
-            horaFin: b.horaFin
-          }
-        }))
+        this.eventos = res.data.map(b => this.mapearBloque(b, this.idEmpleado, null))
       } catch (e) { console.error(e) }
     },
 
@@ -439,7 +545,7 @@ export default {
 
         await api.post('/citas', {
           idCliente:        this.form.idCliente,
-          idEmpleado:       this.idEmpleado,
+          idEmpleado:       this.bloqueSeleccionado.extendedProps.idEmpleado || this.idEmpleado,
           idServicio:       this.form.idServicio,
           idDisponibilidad: this.bloqueSeleccionado.extendedProps.idDisponibilidad,
           fecha,
@@ -451,6 +557,7 @@ export default {
         this.mostrarToast('success', 'Cita agendada', 'La cita quedó registrada. El resto del horario sigue disponible.')
         this.cerrarModal()
         await this.cargarAgenda()
+        await this.cargarCitasDia()
 
       } catch (error) {
         console.error(error)
@@ -473,6 +580,7 @@ export default {
         this.mostrarToast('success', 'Cita cancelada', 'El horario volvió a estar disponible.')
         this.cerrarDetalle()
         await this.cargarAgenda()
+        await this.cargarCitasDia()
       } catch (error) {
         console.error(error)
         const msg = typeof error.response?.data === 'string'
@@ -539,6 +647,120 @@ export default {
   text-transform: uppercase;
   letter-spacing: 0.8px;
 }
+
+/* =========================
+   CITAS DEL DÍA
+========================= */
+
+.dia-card {
+  background: #ffffff;
+  border: 1px solid #d9e8db;
+  border-radius: 18px;
+  padding: 22px 24px;
+  box-shadow: 0 2px 8px rgba(1, 68, 33, 0.06);
+}
+
+.dia-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.dia-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #173221;
+}
+
+.dia-fecha {
+  padding: 10px 14px;
+  border: 1px solid #d7e2da;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  color: #173221;
+  background: #ffffff;
+  outline: none;
+  cursor: pointer;
+}
+
+.dia-fecha:focus {
+  border-color: #004518;
+  box-shadow: 0 0 0 4px rgba(0, 69, 24, 0.08);
+}
+
+.dia-vacio {
+  padding: 28px;
+  text-align: center;
+  color: #8a9b8f;
+  font-style: italic;
+  font-size: 14px;
+  background: #f9fcf8;
+  border: 1px dashed #d9e8db;
+  border-radius: 12px;
+}
+
+.dia-tabla-wrap {
+  overflow-x: auto;
+}
+
+.dia-tabla {
+  width: 100%;
+  min-width: 640px;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  color: #173221;
+}
+
+.dia-tabla th {
+  background: #f0f7f1;
+  color: #4a7c59;
+  padding: 10px 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 1.3px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.dia-tabla td {
+  padding: 12px 14px;
+  border-top: 1px solid #edf2ee;
+}
+
+.dia-tabla tbody tr:hover {
+  background: #f6fbf7;
+}
+
+.dia-hora {
+  font-weight: 700;
+  color: #014421;
+  white-space: nowrap;
+}
+
+.dia-cliente {
+  font-weight: 600;
+}
+
+.estado-badge {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.estado-pendiente  { background: #fdf5e6; color: #8a5a0a; border: 1px solid #f0d895; }
+.estado-confirmada { background: #e7f4ea; color: #1d7a3a; border: 1px solid #bfe3c8; }
+.estado-finalizada { background: #eef1ef; color: #5f6f66; border: 1px solid #d7e0d9; }
 
 /* =========================
    MODAL OVERLAY

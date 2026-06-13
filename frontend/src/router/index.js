@@ -30,6 +30,7 @@ const routes = [
   {
     path: '/admin',
     component: AdminLayout,
+    meta: { roles: ['ADMIN'] },
     children: [
       {
         path: '',
@@ -56,6 +57,16 @@ const routes = [
         path: 'servicios/:id', // Simplificado para que sea relativo al padre /admin
         name: 'ServicioDetalle',
         component: () => import('@/views/ServicioDetalleView.vue')
+      },
+      {
+        path: 'pagos-empleados',
+        name: 'PagoEmpleados',
+        component: () => import('@/views/PagoEmpleadosView.vue')
+      },
+      {
+        path: 'reportes',
+        name: 'Reportes',
+        component: () => import('@/views/ReportesView.vue')
       }
     ]
   },
@@ -77,6 +88,10 @@ const routes = [
       path: 'servicios/:id',
       name: 'ServicioDetalleCliente',
       component: () => import('@/views/ServicioDetalleView.vue')
+    }, {
+      path: 'mis-citas',
+      name: 'MisCitas',
+      component: () => import('@/views/MisCitasView.vue')
     }
     ]
   },
@@ -85,6 +100,7 @@ const routes = [
   {
     path: '/recepcionista',
     component: RecepcionistaLayout,
+    meta: { roles: ['RECEPCIONISTA', 'ADMIN'] },
     children: [
       {
         path: '',
@@ -99,10 +115,17 @@ const routes = [
         path: 'agenda',
         name: 'AgendaRecepcionista',
         component: AgendaRecepcionistaView
+      },
+      {
+        path: 'caja',
+        name: 'Caja',
+        component: () => import('@/views/CajaView.vue')
+      },
+      {
+        path: 'pagos',
+        name: 'Pagos',
+        component: () => import('@/views/PagosView.vue')
       }
-      // Aquí podrás añadir las demás cuando las crees:
-      // { path: 'disponibilidad', component: DisponibilidadView },
-      // { path: 'agenda', component: AgendaView }
     ]
   },
 
@@ -110,6 +133,7 @@ const routes = [
 {
   path: '/empleado',
   component: EmpleadoLayout,
+  meta: { roles: ['EMPLEADO', 'ADMIN'] },
   children: [
     {
       path: '',
@@ -129,11 +153,33 @@ const router = createRouter({
   routes
 })
 
+function rolDelToken(token) {
+  try {
+    return JSON.parse(atob(token.split('.')[1])).rol || null
+  } catch {
+    return null
+  }
+}
+
+function homeDeRol(rol) {
+  const homes = {
+    ADMIN: '/admin',
+    RECEPCIONISTA: '/recepcionista',
+    EMPLEADO: '/empleado',
+    CLIENTE: '/cliente/servicios'
+  }
+  return homes[rol] || '/'
+}
+
 router.beforeEach((to) => {
   const token = localStorage.getItem("token");
 
-  // 🟢 RUTAS PÚBLICAS (cliente)
+  // 🟢 RUTAS PÚBLICAS (catálogo del cliente)
   if (to.path.startsWith("/cliente")) {
+    // Mis citas sí requiere sesión
+    if (to.path.startsWith("/cliente/mis-citas") && !token) {
+      return "/cliente/servicios";
+    }
     return;
   }
 
@@ -142,9 +188,22 @@ router.beforeEach((to) => {
     return;
   }
 
-  // 🔴 PROTEGIDAS
+  // 🔴 PROTEGIDAS: requiere token
   if (!token) {
     return "/";
+  }
+
+  // 🔴 VALIDACIÓN DE ROL: si la ruta exige roles, el rol del JWT debe estar incluido
+  const rolesRuta = to.matched
+    .map(r => r.meta?.roles)
+    .find(r => Array.isArray(r));
+
+  if (rolesRuta) {
+    const rol = rolDelToken(token);
+    if (!rol) return "/";
+    if (!rolesRuta.includes(rol)) {
+      return homeDeRol(rol);
+    }
   }
 });
 

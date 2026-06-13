@@ -168,15 +168,11 @@ onMounted(() => {
 
   localStorage.removeItem("token");
 
-  if (!window.googleInitialized) {
-
+  // Inicializar siempre: otras vistas (reserva del cliente) registran su propio callback
   google.accounts.id.initialize({
     client_id: CLIENT_ID,
     callback: handleCredentialResponse
   })
-
-  window.googleInitialized = true
-}
 
   google.accounts.id.renderButton(
     document.querySelector(".g_id_signin"),

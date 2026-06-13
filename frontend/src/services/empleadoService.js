@@ -8,3 +8,9 @@ export const editarEmpleado = (id, data) =>
 
 export const getEmpleados = () =>
   api.get('/empleados')
+
+export const desactivarEmpleado = (id) =>
+  api.put(`/empleados/${id}/desactivar`)
+
+export const activarEmpleado = (id) =>
+  api.put(`/empleados/${id}/activar`)

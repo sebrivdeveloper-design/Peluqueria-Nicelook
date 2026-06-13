@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -108,6 +109,8 @@ public class DisponibilidadController {
                                     .getNombreServicio());
 
                     dto.setIdCita(cita.getIdCita());
+
+                    dto.setEstadoCita(cita.getEstadoCita());
                 }
             }
 
@@ -239,10 +242,63 @@ public class DisponibilidadController {
             bloque.setHoraFinBloque(
                     LocalTime.parse(dto.getHoraFinBloque()));
 
+            // Permitir alternar disponible/bloqueado (HU-40), nunca tocar 'ocupado'
+            if (dto.getEstadoBloque() != null
+                    && !"ocupado".equalsIgnoreCase(bloque.getEstadoBloque())
+                    && ("disponible".equalsIgnoreCase(dto.getEstadoBloque())
+                        || "bloqueado".equalsIgnoreCase(dto.getEstadoBloque()))) {
+                bloque.setEstadoBloque(dto.getEstadoBloque().toLowerCase());
+            }
+
             disponibilidadRepository.save(bloque);
 
             return ResponseEntity.ok(
                     "Horario actualizado correctamente");
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(e.getMessage());
+        }
+    }
+
+    // DELETE eliminar bloque de disponibilidad (solo si no tiene citas)
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> eliminarDisponibilidad(@PathVariable Integer id) {
+
+        try {
+
+            Disponibilidad bloque = disponibilidadRepository.findById(id)
+                    .orElse(null);
+
+            if (bloque == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            if ("ocupado".equalsIgnoreCase(bloque.getEstadoBloque())) {
+                return ResponseEntity
+                        .badRequest()
+                        .body("Este horario tiene una cita reservada. Comunícate con recepción para cancelarla primero.");
+            }
+
+            boolean tieneCitas = citaRepository.existeCitaEnBloque(
+                    bloque.getEmpleado().getIdEmpleado(),
+                    bloque.getFecha(),
+                    bloque.getHoraInicioBloque(),
+                    bloque.getHoraFinBloque());
+
+            if (tieneCitas) {
+                return ResponseEntity
+                        .badRequest()
+                        .body("Hay clientes agendados en este horario, no se puede eliminar.");
+            }
+
+            disponibilidadRepository.delete(bloque);
+
+            return ResponseEntity.ok("Horario eliminado correctamente.");
 
         } catch (Exception e) {
 

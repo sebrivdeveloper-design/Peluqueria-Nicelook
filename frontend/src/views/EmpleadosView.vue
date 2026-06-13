@@ -21,12 +21,13 @@
               <th>Documento</th>
               <th>Especialidad</th>
               <th>Salario</th>
+              <th>Estado</th>
               <th>Acciones</th>
             </tr>
           </thead>
 
           <tbody>
-            <tr v-for="emp in filtrados" :key="emp.idEmpleado">
+            <tr v-for="emp in filtrados" :key="emp.idEmpleado" :class="{ 'fila-inactiva': emp.estadoLaboral === 'inactivo' }">
               <td class="empleado-cell">
                 <div class="avatar">
                   {{ obtenerInicial(emp.usuario?.nombreCompleto) }}
@@ -46,14 +47,28 @@
               </td>
               <td class="salary">{{ formatearMoneda(emp.salario) }}</td>
               <td>
-                <button class="btn-editar" @click="abrirModalEditar(emp)">
-                  ✏️ Editar
-                </button>
+                <span class="estado-badge" :class="emp.estadoLaboral === 'inactivo' ? 'badge-inactivo' : 'badge-activo'">
+                  {{ emp.estadoLaboral === 'inactivo' ? 'Inactivo' : 'Activo' }}
+                </span>
+              </td>
+              <td>
+                <div class="acciones-cell">
+                  <button class="btn-editar" @click="abrirModalEditar(emp)">
+                    Editar
+                  </button>
+                  <button
+                    class="btn-estado"
+                    :class="emp.estadoLaboral === 'inactivo' ? 'activar' : 'desactivar'"
+                    @click="pedirToggleEstado(emp)"
+                  >
+                    {{ emp.estadoLaboral === 'inactivo' ? 'Activar' : 'Desactivar' }}
+                  </button>
+                </div>
               </td>
             </tr>
 
             <tr v-if="filtrados.length === 0">
-              <td colspan="6" class="empty-row">
+              <td colspan="7" class="empty-row">
                 No se encontraron empleados con esa búsqueda.
               </td>
             </tr>
@@ -69,6 +84,16 @@
       @actualizar="cargarEmpleados"
     />
 
+    <AppConfirmModal
+      :visible="confirmEstado.visible"
+      :title="confirmEstado.emp?.estadoLaboral === 'inactivo' ? 'Activar empleado' : 'Desactivar empleado'"
+      :message="confirmEstado.emp?.estadoLaboral === 'inactivo'
+        ? `¿Reactivar a ${confirmEstado.emp?.usuario?.nombreCompleto}? Volverá a tener acceso al sistema.`
+        : `¿Desactivar a ${confirmEstado.emp?.usuario?.nombreCompleto}? No podrá iniciar sesión y dejará de aparecer para agendar citas.`"
+      @confirm="ejecutarToggleEstado"
+      @cancel="confirmEstado = { visible: false, emp: null }"
+    />
+
     <AppToast
       :visible="toast.visible"
       :type="toast.type"
@@ -81,15 +106,18 @@
 
 <script>
 import HeaderBar from '../components/HeaderBar.vue'
-import { getEmpleados } from '../services/empleadoService'
+import { getEmpleados, desactivarEmpleado, activarEmpleado } from '../services/empleadoService'
 import EmpleadoModal from '../components/EmpleadoModal.vue'
 import AppToast from '../components/AppToast.vue'
+import AppConfirmModal from '../components/AppConfirmModal.vue'
+import { useNotificacionesStore } from '../stores/notificacionesStore'
 
 export default {
   components: {
     EmpleadoModal,
     HeaderBar,
-    AppToast
+    AppToast,
+    AppConfirmModal
   },
 
   inject: {
@@ -101,6 +129,7 @@ export default {
       empleados: [],
       mostrarModal: false,
       empleadoSeleccionado: null,
+      confirmEstado: { visible: false, emp: null },
       toast: { visible: false, type: 'info', title: '', message: '' }
     }
   },
@@ -149,6 +178,39 @@ export default {
     cerrarModal() {
       this.mostrarModal = false
       this.empleadoSeleccionado = null
+    },
+
+    pedirToggleEstado(emp) {
+      this.confirmEstado = { visible: true, emp }
+    },
+
+    async ejecutarToggleEstado() {
+      const emp = this.confirmEstado.emp
+      this.confirmEstado = { visible: false, emp: null }
+      const desactivar = emp.estadoLaboral !== 'inactivo'
+      try {
+        if (desactivar) {
+          await desactivarEmpleado(emp.idEmpleado)
+        } else {
+          await activarEmpleado(emp.idEmpleado)
+        }
+        const nombre = emp.usuario?.nombreCompleto || 'Empleado'
+        this.mostrarToast(
+          'success',
+          desactivar ? 'Empleado desactivado' : 'Empleado activado',
+          `"${nombre}" quedó ${desactivar ? 'inactivo' : 'activo'}.`
+        )
+        useNotificacionesStore().agregar(
+          desactivar ? 'warning' : 'success',
+          desactivar ? 'Empleado desactivado' : 'Empleado activado',
+          nombre
+        )
+        await this.cargarEmpleados()
+      } catch (error) {
+        const msg = typeof error.response?.data === 'string'
+          ? error.response.data : 'No se pudo cambiar el estado del empleado.'
+        this.mostrarToast('error', 'Error', msg)
+      }
     },
 
     obtenerInicial(nombre) {
@@ -218,7 +280,7 @@ export default {
 .empleados-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 820px;
+  min-width: 940px;
 }
 
 .empleados-table thead {
@@ -322,6 +384,51 @@ export default {
   color: #ffffff;
   border-color: #004518;
 }
+
+.acciones-cell {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.btn-estado {
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.btn-estado.desactivar {
+  background: #fdecec;
+  color: #b42318;
+  border: 1px solid #f3c2bd;
+}
+.btn-estado.desactivar:hover { background: #fad6d3; }
+
+.btn-estado.activar {
+  background: #004518;
+  color: #ffffff;
+  border: 1px solid #004518;
+}
+.btn-estado.activar:hover { background: #1f6a34; }
+
+.estado-badge {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.badge-activo   { background: #e7f4ea; color: #1d7a3a; border: 1px solid #bfe3c8; }
+.badge-inactivo { background: #fdecec; color: #b42318; border: 1px solid #f3c2bd; }
+
+.fila-inactiva { opacity: 0.6; }
 
 .empty-row {
   text-align: center;

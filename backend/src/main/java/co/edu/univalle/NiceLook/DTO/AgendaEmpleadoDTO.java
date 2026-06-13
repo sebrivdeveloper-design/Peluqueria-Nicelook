@@ -30,6 +30,16 @@ public class AgendaEmpleadoDTO {
         this.idCita = idCita;
     }
 
+    private String estadoCita;
+
+    public String getEstadoCita() {
+        return estadoCita;
+    }
+
+    public void setEstadoCita(String estadoCita) {
+        this.estadoCita = estadoCita;
+    }
+
     public String getFecha() {
         return fecha;
     }

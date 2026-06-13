@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import co.edu.univalle.NiceLook.model.Servicio;
 import co.edu.univalle.NiceLook.repository.ServicioRepository;
 import co.edu.univalle.NiceLook.service.ServicioService;
+import co.edu.univalle.NiceLook.service.NotificacionService;
 import jakarta.validation.Valid;
 
 @RestController
@@ -30,6 +31,9 @@ public class ServicioController {
 
     @Autowired
     private ServicioService servicioService;
+
+    @Autowired
+    private NotificacionService notificacionService;
 
     //Método de busqueda del servicio
     @GetMapping("/buscar")
@@ -89,6 +93,9 @@ public class ServicioController {
     public ResponseEntity<?> deshabilitar(@PathVariable Integer id) {
         try {
             servicioService.deshabilitar(id);
+            servicioRepository.findById(id).ifPresent(s ->
+                notificacionService.notificarStaff("warning", "Servicio desactivado",
+                        "El servicio \"" + s.getNombreServicio() + "\" fue desactivado."));
             return ResponseEntity.ok("Servicio desactivado");
         } catch (Exception e) {
             return ResponseEntity.notFound().build();
@@ -99,6 +106,9 @@ public class ServicioController {
     public ResponseEntity<?> activar(@PathVariable Integer id) {
         try {
             servicioService.activar(id);
+            servicioRepository.findById(id).ifPresent(s ->
+                notificacionService.notificarStaff("success", "Servicio activado",
+                        "El servicio \"" + s.getNombreServicio() + "\" fue activado."));
             return ResponseEntity.ok("Servicio activado");
         } catch (Exception e) {
             return ResponseEntity.notFound().build();
@@ -108,16 +118,7 @@ public class ServicioController {
     @PutMapping("/{id}")
     public ResponseEntity<?> actualizar(@PathVariable Integer id, @Valid @RequestBody Servicio servicio) {
         try {
-            return servicioRepository.findById(id)
-                .map(s -> {
-                    s.setNombreServicio(servicio.getNombreServicio());
-                    s.setDescripcion(servicio.getDescripcion());
-                    s.setDuracion(servicio.getDuracion());
-                    s.setPrecio(servicio.getPrecio());
-                    s.setCategoria(servicio.getCategoria());
-                    return ResponseEntity.ok(servicioService.guardar(s));
-                })
-                .orElse(ResponseEntity.notFound().build());
+            return ResponseEntity.ok(servicioService.actualizar(id, servicio));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

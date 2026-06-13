@@ -91,4 +91,22 @@ public class EmpleadoService {
     public List<Empleado> listar() {
         return empleadoRepository.findAll();
     }
+
+    // Cambia el estado laboral del empleado y el estado del usuario (HU-16)
+    public Empleado cambiarEstado(Integer id, boolean activar) {
+
+        Empleado empleado = empleadoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Empleado no encontrado"));
+
+        String estado = activar ? "activo" : "inactivo";
+
+        empleado.setEstadoLaboral(estado);
+
+        if (empleado.getUsuario() != null) {
+            empleado.getUsuario().setEstado(estado);
+            usuarioRepository.save(empleado.getUsuario());
+        }
+
+        return empleadoRepository.save(empleado);
+    }
 }

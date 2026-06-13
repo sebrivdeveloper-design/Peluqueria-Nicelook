@@ -117,6 +117,7 @@ export default {
 
   mounted() {
     document.addEventListener('click', this.cerrarPanel)
+    useNotificacionesStore().cargar()
   },
 
   beforeUnmount() {

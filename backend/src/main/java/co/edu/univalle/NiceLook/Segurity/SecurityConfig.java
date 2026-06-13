@@ -45,16 +45,26 @@ public class SecurityConfig {
 
                 // PÚBLICOS
                 .requestMatchers("/auth/**").permitAll()
-                .requestMatchers("/api/servicios/**").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/servicios/**").permitAll()
                 .requestMatchers("/api/categorias/categoria/**").permitAll()
                 .requestMatchers("/api/citas/**").permitAll()
-                .requestMatchers("/api/empleados/**").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/empleados/**").permitAll()
+
+                // Mutaciones de empleados solo ADMIN (HU-15/16/37)
+                .requestMatchers("/api/empleados/**").hasRole("ADMIN")
+                // Crear/editar/desactivar servicios solo ADMIN
+                .requestMatchers("/api/servicios/**").hasRole("ADMIN")
 
                 // PROTEGIDOS
                 .requestMatchers("/api/usuarios/me").authenticated()
                 .requestMatchers("/api/categorias/**").hasRole("ADMIN")
                 .requestMatchers("/api/clientes/**").hasAnyRole("RECEPCIONISTA", "ADMIN")
                 .requestMatchers("/api/disponibilidad/**").hasAnyRole("EMPLEADO", "ADMIN", "RECEPCIONISTA")
+                .requestMatchers("/api/caja/**").hasAnyRole("RECEPCIONISTA", "ADMIN")
+                .requestMatchers("/api/pagos/**").hasAnyRole("RECEPCIONISTA", "ADMIN")
+                .requestMatchers("/api/pagos-empleados/**").hasRole("ADMIN")
+                .requestMatchers("/api/reportes/**").hasRole("ADMIN")
+                .requestMatchers("/api/notificaciones/**").hasAnyRole("ADMIN", "RECEPCIONISTA")
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

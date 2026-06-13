@@ -10,7 +10,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -46,11 +48,16 @@ public class ClienteController {
         List<ClienteDTO> dtos = clientes.stream().map(c -> {
             ClienteDTO dto = new ClienteDTO();
             dto.setIdCliente(c.getIdCliente());
+            dto.setGenero(c.getGenero());
+            dto.setFechaNacimiento(c.getFechaNacimiento() != null
+                    ? c.getFechaNacimiento().toString() : "");
+            dto.setObservaciones(c.getObservaciones());
             if (c.getUsuario() != null) {
                 dto.setDocumento(c.getUsuario().getDocumento());
                 dto.setNombreCompleto(c.getUsuario().getNombreCompleto());
                 dto.setTelefono(c.getUsuario().getTelefono());
                 dto.setCorreo(c.getUsuario().getCorreo());
+                dto.setEstado(c.getUsuario().getEstado());
             } else {
                 dto.setDocumento("S/D");
                 dto.setNombreCompleto("CLIENTE SIN USUARIO ASIGNADO");
@@ -101,5 +108,112 @@ public class ClienteController {
 
         return ResponseEntity.status(HttpStatus.CREATED)
             .body("Cliente registrado exitosamente.");
+    }
+
+    // PUT: editar datos de un cliente (HU-35)
+    @PutMapping("/{id}")
+    public ResponseEntity<?> editarCliente(
+            @PathVariable Integer id,
+            @RequestBody RegistroClienteDTO dto) {
+
+        try {
+
+            Cliente cliente = clienteRepository.findById(id).orElse(null);
+            if (cliente == null || cliente.getUsuario() == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            Usuario usuario = cliente.getUsuario();
+
+            // Validaciones de campos
+            if (dto.getNombreCompleto() == null || dto.getNombreCompleto().isBlank()) {
+                return ResponseEntity.badRequest().body("El nombre es obligatorio.");
+            }
+            if (dto.getNombreCompleto().length() > 100) {
+                return ResponseEntity.badRequest().body("El nombre no puede superar 100 caracteres.");
+            }
+            if (dto.getTelefono() == null || dto.getTelefono().isBlank()) {
+                return ResponseEntity.badRequest().body("El teléfono es obligatorio.");
+            }
+            if (!dto.getTelefono().matches("^[0-9]{1,12}$")) {
+                return ResponseEntity.badRequest().body("El teléfono debe ser numérico (máx. 12 dígitos).");
+            }
+            if (dto.getCorreo() == null || dto.getCorreo().isBlank()) {
+                return ResponseEntity.badRequest().body("El correo es obligatorio.");
+            }
+            if (dto.getCorreo().length() > 50) {
+                return ResponseEntity.badRequest().body("El correo no puede superar 50 caracteres.");
+            }
+
+            // Duplicados: el correo/teléfono no pueden pertenecer a OTRO usuario
+            var conCorreo = usuarioRepository.findByCorreo(dto.getCorreo());
+            if (conCorreo.isPresent() && !conCorreo.get().getIdUsuario().equals(usuario.getIdUsuario())) {
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                        .body("Ese correo ya pertenece a otro cliente.");
+            }
+
+            var conTelefono = usuarioRepository.findByTelefono(dto.getTelefono());
+            if (conTelefono.isPresent() && !conTelefono.get().getIdUsuario().equals(usuario.getIdUsuario())) {
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                        .body("Ese teléfono ya pertenece a otro cliente.");
+            }
+
+            usuario.setNombreCompleto(dto.getNombreCompleto().trim());
+            usuario.setTelefono(dto.getTelefono().trim());
+            usuario.setCorreo(dto.getCorreo().trim());
+            if (dto.getDocumento() != null && !dto.getDocumento().isBlank()) {
+                usuario.setDocumento(dto.getDocumento().trim());
+            }
+            usuarioRepository.save(usuario);
+
+            if (dto.getGenero() != null && !dto.getGenero().isBlank()) {
+                cliente.setGenero(dto.getGenero());
+            }
+            if (dto.getFechaNacimiento() != null && !dto.getFechaNacimiento().isBlank()) {
+                cliente.setFechaNacimiento(LocalDate.parse(dto.getFechaNacimiento()));
+            }
+            if (dto.getObservaciones() != null) {
+                cliente.setObservaciones(dto.getObservaciones());
+            }
+            clienteRepository.save(cliente);
+
+            return ResponseEntity.ok("Cliente actualizado exitosamente.");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("No se pudo actualizar el cliente: " + e.getMessage());
+        }
+    }
+
+    // PUT: desactivar cliente (HU-45) — se oculta de búsquedas activas y no puede iniciar sesión
+    @PutMapping("/{id}/desactivar")
+    public ResponseEntity<?> desactivarCliente(@PathVariable Integer id) {
+
+        Cliente cliente = clienteRepository.findById(id).orElse(null);
+        if (cliente == null || cliente.getUsuario() == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        cliente.getUsuario().setEstado("inactivo");
+        usuarioRepository.save(cliente.getUsuario());
+
+        return ResponseEntity.ok("Cliente desactivado. Su información e historial se conservan.");
+    }
+
+    // PUT: reactivar cliente
+    @PutMapping("/{id}/activar")
+    public ResponseEntity<?> activarCliente(@PathVariable Integer id) {
+
+        Cliente cliente = clienteRepository.findById(id).orElse(null);
+        if (cliente == null || cliente.getUsuario() == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        cliente.getUsuario().setEstado("activo");
+        usuarioRepository.save(cliente.getUsuario());
+
+        return ResponseEntity.ok("Cliente reactivado exitosamente.");
     }
 }

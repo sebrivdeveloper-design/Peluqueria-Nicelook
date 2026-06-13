@@ -10,23 +10,31 @@
       </div>
 
       <div class="form-group">
-        <label for="sf-nombre">Nombre</label>
-        <input id="sf-nombre" v-model="form.nombreServicio" maxlength="255" placeholder="Ej. Corte clásico" />
+        <label for="sf-nombre">Nombre <small class="contador">{{ form.nombreServicio.length }}/30</small></label>
+        <input id="sf-nombre" v-model="form.nombreServicio" maxlength="30" placeholder="Ej. Corte clásico" />
       </div>
 
       <div class="form-group">
-        <label for="sf-desc">Descripción</label>
-        <textarea id="sf-desc" v-model="form.descripcion" maxlength="255" rows="3" placeholder="Describe brevemente este servicio"></textarea>
+        <label for="sf-desc">Descripción <small class="contador">{{ form.descripcion.length }}/100</small></label>
+        <textarea id="sf-desc" v-model="form.descripcion" maxlength="100" rows="3" placeholder="Describe brevemente este servicio"></textarea>
       </div>
 
       <div class="form-group">
         <label for="sf-duracion">Duración</label>
-        <input id="sf-duracion" v-model="form.duracion" placeholder="Ej. 30 min" />
+        <input id="sf-duracion" v-model="form.duracion" maxlength="30" placeholder="Ej. 30 min" />
       </div>
 
       <div class="form-group">
         <label for="sf-precio">Precio</label>
-        <input id="sf-precio" v-model="form.precio" type="number" min="0" placeholder="Ej. 25000" />
+        <input id="sf-precio" v-model="form.precio" type="number" min="0" max="99999999" placeholder="Ej. 25000" />
+      </div>
+
+      <div class="form-group">
+        <label for="sf-porcentaje">% para el empleado</label>
+        <input id="sf-porcentaje" v-model="form.porcentajeEmpleado" type="number" min="0" max="100" placeholder="Ej. 50" />
+        <small class="hint-porcentaje" v-if="gananciaEmpleado !== null">
+          El empleado recibiría {{ gananciaEmpleado }} por servicio.
+        </small>
       </div>
 
       <div class="form-group">
@@ -89,6 +97,7 @@ export default {
         descripcion: '',
         duracion: '',
         precio: '',
+        porcentajeEmpleado: 50,
         idCategoria: ''
       },
       toast: { visible: false, type: 'info', title: '', message: '' }
@@ -98,6 +107,15 @@ export default {
   computed: {
     modoEdicion() {
       return !!this.servicio
+    },
+
+    gananciaEmpleado() {
+      const precio = Number(this.form.precio)
+      const pct = Number(this.form.porcentajeEmpleado)
+      if (!precio || isNaN(pct)) return null
+      return (precio * pct / 100).toLocaleString('es-CO', {
+        style: 'currency', currency: 'COP', maximumFractionDigits: 0
+      })
     }
   },
 
@@ -125,6 +143,15 @@ export default {
         this.mostrarToast('warning', 'Precio inválido', 'Ingresa un precio válido.')
         return
       }
+      if (String(Math.trunc(Number(this.form.precio))).length > 8) {
+        this.mostrarToast('warning', 'Precio inválido', 'El precio no puede superar 8 dígitos.')
+        return
+      }
+      const pct = Number(this.form.porcentajeEmpleado)
+      if (isNaN(pct) || pct < 0 || pct > 100) {
+        this.mostrarToast('warning', 'Porcentaje inválido', 'El porcentaje debe estar entre 0 y 100.')
+        return
+      }
 
       this.guardando = true
       try {
@@ -133,6 +160,7 @@ export default {
           descripcion: this.form.descripcion,
           duracion: this.form.duracion,
           precio: this.form.precio,
+          porcentajeEmpleado: pct,
           categoria: { idCategoria: this.form.idCategoria }
         }
 
@@ -167,6 +195,7 @@ export default {
       this.form.descripcion    = this.servicio.descripcion    || ''
       this.form.duracion       = this.servicio.duracion       || ''
       this.form.precio         = this.servicio.precio         || ''
+      this.form.porcentajeEmpleado = this.servicio.porcentajeEmpleado ?? 50
       this.form.idCategoria    = this.servicio.categoria?.idCategoria || ''
     }
   }
@@ -229,6 +258,21 @@ export default {
   font-size: 13px;
   font-weight: 600;
   color: #1d3524;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.contador {
+  font-size: 11px;
+  color: #90a08f;
+  font-weight: 500;
+}
+
+.hint-porcentaje {
+  font-size: 12px;
+  color: #4a7c59;
+  font-weight: 600;
 }
 
 .form-group input,

@@ -10,6 +10,14 @@
         <span class="legend-dot ocupado"></span>
         Ocupado
       </span>
+      <span class="legend-item">
+        <span class="legend-dot finalizado"></span>
+        Finalizado
+      </span>
+      <span class="legend-item">
+        <span class="legend-dot bloqueado"></span>
+        Bloqueado
+      </span>
     </div>
 
     <FullCalendar :options="calendarOptions" />
@@ -158,6 +166,16 @@ export default {
   border: 2px solid #c0392b;
 }
 
+.legend-dot.finalizado {
+  background: #eef1ef;
+  border: 2px solid #8a9b8f;
+}
+
+.legend-dot.bloqueado {
+  background: #f3eef7;
+  border: 2px solid #6b5b95;
+}
+
 /* FULLCALENDAR CUSTOM */
 
 :deep(.fc) {
@@ -250,6 +268,26 @@ export default {
 
 :deep(.evento-ocupado .fc-event-main) {
   color: #8c1d12 !important;
+}
+
+:deep(.evento-finalizado) {
+  background: #eef1ef !important;
+  border-left: 3px solid #8a9b8f !important;
+  color: #5f6f66 !important;
+}
+
+:deep(.evento-finalizado .fc-event-main) {
+  color: #5f6f66 !important;
+}
+
+:deep(.evento-bloqueado) {
+  background: #f3eef7 !important;
+  border-left: 3px solid #6b5b95 !important;
+  color: #4a3d6b !important;
+}
+
+:deep(.evento-bloqueado .fc-event-main) {
+  color: #4a3d6b !important;
 }
 
 :deep(.fc-day-today) {

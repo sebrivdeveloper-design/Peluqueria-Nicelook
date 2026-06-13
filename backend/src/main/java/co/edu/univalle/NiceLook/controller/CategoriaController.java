@@ -11,6 +11,7 @@ import co.edu.univalle.NiceLook.model.CategoriaServicios;
 import co.edu.univalle.NiceLook.model.Servicio;
 import co.edu.univalle.NiceLook.repository.CategoriaRepository;
 import co.edu.univalle.NiceLook.service.ServicioService;
+import co.edu.univalle.NiceLook.service.NotificacionService;
 
 @RestController
 @RequestMapping("/api/categorias")
@@ -25,6 +26,9 @@ public class CategoriaController {
 
     @Autowired
     private ServicioService servicioService;
+
+    @Autowired
+    private NotificacionService notificacionService;
 
     @PostMapping
     public ResponseEntity<?> crear(@RequestBody CategoriaServicios categoria) {
@@ -73,11 +77,17 @@ public class CategoriaController {
     @DeleteMapping("/{idCategoria}")
     public ResponseEntity<?> deshabilitar(@PathVariable Long idCategoria) {
         service.deshabilitar(idCategoria);
+        repository.findById(idCategoria).ifPresent(c ->
+            notificacionService.notificarStaff("warning", "Categoría desactivada",
+                    "La categoría \"" + c.getNombreCategoria() + "\" y sus servicios fueron desactivados."));
         return ResponseEntity.ok("Categoría deshabilitada");
     }
 
     @PutMapping("/activar/{idCategoria}")
     public void activar(@PathVariable Long idCategoria) {
         service.activar(idCategoria);
+        repository.findById(idCategoria).ifPresent(c ->
+            notificacionService.notificarStaff("success", "Categoría activada",
+                    "La categoría \"" + c.getNombreCategoria() + "\" fue activada."));
     }
 }

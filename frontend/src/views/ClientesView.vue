@@ -15,6 +15,19 @@
       />
     </div>
 
+    <!-- FILTRO DE ESTADO -->
+    <div class="filtros-estado">
+      <button
+        v-for="f in filtrosEstado"
+        :key="f.valor"
+        class="filtro-pill"
+        :class="{ activo: filtroEstado === f.valor }"
+        @click="filtroEstado = f.valor"
+      >
+        {{ f.label }}
+      </button>
+    </div>
+
     <div v-if="loading" class="loading-state">
       <div class="spinner"></div>
       <p>Cargando listado de clientes de la base de datos...</p>
@@ -28,23 +41,41 @@
             <th class="th-nombre">Nombre Completo</th>
             <th class="th-telefono">Teléfono</th>
             <th class="th-correo">Correo</th>
+            <th>Estado</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
           <tr v-if="filtrados.length === 0">
-            <td colspan="4" class="empty-row">
+            <td colspan="6" class="empty-row">
               No se encontraron clientes que coincidan con la búsqueda.
             </td>
           </tr>
           <tr
             v-for="cliente in filtrados"
-            :key="cliente.documento"
+            :key="cliente.idCliente"
             class="table-row"
+            :class="{ 'fila-inactiva': cliente.estado === 'inactivo' }"
           >
             <td class="col-documento">{{ cliente.documento }}</td>
             <td class="col-nombre">{{ cliente.nombreCompleto }}</td>
             <td class="col-telefono">{{ cliente.telefono || 'N/A' }}</td>
             <td class="col-correo">{{ cliente.correo || 'N/A' }}</td>
+            <td>
+              <span class="estado-badge" :class="cliente.estado === 'inactivo' ? 'badge-inactivo' : 'badge-activo'">
+                {{ cliente.estado === 'inactivo' ? 'Inactivo' : 'Activo' }}
+              </span>
+            </td>
+            <td class="col-acciones">
+              <button class="btn-mini editar" @click="abrirModalEdicion(cliente)">Editar</button>
+              <button
+                class="btn-mini"
+                :class="cliente.estado === 'inactivo' ? 'activar' : 'desactivar'"
+                @click="pedirToggleEstado(cliente)"
+              >
+                {{ cliente.estado === 'inactivo' ? 'Activar' : 'Desactivar' }}
+              </button>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -52,7 +83,7 @@
 
     <div v-if="mostrarModal" class="modal-overlay" @click.self="mostrarModal = false">
       <div class="modal-content">
-        <h2>Registrar Nuevo Cliente</h2>
+        <h2>{{ clienteEditando ? 'Editar Cliente' : 'Registrar Nuevo Cliente' }}</h2>
 
         <div v-if="mensajeExito" class="alerta-exito">{{ mensajeExito }}</div>
         <div v-if="mensajeError" class="alerta-error">{{ mensajeError }}</div>
@@ -105,11 +136,30 @@
 
           <div class="modal-actions">
             <button type="button" class="btn-cancelar" @click="mostrarModal = false">Cancelar</button>
-            <button type="submit" class="btn-guardar">Registrar</button>
+            <button type="submit" class="btn-guardar">{{ clienteEditando ? 'Guardar cambios' : 'Registrar' }}</button>
           </div>
         </form>
       </div>
     </div>
+
+    <!-- CONFIRMAR CAMBIO DE ESTADO -->
+    <AppConfirmModal
+      :visible="confirmEstado.visible"
+      :title="confirmEstado.cliente?.estado === 'inactivo' ? 'Activar cliente' : 'Desactivar cliente'"
+      :message="confirmEstado.cliente?.estado === 'inactivo'
+        ? `¿Reactivar a ${confirmEstado.cliente?.nombreCompleto}? Podrá iniciar sesión y reservar citas nuevamente.`
+        : `¿Desactivar a ${confirmEstado.cliente?.nombreCompleto}? Se ocultará de las búsquedas activas y no podrá iniciar sesión, pero su información e historial se conservan.`"
+      @confirm="ejecutarToggleEstado"
+      @cancel="confirmEstado = { visible: false, cliente: null }"
+    />
+
+    <AppToast
+      :visible="toast.visible"
+      :type="toast.type"
+      :title="toast.title"
+      :message="toast.message"
+      @close="toast.visible = false"
+    />
 
   </section>
 </template>
@@ -117,10 +167,13 @@
 <script>
 import HeaderBar from '@/components/HeaderBar.vue'
 import api from "@/services/clienteService"
+import AppToast from '@/components/AppToast.vue'
+import AppConfirmModal from '@/components/AppConfirmModal.vue'
+import { useNotificacionesStore } from '@/stores/notificacionesStore'
 
 export default {
   name: 'ClientesView',
-  components: { HeaderBar },
+  components: { HeaderBar, AppToast, AppConfirmModal },
   data() {
     return {
       textoBusqueda: '',
@@ -130,6 +183,15 @@ export default {
       mensajeError: '',
       errores: {},
       clientes: [],
+      clienteEditando: null,
+      filtroEstado: 'activos',
+      filtrosEstado: [
+        { valor: 'activos', label: 'Activos' },
+        { valor: 'inactivos', label: 'Inactivos' },
+        { valor: 'todos', label: 'Todos' }
+      ],
+      confirmEstado: { visible: false, cliente: null },
+      toast: { visible: false, type: 'info', title: '', message: '' },
       nuevoCliente: {
         documento: '',
         nombreCompleto: '',
@@ -143,9 +205,17 @@ export default {
   },
   computed: {
     filtrados() {
-      if (!this.textoBusqueda) return this.clientes
+      let lista = this.clientes
+
+      if (this.filtroEstado === 'activos') {
+        lista = lista.filter(c => c.estado !== 'inactivo')
+      } else if (this.filtroEstado === 'inactivos') {
+        lista = lista.filter(c => c.estado === 'inactivo')
+      }
+
+      if (!this.textoBusqueda) return lista
       const query = this.textoBusqueda.toLowerCase().trim()
-      return this.clientes.filter(c => {
+      return lista.filter(c => {
         const nombre = (c.nombreCompleto || '').toLowerCase()
         const doc = (c.documento || '').toString()
         const mail = (c.correo || '').toLowerCase()
@@ -167,6 +237,7 @@ export default {
     },
 
     abrirModalRegistro() {
+      this.clienteEditando = null
       this.nuevoCliente = {
         documento: '',
         nombreCompleto: '',
@@ -180,6 +251,60 @@ export default {
       this.mensajeExito = ''
       this.mensajeError = ''
       this.mostrarModal = true
+    },
+
+    abrirModalEdicion(cliente) {
+      this.clienteEditando = cliente
+      this.nuevoCliente = {
+        documento: cliente.documento || '',
+        nombreCompleto: cliente.nombreCompleto || '',
+        correo: cliente.correo || '',
+        telefono: cliente.telefono || '',
+        genero: cliente.genero || 'masculino',
+        fechaNacimiento: cliente.fechaNacimiento || '',
+        observaciones: cliente.observaciones || ''
+      }
+      this.errores = {}
+      this.mensajeExito = ''
+      this.mensajeError = ''
+      this.mostrarModal = true
+    },
+
+    mostrarToast(type, title, message) {
+      this.toast = { visible: true, type, title, message }
+      setTimeout(() => { this.toast.visible = false }, 3500)
+    },
+
+    pedirToggleEstado(cliente) {
+      this.confirmEstado = { visible: true, cliente }
+    },
+
+    async ejecutarToggleEstado() {
+      const cliente = this.confirmEstado.cliente
+      this.confirmEstado = { visible: false, cliente: null }
+      const desactivar = cliente.estado !== 'inactivo'
+      try {
+        if (desactivar) {
+          await api.desactivarCliente(cliente.idCliente)
+        } else {
+          await api.activarCliente(cliente.idCliente)
+        }
+        this.mostrarToast(
+          'success',
+          desactivar ? 'Cliente desactivado' : 'Cliente activado',
+          `"${cliente.nombreCompleto}" quedó ${desactivar ? 'inactivo' : 'activo'}.`
+        )
+        useNotificacionesStore().agregar(
+          desactivar ? 'warning' : 'success',
+          desactivar ? 'Cliente desactivado' : 'Cliente activado',
+          cliente.nombreCompleto
+        )
+        await this.cargarClientes()
+      } catch (error) {
+        const msg = typeof error.response?.data === 'string'
+          ? error.response.data : 'No se pudo cambiar el estado del cliente.'
+        this.mostrarToast('error', 'Error', msg)
+      }
     },
 
     validar() {
@@ -209,7 +334,8 @@ export default {
       else if (this.nuevoCliente.correo.length > 50)
         e.correo = 'El correo no puede superar 50 caracteres.'
 
-      if (!this.nuevoCliente.fechaNacimiento)
+      // La fecha de nacimiento solo es obligatoria al registrar
+      if (!this.clienteEditando && !this.nuevoCliente.fechaNacimiento)
         e.fechaNacimiento = 'La fecha de nacimiento es obligatoria.'
 
       this.errores = e
@@ -220,8 +346,15 @@ export default {
       if (!this.validar()) return
 
       try {
-        await api.registrarCliente(this.nuevoCliente)
-        this.mensajeExito = '✓ Cliente registrado exitosamente.'
+        if (this.clienteEditando) {
+          await api.editarCliente(this.clienteEditando.idCliente, this.nuevoCliente)
+          this.mensajeExito = '✓ Cliente actualizado exitosamente.'
+          useNotificacionesStore().agregar('success', 'Cliente actualizado', this.nuevoCliente.nombreCompleto)
+        } else {
+          await api.registrarCliente(this.nuevoCliente)
+          this.mensajeExito = '✓ Cliente registrado exitosamente.'
+          useNotificacionesStore().agregar('success', 'Cliente registrado', this.nuevoCliente.nombreCompleto)
+        }
         this.mensajeError = ''
         await this.cargarClientes()
         setTimeout(() => {
@@ -229,10 +362,12 @@ export default {
           this.mensajeExito = ''
         }, 2000)
       } catch (error) {
-        if (error.response && error.response.status === 409) {
+        if (error.response && (error.response.status === 409 || error.response.status === 400)) {
           this.mensajeError = error.response.data
         } else {
-          this.mensajeError = 'Ocurrió un error al registrar el cliente.'
+          this.mensajeError = this.clienteEditando
+            ? 'Ocurrió un error al actualizar el cliente.'
+            : 'Ocurrió un error al registrar el cliente.'
         }
       }
     }
@@ -270,6 +405,85 @@ export default {
   font-size: 15px;
   color: #5f6f63;
 }
+
+.filtros-estado {
+  display: flex;
+  gap: 8px;
+}
+
+.filtro-pill {
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid #d7e2da;
+  background: #ffffff;
+  color: #4f5d52;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.18s ease;
+}
+
+.filtro-pill:hover { background: #f0f7f1; }
+
+.filtro-pill.activo {
+  background: #014421;
+  border-color: #014421;
+  color: #ffffff;
+}
+
+.estado-badge {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.badge-activo   { background: #e7f4ea; color: #1d7a3a; border: 1px solid #bfe3c8; }
+.badge-inactivo { background: #fdecec; color: #b42318; border: 1px solid #f3c2bd; }
+
+.fila-inactiva { opacity: 0.6; }
+
+.col-acciones {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.btn-mini {
+  padding: 7px 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+
+.btn-mini.editar {
+  background: #f0f7f1;
+  color: #014421;
+  border: 1px solid #cfe3d3;
+}
+.btn-mini.editar:hover { background: #e0efe3; }
+
+.btn-mini.desactivar {
+  background: #fdecec;
+  color: #b42318;
+  border: 1px solid #f3c2bd;
+}
+.btn-mini.desactivar:hover { background: #fad6d3; }
+
+.btn-mini.activar {
+  background: #014421;
+  color: #ffffff;
+  border: 1px solid #014421;
+}
+.btn-mini.activar:hover { background: #1f6a34; }
 
 .table-container {
   width: 100%;
