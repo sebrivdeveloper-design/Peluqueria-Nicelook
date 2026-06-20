@@ -4,8 +4,12 @@ export function getCitasPorCobrar(fecha) {
   return api.get('/pagos/pendientes', { params: fecha ? { fecha } : {} })
 }
 
-export function registrarPago(idCita, metodoPago) {
-  return api.post('/pagos', { idCita: String(idCita), metodoPago })
+export function registrarPago(idCita, metodoPago, confirmarExcepcion = false) {
+  return api.post('/pagos', {
+    idCita: String(idCita),
+    metodoPago,
+    confirmarExcepcion: String(confirmarExcepcion)
+  })
 }
 
 export function getPagosDelDia(fecha) {

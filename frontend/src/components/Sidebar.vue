@@ -36,13 +36,18 @@
         </button>
         <button class="nav-item" :class="{ active: isActive('/admin/empleados') }" @click="goTo('/admin/empleados')">
           <span class="nav-icon"><Users :size="17" /></span>
-          <transition name="fade"><span v-if="!isCollapsed" class="nav-text">Empleados</span></transition>
+          <transition name="fade"><span v-if="!isCollapsed" class="nav-text">Estilistas</span></transition>
           <span v-if="isActive('/admin/empleados') && !isCollapsed" class="active-pill"></span>
         </button>
-        <button class="nav-item" :class="{ active: isActive('/admin/pagos-empleados') }" @click="goTo('/admin/pagos-empleados')">
+        <button class="nav-item" :class="{ active: isActive('/admin/arrendamiento') }" @click="goTo('/admin/arrendamiento')">
+          <span class="nav-icon"><Building2 :size="17" /></span>
+          <transition name="fade"><span v-if="!isCollapsed" class="nav-text">Arrendamiento</span></transition>
+          <span v-if="isActive('/admin/arrendamiento') && !isCollapsed" class="active-pill"></span>
+        </button>
+        <button class="nav-item" :class="{ active: isActive('/admin/historial-estilistas') }" @click="goTo('/admin/historial-estilistas')">
           <span class="nav-icon"><Banknote :size="17" /></span>
-          <transition name="fade"><span v-if="!isCollapsed" class="nav-text">Pagos a empleados</span></transition>
-          <span v-if="isActive('/admin/pagos-empleados') && !isCollapsed" class="active-pill"></span>
+          <transition name="fade"><span v-if="!isCollapsed" class="nav-text">Historial estilistas</span></transition>
+          <span v-if="isActive('/admin/historial-estilistas') && !isCollapsed" class="active-pill"></span>
         </button>
         <button class="nav-item" :class="{ active: isActive('/admin/reportes') }" @click="goTo('/admin/reportes')">
           <span class="nav-icon"><BarChart3 :size="17" /></span>
@@ -71,6 +76,11 @@
           <span class="nav-icon"><LayoutGrid :size="17" /></span>
           <transition name="fade"><span v-if="!isCollapsed" class="nav-text">Agenda</span></transition>
           <span v-if="isActive('/empleado/agenda') && !isCollapsed" class="active-pill"></span>
+        </button>
+        <button class="nav-item" :class="{ active: isActive('/empleado/historial') }" @click="goTo('/empleado/historial')">
+          <span class="nav-icon"><Banknote :size="17" /></span>
+          <transition name="fade"><span v-if="!isCollapsed" class="nav-text">Mi historial</span></transition>
+          <span v-if="isActive('/empleado/historial') && !isCollapsed" class="active-pill"></span>
         </button>
       </template>
 
@@ -154,6 +164,7 @@ import {
   CreditCard,
   BarChart3,
   Banknote,
+  Building2,
   CalendarDays
 } from 'lucide-vue-next'
 import EditarPerfilModal from './EditarPerfilModal.vue'
@@ -181,6 +192,7 @@ export default {
     CreditCard,
     BarChart3,
     Banknote,
+    Building2,
     CalendarDays,
     EditarPerfilModal
   },

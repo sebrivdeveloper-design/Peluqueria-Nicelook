@@ -9,6 +9,8 @@ import co.edu.univalle.NiceLook.model.Cliente;
 
 @Repository
 public interface ClienteRepository extends JpaRepository<Cliente, Integer> {
-    
+
     Optional<Cliente> findByUsuario_Documento(String documento);
+    Optional<Cliente> findByUsuario_Correo(String correo);
+    Optional<Cliente> findByUsuario_Telefono(String telefono);
 }

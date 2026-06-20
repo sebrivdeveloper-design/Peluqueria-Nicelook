@@ -116,6 +116,24 @@
           <p><strong>Cliente:</strong> {{ cobro.cita?.cliente }}</p>
           <p><strong>Servicio:</strong> {{ cobro.cita?.servicio }}</p>
           <p><strong>Estilista:</strong> {{ cobro.cita?.empleado }}</p>
+
+          <!-- Reparto por arrendamiento -->
+          <div class="reparto">
+            <div class="reparto-fila">
+              <span>Arrendamiento (salón)</span>
+              <span>{{ formatoMoneda(cobro.cita?.valorArrendamiento) }}</span>
+            </div>
+            <div class="reparto-fila" :class="{ negativo: pagoNegativo }">
+              <span>A pagar al estilista</span>
+              <span>{{ formatoMoneda(cobro.cita?.valorAPagarEstilista) }}</span>
+            </div>
+          </div>
+
+          <p v-if="pagoNegativo" class="aviso-negativo">
+            ⚠️ El arrendamiento supera el valor del servicio: el estilista recibiría un
+            pago negativo. Ajusta la tarifa en Arrendamiento o confirma la excepción.
+          </p>
+
           <div class="cobro-total">
             <span>Total a cobrar</span>
             <strong>{{ formatoMoneda(cobro.cita?.valor) }}</strong>
@@ -143,7 +161,7 @@
           <button
             class="btn-primario"
             :disabled="!cobro.medio || cobro.guardando"
-            @click="confirmarCobro"
+            @click="confirmarCobro()"
           >
             {{ cobro.guardando ? 'Registrando...' : 'Confirmar pago' }}
           </button>
@@ -207,6 +225,12 @@ export default {
       return this.pagos.filter(p => p.estadoPago === 'completado')
     },
 
+    pagoNegativo() {
+      const c = this.cobro.cita
+      if (!c) return false
+      return Number(c.valorArrendamiento || 0) > Number(c.valor || 0)
+    },
+
     totalValido() {
       return this.pagosCompletados.reduce((acc, p) => acc + Number(p.valor || 0), 0)
     }
@@ -259,17 +283,25 @@ export default {
       this.cobro = { visible: false, cita: null, medio: '', guardando: false }
     },
 
-    async confirmarCobro() {
+    async confirmarCobro(confirmarExcepcion = false) {
       this.cobro.guardando = true
       try {
-        await registrarPago(this.cobro.cita.idCita, this.cobro.medio)
+        await registrarPago(this.cobro.cita.idCita, this.cobro.medio, confirmarExcepcion)
         this.mostrarToast('success', 'Pago registrado', `Se cobró ${this.formatoMoneda(this.cobro.cita.valor)} (${this.cobro.medio}).`)
         useNotificacionesStore().agregar('success', 'Pago registrado', `${this.cobro.cita.cliente} · ${this.formatoMoneda(this.cobro.cita.valor)}`)
         this.cerrarCobro()
         await this.cargarTodo()
       } catch (error) {
-        const msg = typeof error.response?.data === 'string'
-          ? error.response.data : 'No se pudo registrar el pago.'
+        const data = error.response?.data
+        // El backend pide confirmación explícita cuando el pago sería negativo
+        if (data && typeof data === 'object' && data.requiereConfirmacion) {
+          this.cobro.guardando = false
+          if (window.confirm(`${data.mensaje}\n\n¿Deseas registrar el pago de todos modos?`)) {
+            await this.confirmarCobro(true)
+          }
+          return
+        }
+        const msg = typeof data === 'string' ? data : 'No se pudo registrar el pago.'
         this.mostrarToast('error', 'Error al cobrar', msg)
         this.cobro.guardando = false
       }
@@ -689,6 +721,36 @@ export default {
 .cobro-total strong {
   font-size: 20px;
   color: #014421;
+}
+
+.reparto {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e8f0e9;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.reparto-fila {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #4f5d52;
+}
+
+.reparto-fila span:last-child { font-weight: 700; color: #173221; }
+.reparto-fila.negativo span:last-child { color: #b42318; }
+
+.aviso-negativo {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  background: #fdecec;
+  border: 1px solid #f3c2bd;
+  border-radius: 10px;
+  font-size: 12.5px;
+  color: #b42318;
+  line-height: 1.4;
 }
 
 .form-group {

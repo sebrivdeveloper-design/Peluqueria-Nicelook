@@ -19,10 +19,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.math.BigDecimal;
+
 import co.edu.univalle.NiceLook.model.Cita;
 import co.edu.univalle.NiceLook.model.Pago;
 import co.edu.univalle.NiceLook.repository.CitaRepository;
 import co.edu.univalle.NiceLook.repository.PagoRepository;
+import co.edu.univalle.NiceLook.service.ArrendamientoService;
 
 @RestController
 @RequestMapping("/api/pagos")
@@ -34,6 +37,7 @@ public class PagoController {
 
     @Autowired private PagoRepository pagoRepository;
     @Autowired private CitaRepository citaRepository;
+    @Autowired private ArrendamientoService arrendamientoService;
 
     // GET citas finalizadas de una fecha que aún no tienen pago (para cobrar)
     @GetMapping("/pendientes")
@@ -56,7 +60,12 @@ public class PagoController {
                     m.put("servicio", c.getServicio().getNombreServicio());
                     m.put("empleado", c.getEmpleado().getUsuario() != null
                             ? c.getEmpleado().getUsuario().getNombreCompleto() : "");
-                    m.put("valor", c.getServicio().getPrecio());
+                    BigDecimal valor = c.getServicio().getPrecio();
+                    BigDecimal arrendamiento = arrendamientoService.resolver(
+                            c.getEmpleado().getIdEmpleado(), c.getServicio().getIdServicio());
+                    m.put("valor", valor);
+                    m.put("valorArrendamiento", arrendamiento);
+                    m.put("valorAPagarEstilista", valor.subtract(arrendamiento));
                     return m;
                 }).toList();
 
@@ -99,9 +108,43 @@ public class PagoController {
                         .body("Esta cita ya tiene un pago registrado.");
             }
 
+            // ── Comisión por arrendamiento (CHANGE 1 - V2) ──
+            // Se resuelve la tarifa (estilista+servicio -> estilista -> default) y se
+            // calcula el reparto. Los valores se CONGELAN en la cita: son históricos.
+            BigDecimal valorServicio = cita.getServicio().getPrecio();
+            BigDecimal valorArrendamiento = arrendamientoService.resolver(
+                    cita.getEmpleado().getIdEmpleado(),
+                    cita.getServicio().getIdServicio());
+
+            // Validación de pago negativo: si el arrendamiento supera el valor del
+            // servicio, el estilista recibiría un monto negativo. No se permite cobrar
+            // salvo que el Admin/Recepcionista confirme explícitamente la excepción.
+            boolean confirmarExcepcion = "true".equalsIgnoreCase(
+                    String.valueOf(body.getOrDefault("confirmarExcepcion", "false")));
+
+            if (valorArrendamiento.compareTo(valorServicio) > 0 && !confirmarExcepcion) {
+                Map<String, Object> aviso = new HashMap<>();
+                aviso.put("requiereConfirmacion", true);
+                aviso.put("valorServicio", valorServicio);
+                aviso.put("valorArrendamiento", valorArrendamiento);
+                aviso.put("mensaje", "El arrendamiento (" + valorArrendamiento
+                        + ") supera el valor del servicio (" + valorServicio
+                        + "). El estilista recibiría un pago negativo. "
+                        + "Ajusta la tarifa de arrendamiento o confirma la excepción para continuar.");
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(aviso);
+            }
+
+            BigDecimal valorAPagarEstilista = valorServicio.subtract(valorArrendamiento);
+
+            cita.setValorServicio(valorServicio);
+            cita.setValorArrendamiento(valorArrendamiento);
+            cita.setValorAPagarEstilista(valorAPagarEstilista);
+            cita.setValorParaSalon(valorArrendamiento);
+            citaRepository.save(cita);
+
             Pago pago = new Pago();
             pago.setCita(cita);
-            pago.setMontoTotal(cita.getServicio().getPrecio().doubleValue());
+            pago.setMontoTotal(valorServicio.doubleValue());
             pago.setMetodoPago(medio);
             pago.setReferencia("PAG-" + System.currentTimeMillis());
             pago.setEstadoPago("completado");

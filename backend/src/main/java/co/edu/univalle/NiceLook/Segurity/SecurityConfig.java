@@ -45,6 +45,7 @@ public class SecurityConfig {
 
                 // PÚBLICOS
                 .requestMatchers("/auth/**").permitAll()
+                .requestMatchers("/api/public/**").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/servicios/**").permitAll()
                 .requestMatchers("/api/categorias/categoria/**").permitAll()
                 .requestMatchers("/api/citas/**").permitAll()
@@ -63,6 +64,10 @@ public class SecurityConfig {
                 .requestMatchers("/api/caja/**").hasAnyRole("RECEPCIONISTA", "ADMIN")
                 .requestMatchers("/api/pagos/**").hasAnyRole("RECEPCIONISTA", "ADMIN")
                 .requestMatchers("/api/pagos-empleados/**").hasRole("ADMIN")
+                .requestMatchers("/api/arrendamientos/**").hasRole("ADMIN")
+                // Historial por estilista: el estilista ve solo el suyo (/mio); ADMIN ve cualquiera
+                .requestMatchers("/api/historial-estilistas/mio").hasAnyRole("EMPLEADO", "ADMIN")
+                .requestMatchers("/api/historial-estilistas/**").hasRole("ADMIN")
                 .requestMatchers("/api/reportes/**").hasRole("ADMIN")
                 .requestMatchers("/api/notificaciones/**").hasAnyRole("ADMIN", "RECEPCIONISTA")
                 .anyRequest().authenticated()

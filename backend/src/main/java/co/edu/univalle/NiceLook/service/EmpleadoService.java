@@ -82,8 +82,12 @@ public class EmpleadoService {
         usuarioRepository.save(usuario);
 
         empleado.setEspecialidad(request.getEspecialidad());
-        empleado.setSalario(request.getSalario());
         empleado.setDocumento(request.getDocumento());
+        // salario está deprecado (modelo de comisión por arrendamiento, V2). Solo se
+        // actualiza si se envía explícitamente, para no borrar datos históricos.
+        if (request.getSalario() != null) {
+            empleado.setSalario(request.getSalario());
+        }
 
         return empleadoRepository.save(empleado);
     }

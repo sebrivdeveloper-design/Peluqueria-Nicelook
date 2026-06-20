@@ -2,12 +2,12 @@
   <section class="empleados-page">
     <div class="page-header">
       <div>
-        <h1>Empleados</h1>
-        <p>Consulta y administra la información del personal registrado en el sistema.</p>
+        <h1>Estilistas</h1>
+        <p>Consulta y administra la información de los estilistas registrados en el sistema.</p>
       </div>
       <HeaderBar
         @crear="abrirModalCrear"
-        textoBoton="Crear empleado"
+        textoBoton="Crear estilista"
       />
     </div>
 
@@ -16,11 +16,10 @@
         <table class="empleados-table">
           <thead>
             <tr>
-              <th>Empleado</th>
+              <th>Estilista</th>
               <th>Correo</th>
               <th>Documento</th>
               <th>Especialidad</th>
-              <th>Salario</th>
               <th>Estado</th>
               <th>Acciones</th>
             </tr>
@@ -45,7 +44,6 @@
                   {{ emp.especialidad || 'No definida' }}
                 </span>
               </td>
-              <td class="salary">{{ formatearMoneda(emp.salario) }}</td>
               <td>
                 <span class="estado-badge" :class="emp.estadoLaboral === 'inactivo' ? 'badge-inactivo' : 'badge-activo'">
                   {{ emp.estadoLaboral === 'inactivo' ? 'Inactivo' : 'Activo' }}
@@ -68,8 +66,8 @@
             </tr>
 
             <tr v-if="filtrados.length === 0">
-              <td colspan="7" class="empty-row">
-                No se encontraron empleados con esa búsqueda.
+              <td colspan="6" class="empty-row">
+                No se encontraron estilistas con esa búsqueda.
               </td>
             </tr>
           </tbody>
@@ -86,7 +84,7 @@
 
     <AppConfirmModal
       :visible="confirmEstado.visible"
-      :title="confirmEstado.emp?.estadoLaboral === 'inactivo' ? 'Activar empleado' : 'Desactivar empleado'"
+      :title="confirmEstado.emp?.estadoLaboral === 'inactivo' ? 'Activar estilista' : 'Desactivar estilista'"
       :message="confirmEstado.emp?.estadoLaboral === 'inactivo'
         ? `¿Reactivar a ${confirmEstado.emp?.usuario?.nombreCompleto}? Volverá a tener acceso al sistema.`
         : `¿Desactivar a ${confirmEstado.emp?.usuario?.nombreCompleto}? No podrá iniciar sesión y dejará de aparecer para agendar citas.`"
@@ -161,7 +159,7 @@ export default {
         this.empleados = res.data
       } catch (error) {
         console.error(error)
-        this.mostrarToast('error', 'Error de carga', 'No se pudieron cargar los empleados. Revisa tu conexión.')
+        this.mostrarToast('error', 'Error de carga', 'No se pudieron cargar los estilistas. Revisa tu conexión.')
       }
     },
 
@@ -194,21 +192,21 @@ export default {
         } else {
           await activarEmpleado(emp.idEmpleado)
         }
-        const nombre = emp.usuario?.nombreCompleto || 'Empleado'
+        const nombre = emp.usuario?.nombreCompleto || 'Estilista'
         this.mostrarToast(
           'success',
-          desactivar ? 'Empleado desactivado' : 'Empleado activado',
+          desactivar ? 'Estilista desactivado' : 'Estilista activado',
           `"${nombre}" quedó ${desactivar ? 'inactivo' : 'activo'}.`
         )
         useNotificacionesStore().agregar(
           desactivar ? 'warning' : 'success',
-          desactivar ? 'Empleado desactivado' : 'Empleado activado',
+          desactivar ? 'Estilista desactivado' : 'Estilista activado',
           nombre
         )
         await this.cargarEmpleados()
       } catch (error) {
         const msg = typeof error.response?.data === 'string'
-          ? error.response.data : 'No se pudo cambiar el estado del empleado.'
+          ? error.response.data : 'No se pudo cambiar el estado del estilista.'
         this.mostrarToast('error', 'Error', msg)
       }
     },

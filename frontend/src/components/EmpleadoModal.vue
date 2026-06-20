@@ -6,8 +6,8 @@
       </button>
 
       <div class="modal-header">
-        <h3>{{ empleado ? 'Editar empleado' : 'Registrar empleado' }}</h3>
-        <p>{{ empleado ? 'Modifica la información del colaborador.' : 'Completa la información del colaborador para registrarlo en el sistema.' }}</p>
+        <h3>{{ empleado ? 'Editar estilista' : 'Registrar estilista' }}</h3>
+        <p>{{ empleado ? 'Modifica la información del estilista.' : 'Completa la información del estilista para registrarlo en el sistema.' }}</p>
       </div>
 
       <div class="form-grid">
@@ -58,7 +58,7 @@
           >
             <option disabled value="">Seleccione rol</option>
             <option value="ADMIN">Administrador</option>
-            <option value="EMPLEADO">Empleado</option>
+            <option value="EMPLEADO">Estilista</option>
             <option value="RECEPCIONISTA">Recepcionista</option>
           </select>
           <small v-if="errors.rol" class="error-text">
@@ -81,16 +81,6 @@
             id="especialidad"
             v-model="form.especialidad"
             placeholder="Especialidad"
-          />
-        </div>
-
-        <div class="form-group">
-          <label for="salario">Salario</label>
-          <input
-            id="salario"
-            v-model="form.salario"
-            type="number"
-            placeholder="Salario"
           />
         </div>
       </div>
@@ -142,8 +132,7 @@ export default {
         telefono: '',
         rol: '',
         documento: '',
-        especialidad: '',
-        salario: ''
+        especialidad: ''
       },
       toast: {
         visible: false,
@@ -168,8 +157,7 @@ export default {
         telefono:       this.empleado.usuario?.telefono      || '',
         rol:            this.empleado.usuario?.rol?.nombreRol || '',
         documento:      this.empleado.documento              || '',
-        especialidad:   this.empleado.especialidad           || '',
-        salario:        this.empleado.salario                || ''
+        especialidad:   this.empleado.especialidad           || ''
       }
     }
   },
@@ -206,13 +194,13 @@ export default {
         if (this.empleado) {
           // MODO EDICIÓN
           await editarEmpleado(this.empleado.idEmpleado, this.form)
-          useNotificacionesStore().agregar('success', 'Empleado actualizado', `"${this.form.nombreCompleto}" fue actualizado`)
-          this.mostrarToast('success', 'Empleado actualizado', 'Los cambios fueron guardados correctamente.')
+          useNotificacionesStore().agregar('success', 'Estilista actualizado', `"${this.form.nombreCompleto}" fue actualizado`)
+          this.mostrarToast('success', 'Estilista actualizado', 'Los cambios fueron guardados correctamente.')
         } else {
           // MODO CREACIÓN
           await crearEmpleado(this.form)
-          useNotificacionesStore().agregar('success', 'Empleado registrado', `"${this.form.nombreCompleto}" fue registrado`)
-          this.mostrarToast('success', 'Empleado registrado', 'El empleado fue creado correctamente.')
+          useNotificacionesStore().agregar('success', 'Estilista registrado', `"${this.form.nombreCompleto}" fue registrado`)
+          this.mostrarToast('success', 'Estilista registrado', 'El estilista fue creado correctamente.')
         }
 
         setTimeout(() => {

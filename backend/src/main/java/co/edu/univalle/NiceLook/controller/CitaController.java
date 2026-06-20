@@ -49,6 +49,7 @@ public class CitaController {
     @Autowired private DisponibilidadRepository disponibilidadRepository;
     @Autowired private EmailService emailService;
     @Autowired private NotificacionService notificacionService;
+    @Autowired private co.edu.univalle.NiceLook.service.ReservaService reservaService;
 
     // GET horarios disponibles de un barbero en una fecha
     @GetMapping("/disponibilidad/{idEmpleado}")
@@ -114,95 +115,16 @@ public class CitaController {
         return ResponseEntity.ok(response);
     }
 
-    // POST registrar cita
+    // POST registrar cita (panel interno) — delega en ReservaService (lógica única)
     @PostMapping
-    @Transactional
     public ResponseEntity<?> registrarCita(@RequestBody RegistroCitaDTO dto) {
-
         try {
-
-            Cliente cliente = clienteRepository
-                    .findById(dto.getIdCliente())
-                    .orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
-
-            Empleado empleado = empleadoRepository
-                    .findById(dto.getIdEmpleado())
-                    .orElseThrow(() -> new RuntimeException("Empleado no encontrado"));
-
-            Servicio servicio = servicioRepository
-                    .findById(dto.getIdServicio())
-                    .orElseThrow(() -> new RuntimeException("Servicio no encontrado"));
-
-            Disponibilidad bloque = disponibilidadRepository
-                    .findById(dto.getIdDisponibilidad())
-                    .orElseThrow(() -> new RuntimeException("Bloque no encontrado"));
-
-            if (!"disponible".equalsIgnoreCase(bloque.getEstadoBloque())) {
-                return ResponseEntity
-                        .status(HttpStatus.CONFLICT)
-                        .body("Horario no disponible");
-            }
-
-            if (dto.getHoraInicio() == null || dto.getHoraInicio().isBlank()) {
-                return ResponseEntity
-                        .badRequest()
-                        .body("Debes indicar la hora de inicio de la cita");
-            }
-
-            LocalTime horaInicio = LocalTime.parse(dto.getHoraInicio());
-            int duracionMin = parseDuracionMinutos(servicio.getDuracion());
-            LocalTime horaFin = horaInicio.plusMinutes(duracionMin);
-
-            if (horaInicio.isBefore(bloque.getHoraInicioBloque())
-                    || horaFin.isAfter(bloque.getHoraFinBloque())
-                    || !horaFin.isAfter(horaInicio)) {
-                return ResponseEntity
-                        .badRequest()
-                        .body("El servicio (" + duracionMin
-                                + " min) no cabe en el horario seleccionado");
-            }
-
-            // CREAR CITA
-            Cita cita = new Cita();
-            cita.setCliente(cliente);
-            cita.setEmpleado(empleado);
-            cita.setServicio(servicio);
-            cita.setFechaCita(bloque.getFecha());
-            cita.setHoraInicio(horaInicio);
-            cita.setHoraFin(horaFin);
-            cita.setEstadoCita("pendiente");
-            cita.setObservaciones(dto.getObservaciones());
-            cita.setFechaCreacion(LocalDateTime.now());
-
-            Cita citaGuardada = citaRepository.save(cita);
-
-            dividirBloque(bloque, horaInicio, horaFin);
-
-            // ENVIAR CORREO (simula la notificación de WhatsApp)
-            try {
-                emailService.enviarConfirmacionCita(citaGuardada);
-            } catch (Exception e) {
-                System.err.println("Error enviando correo: " + e.getMessage());
-            }
-
-            notificacionService.notificarStaff(
-                    "info",
-                    "Nueva cita registrada",
-                    cliente.getUsuario().getNombreCompleto() + " · "
-                            + servicio.getNombreServicio() + " · "
-                            + bloque.getFecha() + " " + horaInicio);
-
+            reservaService.crearCita(dto, "panel");
             return ResponseEntity
                     .status(HttpStatus.CREATED)
                     .body("Cita registrada exitosamente.");
-
-        } catch (Exception e) {
-
-            e.printStackTrace();
-
-            return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(e.getMessage());
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 

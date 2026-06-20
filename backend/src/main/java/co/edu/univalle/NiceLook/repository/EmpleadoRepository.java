@@ -10,5 +10,6 @@ import co.edu.univalle.NiceLook.model.Empleado;
 @Repository
 public interface EmpleadoRepository extends JpaRepository<Empleado, Integer> {
     Optional<Empleado> findByUsuario_Documento(String documento);
+    Optional<Empleado> findByUsuario_Correo(String correo);
     List<Empleado> findByUsuarioRolNombreRol(String nombreRol);
 }

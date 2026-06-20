@@ -136,7 +136,8 @@ window.handleCredentialResponse = async (response) => {
       }
 
       else {
-        router.push("/cliente");
+        // El cliente ya no usa panel con login: va a la landing pública de reservas.
+        router.push("/reservar");
       }
 
       loading.value = false;
