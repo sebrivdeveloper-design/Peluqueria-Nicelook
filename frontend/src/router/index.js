@@ -2,14 +2,12 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 // Vistas
 import LoginView from '@/views/LoginView.vue'
-import ServicioClienteView from '@/views/ServicioClienteView.vue'
 import ServiciosView from '@/views/ServicioView.vue'
 import ClientesView from '@/views/ClientesView.vue'
 // Layouts
 import AdminLayout from '@/layouts/AdminLayout.vue'
 import RecepcionistaLayout from '@/layouts/RecepcionistaLayout.vue'
 import EmpleadoLayout from '@/layouts/EmpleadoLayout.vue'
-import ClienteLayout from '@/layouts/ClienteLayout.vue'
 
 
 // Admin views
@@ -20,16 +18,24 @@ import AgendaEmpleadoView from '@/views/AgendaEmpleadoView.vue'
 import AgendaRecepcionistaView from '@/views/AgendaRecepcionistaView.vue'
 
 const routes = [
-  // LOGIN
+  // LOGIN (staff)
   {
     path: '/',
     component: LoginView
+  },
+
+  // 🌐 LANDING PÚBLICA DE RESERVAS (sin login) — CHANGE 4 V2
+  {
+    path: '/reservar',
+    name: 'ReservarLanding',
+    component: () => import('@/views/ReservarLandingView.vue')
   },
 
   // 🟩 ADMIN
   {
     path: '/admin',
     component: AdminLayout,
+    meta: { roles: ['ADMIN'] },
     children: [
       {
         path: '',
@@ -56,35 +62,34 @@ const routes = [
         path: 'servicios/:id', // Simplificado para que sea relativo al padre /admin
         name: 'ServicioDetalle',
         component: () => import('@/views/ServicioDetalleView.vue')
+      },
+      {
+        path: 'arrendamiento',
+        name: 'Arrendamiento',
+        component: () => import('@/views/ArrendamientoView.vue')
+      },
+      {
+        path: 'historial-estilistas',
+        name: 'HistorialEstilistas',
+        component: () => import('@/views/HistorialEstilistasView.vue')
+      },
+      {
+        path: 'reportes',
+        name: 'Reportes',
+        component: () => import('@/views/ReportesView.vue')
       }
     ]
   },
 
-  // 🟪 CLIENTE
-  {
-    path: '/cliente',
-    component: ClienteLayout,
-    children: [
-      {
-        path: '',
-        redirect: '/cliente/servicios'
-      },
-      {
-        path: 'servicios',
-        name: 'serviciosCliente',
-        component: ServicioClienteView
-      }, {
-      path: 'servicios/:id',
-      name: 'ServicioDetalleCliente',
-      component: () => import('@/views/ServicioDetalleView.vue')
-    }
-    ]
-  },
+  // 🟪 CLIENTE → ahora todo va a la landing pública (CHANGE 4 V2: cliente sin login)
+  { path: '/cliente', redirect: '/reservar' },
+  { path: '/cliente/:pathMatch(.*)*', redirect: '/reservar' },
 
   // 🟦 RECEPCIONISTA (Actualizado con rutas hijas)
   {
     path: '/recepcionista',
     component: RecepcionistaLayout,
+    meta: { roles: ['RECEPCIONISTA', 'ADMIN'] },
     children: [
       {
         path: '',
@@ -99,10 +104,17 @@ const routes = [
         path: 'agenda',
         name: 'AgendaRecepcionista',
         component: AgendaRecepcionistaView
+      },
+      {
+        path: 'caja',
+        name: 'Caja',
+        component: () => import('@/views/CajaView.vue')
+      },
+      {
+        path: 'pagos',
+        name: 'Pagos',
+        component: () => import('@/views/PagosView.vue')
       }
-      // Aquí podrás añadir las demás cuando las crees:
-      // { path: 'disponibilidad', component: DisponibilidadView },
-      // { path: 'agenda', component: AgendaView }
     ]
   },
 
@@ -110,6 +122,7 @@ const routes = [
 {
   path: '/empleado',
   component: EmpleadoLayout,
+  meta: { roles: ['EMPLEADO', 'ADMIN'] },
   children: [
     {
       path: '',
@@ -119,6 +132,11 @@ const routes = [
       path: 'agenda',
       name: 'AgendaEmpleado',
       component: AgendaEmpleadoView
+    },
+    {
+      path: 'historial',
+      name: 'MiHistorial',
+      component: () => import('@/views/MiHistorialView.vue')
     }
   ]
 }
@@ -129,11 +147,29 @@ const router = createRouter({
   routes
 })
 
+function rolDelToken(token) {
+  try {
+    return JSON.parse(atob(token.split('.')[1])).rol || null
+  } catch {
+    return null
+  }
+}
+
+function homeDeRol(rol) {
+  const homes = {
+    ADMIN: '/admin',
+    RECEPCIONISTA: '/recepcionista',
+    EMPLEADO: '/empleado',
+    CLIENTE: '/reservar'
+  }
+  return homes[rol] || '/'
+}
+
 router.beforeEach((to) => {
   const token = localStorage.getItem("token");
 
-  // 🟢 RUTAS PÚBLICAS (cliente)
-  if (to.path.startsWith("/cliente")) {
+  // 🟢 LANDING PÚBLICA DE RESERVAS (sin login)
+  if (to.path.startsWith("/reservar")) {
     return;
   }
 
@@ -142,9 +178,22 @@ router.beforeEach((to) => {
     return;
   }
 
-  // 🔴 PROTEGIDAS
+  // 🔴 PROTEGIDAS: requiere token
   if (!token) {
     return "/";
+  }
+
+  // 🔴 VALIDACIÓN DE ROL: si la ruta exige roles, el rol del JWT debe estar incluido
+  const rolesRuta = to.matched
+    .map(r => r.meta?.roles)
+    .find(r => Array.isArray(r));
+
+  if (rolesRuta) {
+    const rol = rolDelToken(token);
+    if (!rol) return "/";
+    if (!rolesRuta.includes(rol)) {
+      return homeDeRol(rol);
+    }
   }
 });
 

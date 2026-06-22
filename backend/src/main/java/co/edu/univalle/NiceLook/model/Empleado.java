@@ -32,6 +32,13 @@ public class Empleado {
     @Column(name = "especialidad")
     private String especialidad;
 
+    /**
+     * @deprecated (CHANGE 1 - V2) El negocio ya no maneja salario fijo mensual.
+     * Los estilistas son independientes y el salón cobra una comisión por
+     * arrendamiento por servicio (ver {@link Arrendamiento}). La columna se conserva
+     * para no perder datos históricos, pero ya no se usa ni se muestra en la UI.
+     */
+    @Deprecated
     @Column(name = "salario")
     private Double salario;
 

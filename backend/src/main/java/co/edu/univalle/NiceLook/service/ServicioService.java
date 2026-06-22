@@ -50,8 +50,19 @@ public class ServicioService {
             throw new RuntimeException("No se pueden crear servicios en una categoría inactiva");
         }
 
+        validarPorcentaje(servicio.getPorcentajeEmpleado());
+        if (servicio.getPorcentajeEmpleado() == null) {
+            servicio.setPorcentajeEmpleado(50);
+        }
+
         servicio.setEstado("activo");
         return servicioRepository.save(servicio);
+    }
+
+    private void validarPorcentaje(Integer porcentaje) {
+        if (porcentaje != null && (porcentaje < 0 || porcentaje > 100)) {
+            throw new RuntimeException("El porcentaje del empleado debe estar entre 0 y 100");
+        }
     }
 
     public void deshabilitar(Integer id) {
@@ -79,6 +90,18 @@ public class ServicioService {
         existente.setDescripcion(datos.getDescripcion());
         existente.setDuracion(datos.getDuracion());
         existente.setPrecio(datos.getPrecio());
+
+        if (datos.getPorcentajeEmpleado() != null) {
+            validarPorcentaje(datos.getPorcentajeEmpleado());
+            existente.setPorcentajeEmpleado(datos.getPorcentajeEmpleado());
+        }
+
+        if (datos.getCategoria() != null && datos.getCategoria().getIdCategoria() != null) {
+            CategoriaServicios cat = categoriaRepository
+                    .findById(datos.getCategoria().getIdCategoria())
+                    .orElseThrow(() -> new RuntimeException("Categoría no encontrada"));
+            existente.setCategoria(cat);
+        }
 
         return servicioRepository.save(existente);
     }

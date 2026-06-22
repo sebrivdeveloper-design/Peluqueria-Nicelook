@@ -100,14 +100,33 @@
                   :key="bloque.idDisponibilidad"
                   class="horario-item"
                   :class="{ seleccionado: horarioSeleccionado?.idDisponibilidad === bloque.idDisponibilidad }"
-                  @click="horarioSeleccionado = bloque"
+                  @click="seleccionarBloque(bloque)"
                 >
-                  {{ bloque.horaInicioBloque }} - {{ bloque.horaFinBloque }}
+                  {{ bloque.horaInicioBloque?.slice(0,5) }} - {{ bloque.horaFinBloque?.slice(0,5) }}
+                </div>
+              </div>
+
+              <!-- HORA DE INICIO según duración del servicio -->
+              <div v-if="horarioSeleccionado">
+                <p>Hora de tu cita <small>(duración {{ duracionMin }} min)</small>:</p>
+                <div v-if="slotsDisponibles.length" class="lista-horarios">
+                  <div
+                    v-for="slot in slotsDisponibles"
+                    :key="slot"
+                    class="horario-item"
+                    :class="{ seleccionado: slotSeleccionado === slot }"
+                    @click="slotSeleccionado = slot"
+                  >
+                    {{ slot.slice(0,5) }}
+                  </div>
+                </div>
+                <div v-else class="sin-horarios">
+                  El servicio no cabe en este horario.
                 </div>
               </div>
 
               <button
-                v-if="horarioSeleccionado"
+                v-if="slotSeleccionado"
                 class="btn-confirmar-reserva"
                 @click="paso = 3"
               >
@@ -125,27 +144,58 @@
                 <h4>Resumen de tu cita</h4>
                 <p>💈 <strong>Barbero:</strong> {{ empleadoSeleccionado?.usuario?.nombreCompleto }}</p>
                 <p>📅 <strong>Fecha:</strong> {{ fechaSeleccionada }}</p>
-                <p>⏰ <strong>Hora:</strong> {{ horarioSeleccionado?.horaInicioBloque }} - {{ horarioSeleccionado?.horaFinBloque }}</p>
-                <p>✂️ <strong>Servicio:</strong> {{ servicio.nombreServicio }}</p>
+                <p>⏰ <strong>Hora:</strong> {{ slotSeleccionado?.slice(0,5) }} - {{ finCita?.slice(0,5) }}</p>
+                <p>✂️ <strong>Servicio:</strong> {{ servicio.nombreServicio }} ({{ servicio.duracion }})</p>
+                <div class="total-pagar">
+                  <span>Total a pagar en el establecimiento</span>
+                  <strong>$ {{ formatearPrecio(servicio.precio) }}</strong>
+                </div>
               </div>
 
-              <div class="form-group">
-                <label>Observaciones (opcional):</label>
-                <textarea v-model="observaciones" rows="2" placeholder="Ej. Corte con máquina 2..."></textarea>
+              <!-- AUTENTICACIÓN REQUERIDA PARA RESERVAR -->
+              <div v-if="!clienteAutenticado" class="auth-box">
+                <p class="auth-titulo">Inicia sesión para confirmar tu reserva</p>
+                <p class="auth-sub">Usa tu cuenta de Google. Si es tu primera vez, te registramos automáticamente.</p>
+                <div ref="googleBtn" class="google-btn-wrap"></div>
               </div>
+
+              <!-- COMPLETAR REGISTRO (primera vez / sin teléfono) -->
+              <div v-else-if="requiereDatos" class="auth-box">
+                <p class="auth-titulo">Completa tus datos de contacto</p>
+                <div class="form-group">
+                  <label>Nombre completo:</label>
+                  <input type="text" v-model="perfil.nombre" maxlength="100" class="input-perfil" />
+                </div>
+                <div class="form-group">
+                  <label>Número de WhatsApp:</label>
+                  <input type="text" v-model="perfil.telefono" maxlength="12" inputmode="numeric" placeholder="315XXXXXXX" class="input-perfil"
+                    @input="perfil.telefono = perfil.telefono.replace(/[^0-9]/g, '')" />
+                </div>
+                <button class="btn-confirmar-reserva" :disabled="guardandoPerfil" @click="guardarDatosPerfil">
+                  {{ guardandoPerfil ? 'Guardando...' : 'Guardar y continuar' }}
+                </button>
+              </div>
+
+              <!-- CONFIRMAR -->
+              <template v-else>
+                <div class="form-group">
+                  <label>Observaciones (opcional):</label>
+                  <textarea v-model="observaciones" rows="2" placeholder="Ej. Corte con máquina 2..."></textarea>
+                </div>
+
+                <button
+                  class="btn-confirmar-reserva"
+                  @click="confirmarReserva"
+                  :disabled="guardando"
+                >
+                  {{ guardando ? 'Registrando...' : 'Confirmar reserva' }}
+                </button>
+              </template>
 
               <div v-if="mensajeExito" class="alerta-exito">{{ mensajeExito }}</div>
               <div v-if="mensajeError" class="alerta-error">{{ mensajeError }}</div>
 
-              <button
-                class="btn-confirmar-reserva"
-                @click="confirmarReserva"
-                :disabled="guardando"
-              >
-                {{ guardando ? 'Registrando...' : 'Confirmar reserva' }}
-              </button>
-
-              <p class="nota-pago">El pago se realiza directamente en el local.</p>
+              <p class="nota-pago">El pago se realiza directamente en la peluquería el día de tu cita.</p>
             </div>
 
           </div>
@@ -164,8 +214,13 @@
 </template>
 
 <script>
+import axios from "axios"
 import servicioApi from "@/services/servicioService"
 import citaApi from "@/services/citaService"
+import api from "@/services/axiosInstance"
+
+const GOOGLE_CLIENT_ID =
+  "1055219399395-41dgigof08dichfdip9uf0f5affo5vcp.apps.googleusercontent.com";
 
 export default {
   name: 'ServicioDetalleView',
@@ -179,17 +234,157 @@ export default {
       fechaSeleccionada: '',
       horarios: [],
       horarioSeleccionado: null,
+      slotSeleccionado: null,
       loadingHorarios: false,
       observaciones: '',
       guardando: false,
       mensajeExito: '',
       mensajeError: '',
-      hoy: new Date().toISOString().split('T')[0]
+      hoy: new Date().toISOString().split('T')[0],
+
+      clienteAutenticado: false,
+      requiereDatos: false,
+      perfil: { nombre: '', telefono: '' },
+      guardandoPerfil: false
     }
   },
+
+  computed: {
+    duracionMin() {
+      const d = this.servicio?.duracion
+      if (!d) return 60
+      const texto = String(d).toLowerCase().trim()
+      const match = texto.match(/\d+/)
+      if (!match) return 60
+      let valor = parseInt(match[0], 10)
+      if (texto.includes('hora') || (texto.includes('h') && !texto.includes('min'))) valor *= 60
+      return Math.max(valor, 5)
+    },
+
+    slotsDisponibles() {
+      if (!this.horarioSeleccionado) return []
+      const aMin = h => {
+        const [hh, mm] = String(h).split(':').map(Number)
+        return hh * 60 + mm
+      }
+      const deMin = m => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}:00`
+      const slots = []
+      let t = aMin(this.horarioSeleccionado.horaInicioBloque)
+      const fin = aMin(this.horarioSeleccionado.horaFinBloque)
+      while (t + this.duracionMin <= fin) {
+        slots.push(deMin(t))
+        t += this.duracionMin
+      }
+      return slots
+    },
+
+    finCita() {
+      if (!this.slotSeleccionado) return ''
+      const [h, m] = this.slotSeleccionado.split(':').map(Number)
+      const total = h * 60 + m + this.duracionMin
+      return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}:00`
+    }
+  },
+
+  watch: {
+    // Al llegar al paso de confirmación, verificar sesión y montar el botón de Google
+    paso(nuevo) {
+      if (nuevo === 3) {
+        this.verificarSesionCliente()
+        if (!this.clienteAutenticado) {
+          this.$nextTick(() => this.montarBotonGoogle())
+        }
+      }
+    }
+  },
+
   methods: {
     formatearPrecio(valor) {
       return new Intl.NumberFormat("es-CO").format(valor)
+    },
+
+    // ── AUTENTICACIÓN DEL CLIENTE ──
+
+    payloadToken() {
+      try {
+        const token = localStorage.getItem('token')
+        return token ? JSON.parse(atob(token.split('.')[1])) : null
+      } catch {
+        return null
+      }
+    },
+
+    verificarSesionCliente() {
+      const payload = this.payloadToken()
+      this.clienteAutenticado = !!(payload && payload.idCliente)
+    },
+
+    montarBotonGoogle() {
+      if (!window.google?.accounts?.id || !this.$refs.googleBtn) return
+
+      window.google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: (response) => this.loginClienteGoogle(response)
+      })
+
+      window.google.accounts.id.renderButton(this.$refs.googleBtn, {
+        theme: 'outline',
+        size: 'large',
+        width: 260
+      })
+    },
+
+    async loginClienteGoogle(response) {
+      this.mensajeError = ''
+      try {
+        const base = import.meta.env.VITE_API_URL.replace('/api', '')
+        const res = await axios.post(`${base}/auth/google/cliente`, {
+          token: response.credential
+        })
+
+        localStorage.setItem('token', res.data.token)
+        this.clienteAutenticado = true
+
+        // Primera vez o sin teléfono → completar datos (HU-33)
+        if (res.data.nuevo || !res.data.telefono) {
+          const payload = this.payloadToken()
+          this.perfil.nombre = payload?.nombreCompleto || ''
+          this.perfil.telefono = res.data.telefono || ''
+          this.requiereDatos = true
+        }
+      } catch (error) {
+        const msg = typeof error.response?.data === 'string'
+          ? error.response.data
+          : 'No fue posible iniciar sesión. Intenta de nuevo.'
+        this.mensajeError = msg
+      }
+    },
+
+    async guardarDatosPerfil() {
+      this.mensajeError = ''
+      if (!this.perfil.nombre.trim()) {
+        this.mensajeError = 'El nombre es obligatorio.'
+        return
+      }
+      if (!/^[0-9]{7,12}$/.test(this.perfil.telefono)) {
+        this.mensajeError = 'Ingresa un número de WhatsApp válido (7 a 12 dígitos).'
+        return
+      }
+      this.guardandoPerfil = true
+      try {
+        await api.put('/usuarios/me', {
+          nombreCompleto: this.perfil.nombre.trim(),
+          telefono: this.perfil.telefono
+        })
+        this.requiereDatos = false
+      } catch (error) {
+        const msg = typeof error.response?.data === 'string'
+          ? error.response.data
+          : 'No se pudieron guardar tus datos.'
+        this.mensajeError = msg
+      } finally {
+        this.guardandoPerfil = false
+      }
     },
 
     async cargarDetalle() {
@@ -209,7 +404,8 @@ export default {
     async cargarEmpleados() {
       try {
         const res = await citaApi.getEmpleados()
-        this.empleados = res.data
+        // Solo barberos activos pueden recibir reservas
+        this.empleados = res.data.filter(e => e.estadoLaboral !== 'inactivo')
       } catch (error) {
         console.error("Error cargando empleados:", error)
       }
@@ -220,6 +416,12 @@ export default {
       this.fechaSeleccionada = ''
       this.horarios = []
       this.horarioSeleccionado = null
+      this.slotSeleccionado = null
+    },
+
+    seleccionarBloque(bloque) {
+      this.horarioSeleccionado = bloque
+      this.slotSeleccionado = null
     },
 
     async cargarDisponibilidad() {
@@ -227,6 +429,7 @@ export default {
       this.loadingHorarios = true
       this.horarios = []
       this.horarioSeleccionado = null
+      this.slotSeleccionado = null
       try {
         const res = await citaApi.getDisponibilidad(
           this.empleadoSeleccionado.idEmpleado,
@@ -241,50 +444,55 @@ export default {
     },
 
     async confirmarReserva() {
-  this.guardando = true
-  this.mensajeError = ''
-  this.mensajeExito = ''
+      this.guardando = true
+      this.mensajeError = ''
+      this.mensajeExito = ''
 
-  const token = localStorage.getItem('token')
-  const payload = JSON.parse(atob(token.split('.')[1]))
+      const payload = this.payloadToken()
 
-  try {
+      if (!payload?.idCliente) {
+        this.mensajeError = 'Debes iniciar sesión para reservar.'
+        this.clienteAutenticado = false
+        this.guardando = false
+        this.$nextTick(() => this.montarBotonGoogle())
+        return
+      }
 
-    const citaData = {
-      idCliente: payload.idCliente,
-      idEmpleado: this.empleadoSeleccionado.idEmpleado,
-      idServicio: this.servicio.idServicio,
-      idDisponibilidad: this.horarioSeleccionado.idDisponibilidad,
-      fecha: this.fechaSeleccionada,
-      horaInicio: this.horarioSeleccionado.horaInicioBloque,
-      horaFin: this.horarioSeleccionado.horaFinBloque,
-      observaciones: this.observaciones
+      try {
+
+        const citaData = {
+          idCliente: payload.idCliente,
+          idEmpleado: this.empleadoSeleccionado.idEmpleado,
+          idServicio: this.servicio.idServicio,
+          idDisponibilidad: this.horarioSeleccionado.idDisponibilidad,
+          fecha: this.fechaSeleccionada,
+          horaInicio: this.slotSeleccionado,
+          horaFin: this.finCita,
+          observaciones: this.observaciones
+        }
+
+        await citaApi.registrarCita(citaData)
+
+        this.mensajeExito = `✅ ¡Cita registrada! Recibirás la confirmación por correo. Total a pagar en el local: $ ${this.formatearPrecio(this.servicio.precio)}`
+
+        setTimeout(() => {
+          this.$router.push('/cliente/mis-citas')
+        }, 3500)
+
+      } catch (error) {
+
+        console.error(error)
+
+        if (error.response?.status === 409 || error.response?.status === 400) {
+          this.mensajeError = error.response.data
+        } else {
+          this.mensajeError = 'Ocurrió un error al registrar la cita.'
+        }
+
+      } finally {
+        this.guardando = false
+      }
     }
-
-    console.log("ENVIANDO:", citaData)
-
-    await citaApi.registrarCita(citaData)
-
-    this.mensajeExito = '✅ ¡Cita registrada!'
-
-    setTimeout(() => {
-      this.$router.push('/cliente/servicios')
-    }, 3000)
-
-  } catch (error) {
-
-    console.error(error)
-
-    if (error.response?.status === 409) {
-      this.mensajeError = error.response.data
-    } else {
-      this.mensajeError = 'Ocurrió un error al registrar la cita.'
-    }
-
-  } finally {
-    this.guardando = false
-  }
-}
   },
   mounted() {
     this.cargarDetalle()
@@ -577,6 +785,68 @@ export default {
   color: #888;
   font-style: italic;
   text-align: center;
+}
+
+.total-pagar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 12px 14px;
+  background: #e6f4ea;
+  border: 1px solid #bfe3c8;
+  border-radius: 10px;
+  font-size: 13px;
+  color: #14532d;
+}
+
+.total-pagar strong {
+  font-size: 18px;
+  color: #014421;
+}
+
+.auth-box {
+  background: white;
+  border: 1px solid #d9e4da;
+  border-radius: 12px;
+  padding: 18px 16px;
+  margin-bottom: 14px;
+  text-align: center;
+}
+
+.auth-titulo {
+  font-weight: 700;
+  color: #173221;
+  margin: 0 0 6px;
+  font-size: 15px;
+}
+
+.auth-sub {
+  font-size: 13px;
+  color: #5f6f63;
+  margin: 0 0 14px;
+}
+
+.google-btn-wrap {
+  display: flex;
+  justify-content: center;
+}
+
+.input-perfil {
+  padding: 11px 14px;
+  border: 1px solid #d9e4da;
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: inherit;
+  color: #173221;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.input-perfil:focus {
+  border-color: #145c43;
 }
 
 .loading-small {

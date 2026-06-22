@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.*;
 @Data
 @Entity
@@ -47,5 +48,25 @@ public class Cita {
     @ManyToOne
     @JoinColumn(name = "id_servicio", nullable = false)
     private Servicio servicio;
+
+    // ─────────────────────────────────────────────────────────────
+    // Comisión por arrendamiento (CHANGE 1 - V2)
+    // Estos valores se calculan y CONGELAN cuando la cita se cobra
+    // (ver PagoController.registrarPago). Son históricos e inmutables:
+    // no se recalculan aunque cambien las tarifas de arrendamiento.
+    // Nullable: solo las citas ya cobradas los tienen.
+    // ─────────────────────────────────────────────────────────────
+
+    @Column(name = "valor_servicio")
+    private BigDecimal valorServicio;
+
+    @Column(name = "valor_arrendamiento")
+    private BigDecimal valorArrendamiento;
+
+    @Column(name = "valor_a_pagar_estilista")
+    private BigDecimal valorAPagarEstilista;
+
+    @Column(name = "valor_para_salon")
+    private BigDecimal valorParaSalon;
     // getters y setters
 }

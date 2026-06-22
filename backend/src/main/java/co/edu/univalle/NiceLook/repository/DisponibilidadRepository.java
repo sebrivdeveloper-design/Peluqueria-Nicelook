@@ -40,11 +40,39 @@ public interface DisponibilidadRepository
         @Param("fin") LocalDate fin
     );
 
-    // 🔥 VALIDAR CRUCE DE HORARIOS
+    // VALIDAR CRUCE DE HORARIOS
     boolean existsByEmpleado_IdEmpleadoAndFechaAndHoraInicioBloqueLessThanAndHoraFinBloqueGreaterThan(
         Integer idEmpleado,
         LocalDate fecha,
         LocalTime horaFin,
         LocalTime horaInicio
+    );
+
+    // BUSCAR BLOQUE EXACTO (para restaurar al cancelar cita)
+    java.util.Optional<Disponibilidad>
+    findByEmpleado_IdEmpleadoAndFechaAndHoraInicioBloqueAndHoraFinBloqueAndEstadoBloque(
+        Integer idEmpleado,
+        LocalDate fecha,
+        LocalTime horaInicio,
+        LocalTime horaFin,
+        String estadoBloque
+    );
+
+    // BLOQUE CONTIGUO ANTERIOR (termina donde inicia otro)
+    List<Disponibilidad>
+    findByEmpleado_IdEmpleadoAndFechaAndHoraFinBloqueAndEstadoBloque(
+        Integer idEmpleado,
+        LocalDate fecha,
+        LocalTime horaFinBloque,
+        String estadoBloque
+    );
+
+    // BLOQUE CONTIGUO SIGUIENTE (inicia donde termina otro)
+    List<Disponibilidad>
+    findByEmpleado_IdEmpleadoAndFechaAndHoraInicioBloqueAndEstadoBloque(
+        Integer idEmpleado,
+        LocalDate fecha,
+        LocalTime horaInicioBloque,
+        String estadoBloque
     );
 }

@@ -93,8 +93,44 @@
 
         </div>
 
+        <!-- TIPO DE BLOQUE -->
+        <div class="form-group">
+          <label>Tipo de horario</label>
+          <div class="tipo-bloque">
+            <button
+              type="button"
+              class="tipo-chip"
+              :class="{ activo: form.tipo === 'disponible' }"
+              @click="form.tipo = 'disponible'"
+            >
+              🟢 Disponible
+            </button>
+            <button
+              type="button"
+              class="tipo-chip"
+              :class="{ activo: form.tipo === 'bloqueado' }"
+              @click="form.tipo = 'bloqueado'"
+            >
+              ⛔ Bloqueado
+            </button>
+          </div>
+          <small class="tipo-hint">
+            {{ form.tipo === 'bloqueado'
+              ? 'Los clientes y la recepción no podrán agendar en este horario.'
+              : 'Este horario quedará disponible para recibir citas.' }}
+          </small>
+        </div>
+
         <!-- BOTONES -->
         <div class="form-actions">
+
+          <button
+            v-if="form.idDisponibilidad"
+            class="btn-eliminar"
+            @click="pedirEliminarHorario"
+          >
+            Eliminar
+          </button>
 
           <button
             class="btn-secondary"
@@ -120,6 +156,104 @@
 
     </div>
 
+    <!-- MODAL DETALLE DE CITA -->
+    <div
+      v-if="citaDetalle.visible"
+      class="modal-overlay"
+      @click.self="cerrarDetalle"
+    >
+
+      <div class="modal-card detalle-card">
+
+        <div class="modal-header">
+          <div class="detalle-badge">
+            <span class="detalle-dot"></span>
+            <h2>Cita asignada</h2>
+          </div>
+          <button class="close-btn" @click="cerrarDetalle">✕</button>
+        </div>
+
+        <div class="detalle-grid">
+          <div class="detalle-row">
+            <span class="detalle-icon">👤</span>
+            <div>
+              <p class="detalle-label">Cliente</p>
+              <p class="detalle-value">{{ citaDetalle.cliente }}</p>
+            </div>
+          </div>
+          <div class="detalle-row">
+            <span class="detalle-icon">✂️</span>
+            <div>
+              <p class="detalle-label">Servicio</p>
+              <p class="detalle-value">{{ citaDetalle.servicio }}</p>
+            </div>
+          </div>
+          <div class="detalle-row">
+            <span class="detalle-icon">📅</span>
+            <div>
+              <p class="detalle-label">Fecha</p>
+              <p class="detalle-value">{{ citaDetalle.fecha }}</p>
+            </div>
+          </div>
+          <div class="detalle-row">
+            <span class="detalle-icon">🕐</span>
+            <div>
+              <p class="detalle-label">Horario</p>
+              <p class="detalle-value">{{ citaDetalle.horario }}</p>
+            </div>
+          </div>
+        </div>
+
+        <p v-if="citaDetalle.estadoCita !== 'finalizada'" class="detalle-nota">
+          Para cancelar o reprogramar esta cita, comunícate con recepción.
+        </p>
+
+        <p v-else class="detalle-nota finalizada-nota">
+          Servicio realizado. La cita quedó disponible para registro de pago en recepción.
+        </p>
+
+        <div class="form-actions">
+          <button class="btn-secondary" @click="cerrarDetalle">Cerrar</button>
+          <button
+            v-if="citaDetalle.idCita && citaDetalle.estadoCita !== 'finalizada'"
+            class="btn-primary"
+            :disabled="finalizando"
+            @click="confirmFinalizar = true"
+          >
+            {{ finalizando ? 'Guardando...' : 'Marcar como finalizada' }}
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- CONFIRMAR FINALIZAR CITA -->
+    <AppConfirmModal
+      :visible="confirmFinalizar"
+      title="Finalizar cita"
+      :message="`¿Marcar como finalizada la cita de ${citaDetalle.cliente} (${citaDetalle.servicio})? Quedará lista para el cobro en recepción.`"
+      @confirm="ejecutarFinalizarCita"
+      @cancel="confirmFinalizar = false"
+    />
+
+    <!-- CONFIRMAR ELIMINAR HORARIO -->
+    <AppConfirmModal
+      :visible="confirmEliminar"
+      title="Eliminar horario"
+      :message="`¿Eliminar el horario del ${form.fecha} de ${form.horaInicio} a ${form.horaFin}? Esta acción no se puede deshacer.`"
+      @confirm="ejecutarEliminarHorario"
+      @cancel="confirmEliminar = false"
+    />
+
+    <AppToast
+      :visible="toast.visible"
+      :type="toast.type"
+      :title="toast.title"
+      :message="toast.message"
+      @close="toast.visible = false"
+    />
+
   </section>
 </template>
 
@@ -127,18 +261,25 @@
 import {
   getDisponibilidad,
   crearDisponibilidad,
-  editarDisponibilidad
+  editarDisponibilidad,
+  eliminarDisponibilidad
 } from '@/services/disponibilidadService'
 
 import AgendaCalendar
 from '@/components/AgendaCalendar.vue'
+
+import AppToast from '@/components/AppToast.vue'
+import AppConfirmModal from '@/components/AppConfirmModal.vue'
+import citaApi from '@/services/citaService'
 
 export default {
 
   name: 'AgendaEmpleadoView',
 
   components: {
-    AgendaCalendar
+    AgendaCalendar,
+    AppToast,
+    AppConfirmModal
   },
 
   data() {
@@ -157,8 +298,26 @@ export default {
 
         horaInicio: '',
 
-        horaFin: ''
-      }
+        horaFin: '',
+
+        tipo: 'disponible'
+      },
+
+      citaDetalle: {
+        visible: false,
+        idCita: null,
+        estadoCita: '',
+        cliente: '',
+        servicio: '',
+        fecha: '',
+        horario: ''
+      },
+
+      confirmEliminar: false,
+      confirmFinalizar: false,
+      finalizando: false,
+
+      toast: { visible: false, type: 'info', title: '', message: '' }
     }
   },
 
@@ -168,6 +327,86 @@ export default {
   },
 
   methods: {
+
+    mostrarToast(type, title, message) {
+      this.toast = { visible: true, type, title, message }
+      setTimeout(() => { this.toast.visible = false }, 3000)
+    },
+
+    formatHora(date) {
+      if (!date) return ''
+      return new Date(date).toLocaleTimeString('es-CO', {
+        hour: '2-digit', minute: '2-digit', hour12: true
+      })
+    },
+
+    cerrarDetalle() {
+      this.citaDetalle = { visible: false, idCita: null, estadoCita: '', cliente: '', servicio: '', fecha: '', horario: '' }
+    },
+
+    // FINALIZAR CITA
+
+    async ejecutarFinalizarCita() {
+
+      this.confirmFinalizar = false
+      this.finalizando = true
+
+      try {
+
+        await citaApi.finalizarCita(this.citaDetalle.idCita)
+
+        this.cerrarDetalle()
+
+        await this.cargarDisponibilidad()
+
+        this.mostrarToast('success', 'Cita finalizada', 'El servicio quedó listo para el cobro en recepción.')
+
+      } catch (error) {
+
+        console.error(error)
+
+        const msg = typeof error.response?.data === 'string'
+          ? error.response.data
+          : 'No se pudo finalizar la cita.'
+
+        this.mostrarToast('error', 'Error', msg)
+
+      } finally {
+        this.finalizando = false
+      }
+    },
+
+    // ELIMINAR HORARIO
+
+    pedirEliminarHorario() {
+      this.confirmEliminar = true
+    },
+
+    async ejecutarEliminarHorario() {
+
+      this.confirmEliminar = false
+
+      try {
+
+        await eliminarDisponibilidad(this.form.idDisponibilidad)
+
+        this.cerrarModal()
+
+        await this.cargarDisponibilidad()
+
+        this.mostrarToast('success', 'Horario eliminado', 'El horario fue eliminado de tu agenda.')
+
+      } catch (error) {
+
+        console.error('Error eliminando horario:', error)
+
+        const msg = typeof error.response?.data === 'string'
+          ? error.response.data
+          : 'No se pudo eliminar el horario.'
+
+        this.mostrarToast('error', 'No se pudo eliminar', msg)
+      }
+    },
 
     // TOKEN
 
@@ -203,14 +442,11 @@ export default {
     abrirModal() {
 
       this.form = {
-
         idDisponibilidad: null,
-
         fecha: '',
-
         horaInicio: '',
-
-        horaFin: ''
+        horaFin: '',
+        tipo: 'disponible'
       }
 
       this.mostrarModal = true
@@ -221,14 +457,11 @@ export default {
       this.mostrarModal = false
 
       this.form = {
-
         idDisponibilidad: null,
-
         fecha: '',
-
         horaInicio: '',
-
-        horaFin: ''
+        horaFin: '',
+        tipo: 'disponible'
       }
     },
 
@@ -263,13 +496,21 @@ export default {
         evento.extendedProps.estado === 'ocupado'
       ) {
 
-        alert(
-          'Este horario tiene citas agendadas'
-        )
+        // Mostrar el detalle de la cita asignada
+        this.citaDetalle = {
+          visible: true,
+          idCita: evento.extendedProps.idCita || null,
+          estadoCita: evento.extendedProps.estadoCita || 'pendiente',
+          cliente: evento.extendedProps.cliente || 'Sin información',
+          servicio: evento.extendedProps.servicio || 'Sin información',
+          fecha: new Date(evento.start).toLocaleDateString('es-CO', {
+            weekday: 'long', day: 'numeric', month: 'long'
+          }),
+          horario: `${this.formatHora(evento.start)} – ${this.formatHora(evento.end)}`
+        }
 
         return
       }
-
 
       this.form.idDisponibilidad =
         evento.id
@@ -287,6 +528,9 @@ export default {
           .split('T')[1]
           ?.substring(0, 5)
 
+      this.form.tipo = evento.extendedProps.estado === 'bloqueado'
+        ? 'bloqueado'
+        : 'disponible'
 
       this.mostrarModal = true
     },
@@ -318,40 +562,34 @@ export default {
       )
 
     this.eventos =
-      response.data.map(bloque => ({
+      response.data.map(bloque => {
 
-        id:
-          bloque.idDisponibilidad,
+        let titulo = 'Disponible'
+        let clase = 'evento-disponible'
 
-        title:
-          bloque.estado === 'ocupado'
-            ? `${bloque.cliente} - ${bloque.servicio}`
-            : 'Disponible',
-
-        start:
-          `${bloque.fecha}T${bloque.horaInicio}`,
-
-        end:
-          `${bloque.fecha}T${bloque.horaFin}`,
-
-        className:
-          bloque.estado === 'ocupado'
-            ? 'evento-ocupado'
-            : 'evento-disponible',
-
-        extendedProps: {
-
-          estado:
-            bloque.estado,
-
-          cliente:
-            bloque.cliente,
-
-          servicio:
-            bloque.servicio
+        if (bloque.estado === 'ocupado') {
+          titulo = `${bloque.cliente} - ${bloque.servicio}`
+          clase = bloque.estadoCita === 'finalizada' ? 'evento-finalizado' : 'evento-ocupado'
+        } else if (bloque.estado === 'bloqueado') {
+          titulo = '⛔ Bloqueado'
+          clase = 'evento-bloqueado'
         }
 
-      }))
+        return {
+          id: bloque.idDisponibilidad,
+          title: titulo,
+          start: `${bloque.fecha}T${bloque.horaInicio}`,
+          end: `${bloque.fecha}T${bloque.horaFin}`,
+          className: clase,
+          extendedProps: {
+            estado: bloque.estado,
+            idCita: bloque.idCita,
+            estadoCita: bloque.estadoCita,
+            cliente: bloque.cliente,
+            servicio: bloque.servicio
+          }
+        }
+      })
 
   } catch (error) {
 
@@ -376,9 +614,7 @@ export default {
           !this.form.horaFin
         ) {
 
-          alert(
-            'Completa todos los campos'
-          )
+          this.mostrarToast('warning', 'Campos incompletos', 'Completa la fecha y las horas del horario.')
 
           return
         }
@@ -392,9 +628,7 @@ export default {
 
         if (this.form.fecha < hoy) {
 
-          alert(
-            'No puedes registrar horarios en fechas pasadas'
-          )
+          this.mostrarToast('warning', 'Fecha inválida', 'No puedes registrar horarios en fechas pasadas.')
 
           return
         }
@@ -406,9 +640,7 @@ export default {
           this.form.horaInicio
         ) {
 
-          alert(
-            'La hora fin debe ser mayor a la hora inicio'
-          )
+          this.mostrarToast('warning', 'Horas inválidas', 'La hora fin debe ser mayor a la hora inicio.')
 
           return
         }
@@ -431,7 +663,7 @@ export default {
             this.form.horaFin,
 
           estadoBloque:
-            'disponible'
+            this.form.tipo === 'bloqueado' ? 'bloqueado' : 'disponible'
         }
 
           // EDITAR
@@ -459,10 +691,10 @@ export default {
 
     this.cerrarModal()
 
-    alert(
-      esEdicion
-        ? 'Horario actualizado correctamente'
-        : 'Horario registrado correctamente'
+    this.mostrarToast(
+      'success',
+      esEdicion ? 'Horario actualizado' : 'Horario registrado',
+      esEdicion ? 'Los cambios fueron guardados.' : 'Tu horario quedó registrado.'
     )
 
       } catch (error) {
@@ -474,13 +706,14 @@ export default {
 
         if (error.response) {
 
-          alert(error.response.data)
+          const msg = typeof error.response.data === 'string'
+            ? error.response.data
+            : 'No se pudo guardar el horario.'
+          this.mostrarToast('error', 'Error al guardar', msg)
 
         } else {
 
-          alert(
-            'Error de conexión con el servidor'
-          )
+          this.mostrarToast('error', 'Sin conexión', 'No hay conexión con el servidor. Intenta de nuevo.')
         }
       }
     }
@@ -646,6 +879,143 @@ export default {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* BOTÓN ELIMINAR */
+
+.btn-eliminar {
+  background: #fdecec;
+  color: #b42318;
+  border: 1px solid #f3c2bd;
+  padding: 13px 18px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 14px;
+  font-family: inherit;
+  margin-right: auto;
+  transition: all 0.2s ease;
+}
+
+.btn-eliminar:hover {
+  background: #fad6d3;
+  border-color: #e89f98;
+}
+
+/* DETALLE DE CITA */
+
+.detalle-card {
+  max-width: 420px;
+}
+
+.detalle-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.detalle-badge h2 {
+  margin: 0;
+  font-size: 20px;
+  color: #1e2a22;
+}
+
+.detalle-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #c0392b;
+  box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.18);
+  flex-shrink: 0;
+}
+
+.detalle-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.detalle-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 13px 16px;
+  background: #f9fcf8;
+  border: 1px solid #e8f0e9;
+  border-radius: 14px;
+}
+
+.detalle-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.detalle-label {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  color: #7a8f80;
+}
+
+.detalle-value {
+  margin: 3px 0 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #173221;
+  text-transform: capitalize;
+}
+
+.detalle-nota {
+  margin: 16px 0 0;
+  font-size: 13px;
+  color: #8a6a00;
+  background: #fdf5e6;
+  border: 1px solid #f0dcb4;
+  border-radius: 12px;
+  padding: 11px 14px;
+}
+
+.finalizada-nota {
+  color: #1d7a3a;
+  background: #e7f4ea;
+  border-color: #bfe3c8;
+}
+
+.tipo-bloque {
+  display: flex;
+  gap: 10px;
+}
+
+.tipo-chip {
+  flex: 1;
+  padding: 11px 8px;
+  border-radius: 12px;
+  border: 1px solid #d7e2da;
+  background: #ffffff;
+  color: #33443a;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.16s ease;
+}
+
+.tipo-chip:hover { background: #f0f7f1; }
+
+.tipo-chip.activo {
+  background: #004518;
+  border-color: #004518;
+  color: #ffffff;
+}
+
+.tipo-hint {
+  font-size: 12px;
+  color: #6b7a72;
+  margin-top: 6px;
 }
 
 /* RESPONSIVE */
@@ -657,6 +1027,14 @@ export default {
   }
   .modal-card {
     width: 92%;
+  }
+  :deep(.fc-header-toolbar) {
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+  }
+  :deep(.fc-toolbar-title) {
+    font-size: 18px;
   }
 }
 

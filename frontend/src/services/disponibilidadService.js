@@ -13,3 +13,7 @@ export function crearDisponibilidad(data) {
 export function editarDisponibilidad(id, data) {
   return api.put(`/disponibilidad/${id}`, data)
 }
+
+export function eliminarDisponibilidad(id) {
+  return api.delete(`/disponibilidad/${id}`)
+}

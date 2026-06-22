@@ -36,25 +36,35 @@
         </button>
         <button class="nav-item" :class="{ active: isActive('/admin/empleados') }" @click="goTo('/admin/empleados')">
           <span class="nav-icon"><Users :size="17" /></span>
-          <transition name="fade"><span v-if="!isCollapsed" class="nav-text">Empleados</span></transition>
+          <transition name="fade"><span v-if="!isCollapsed" class="nav-text">Estilistas</span></transition>
           <span v-if="isActive('/admin/empleados') && !isCollapsed" class="active-pill"></span>
+        </button>
+        <button class="nav-item" :class="{ active: isActive('/admin/arrendamiento') }" @click="goTo('/admin/arrendamiento')">
+          <span class="nav-icon"><Building2 :size="17" /></span>
+          <transition name="fade"><span v-if="!isCollapsed" class="nav-text">Arrendamiento</span></transition>
+          <span v-if="isActive('/admin/arrendamiento') && !isCollapsed" class="active-pill"></span>
+        </button>
+        <button class="nav-item" :class="{ active: isActive('/admin/historial-estilistas') }" @click="goTo('/admin/historial-estilistas')">
+          <span class="nav-icon"><Banknote :size="17" /></span>
+          <transition name="fade"><span v-if="!isCollapsed" class="nav-text">Historial estilistas</span></transition>
+          <span v-if="isActive('/admin/historial-estilistas') && !isCollapsed" class="active-pill"></span>
+        </button>
+        <button class="nav-item" :class="{ active: isActive('/admin/reportes') }" @click="goTo('/admin/reportes')">
+          <span class="nav-icon"><BarChart3 :size="17" /></span>
+          <transition name="fade"><span v-if="!isCollapsed" class="nav-text">Reportes</span></transition>
+          <span v-if="isActive('/admin/reportes') && !isCollapsed" class="active-pill"></span>
         </button>
       </template>
 
       <!-- CLIENTE -->
       <template v-else-if="rol === 'CLIENTE'">
-        <button class="nav-item" :class="{ active: isActive('/') }" @click="goTo('/')">
-          <span class="nav-icon"><LayoutGrid :size="17" /></span>
-          <transition name="fade"><span v-if="!isCollapsed" class="nav-text">Inicio</span></transition>
-          <span v-if="isActive('/') && !isCollapsed" class="active-pill"></span>
-        </button>
         <button class="nav-item" :class="{ active: isActive('/cliente/servicios') }" @click="goTo('/cliente/servicios')">
           <span class="nav-icon"><BriefcaseBusiness :size="17" /></span>
           <transition name="fade"><span v-if="!isCollapsed" class="nav-text">Servicios</span></transition>
           <span v-if="isActive('/cliente/servicios') && !isCollapsed" class="active-pill"></span>
         </button>
         <button class="nav-item" :class="{ active: isActive('/cliente/mis-citas') }" @click="goTo('/cliente/mis-citas')">
-          <span class="nav-icon"><Users :size="17" /></span>
+          <span class="nav-icon"><CalendarDays :size="17" /></span>
           <transition name="fade"><span v-if="!isCollapsed" class="nav-text">Mis citas</span></transition>
           <span v-if="isActive('/cliente/mis-citas') && !isCollapsed" class="active-pill"></span>
         </button>
@@ -67,15 +77,10 @@
           <transition name="fade"><span v-if="!isCollapsed" class="nav-text">Agenda</span></transition>
           <span v-if="isActive('/empleado/agenda') && !isCollapsed" class="active-pill"></span>
         </button>
-        <button class="nav-item" :class="{ active: isActive('/empleado/turnos') }" @click="goTo('/empleado/turnos')">
-          <span class="nav-icon"><Users :size="17" /></span>
-          <transition name="fade"><span v-if="!isCollapsed" class="nav-text">Turnos</span></transition>
-          <span v-if="isActive('/empleado/turnos') && !isCollapsed" class="active-pill"></span>
-        </button>
-        <button class="nav-item" :class="{ active: isActive('/empleado/servicios') }" @click="goTo('/empleado/servicios')">
-          <span class="nav-icon"><BriefcaseBusiness :size="17" /></span>
-          <transition name="fade"><span v-if="!isCollapsed" class="nav-text">Servicios</span></transition>
-          <span v-if="isActive('/empleado/servicios') && !isCollapsed" class="active-pill"></span>
+        <button class="nav-item" :class="{ active: isActive('/empleado/historial') }" @click="goTo('/empleado/historial')">
+          <span class="nav-icon"><Banknote :size="17" /></span>
+          <transition name="fade"><span v-if="!isCollapsed" class="nav-text">Mi historial</span></transition>
+          <span v-if="isActive('/empleado/historial') && !isCollapsed" class="active-pill"></span>
         </button>
       </template>
 
@@ -91,10 +96,15 @@
           <transition name="fade"><span v-if="!isCollapsed" class="nav-text">Agenda</span></transition>
           <span v-if="isActive('/recepcionista/agenda') && !isCollapsed" class="active-pill"></span>
         </button>
-        <button class="nav-item" :class="{ active: isActive('/recepcionista/base-diaria') }" @click="goTo('/recepcionista/base-diaria')">
-          <span class="nav-icon"><BriefcaseBusiness :size="17" /></span>
-          <transition name="fade"><span v-if="!isCollapsed" class="nav-text">Base diaria</span></transition>
-          <span v-if="isActive('/recepcionista/base-diaria') && !isCollapsed" class="active-pill"></span>
+        <button class="nav-item" :class="{ active: isActive('/recepcionista/caja') }" @click="goTo('/recepcionista/caja')">
+          <span class="nav-icon"><Wallet :size="17" /></span>
+          <transition name="fade"><span v-if="!isCollapsed" class="nav-text">Caja</span></transition>
+          <span v-if="isActive('/recepcionista/caja') && !isCollapsed" class="active-pill"></span>
+        </button>
+        <button class="nav-item" :class="{ active: isActive('/recepcionista/pagos') }" @click="goTo('/recepcionista/pagos')">
+          <span class="nav-icon"><CreditCard :size="17" /></span>
+          <transition name="fade"><span v-if="!isCollapsed" class="nav-text">Pagos</span></transition>
+          <span v-if="isActive('/recepcionista/pagos') && !isCollapsed" class="active-pill"></span>
         </button>
       </template>
 
@@ -110,9 +120,9 @@
 
       <span v-if="!isCollapsed" class="section-label">Cuenta</span>
 
-      <button class="nav-item">
-        <span class="nav-icon"><Settings :size="17" /></span>
-        <transition name="fade"><span v-if="!isCollapsed" class="nav-text">Configuración</span></transition>
+      <button class="nav-item" @click="modalPerfilAbierto = true">
+        <span class="nav-icon"><User :size="17" /></span>
+        <transition name="fade"><span v-if="!isCollapsed" class="nav-text">Editar perfil</span></transition>
       </button>
 
       <button class="nav-item logout-item" @click="cerrarSesion">
@@ -122,10 +132,10 @@
 
       <!-- PROFILE -->
       <div class="profile-card">
-        <div class="profile-avatar">{{ roleConfig.avatar }}</div>
+        <div class="profile-avatar">{{ usuarioInicial }}</div>
         <transition name="fade">
           <div v-if="!isCollapsed" class="profile-info">
-            <span class="profile-name">{{ roleConfig.title }}</span>
+            <span class="profile-name">{{ usuarioNombre }}</span>
             <span class="profile-status">
               <span class="status-dot"></span>
               En línea
@@ -136,6 +146,8 @@
 
     </div>
 
+    <EditarPerfilModal v-if="modalPerfilAbierto" @cerrar="modalPerfilAbierto = false" />
+
   </aside>
 </template>
 
@@ -144,11 +156,19 @@ import {
   LayoutGrid,
   BriefcaseBusiness,
   Users,
-  Settings,
+  User,
   LogOut,
   PanelLeftClose,
-  PanelLeftOpen
+  PanelLeftOpen,
+  Wallet,
+  CreditCard,
+  BarChart3,
+  Banknote,
+  Building2,
+  CalendarDays
 } from 'lucide-vue-next'
+import EditarPerfilModal from './EditarPerfilModal.vue'
+import { useUsuarioStore } from '../stores/usuarioStore'
 
 export default {
   name: 'Sidebar',
@@ -164,15 +184,23 @@ export default {
     LayoutGrid,
     BriefcaseBusiness,
     Users,
-    Settings,
+    User,
     LogOut,
     PanelLeftClose,
-    PanelLeftOpen
+    PanelLeftOpen,
+    Wallet,
+    CreditCard,
+    BarChart3,
+    Banknote,
+    Building2,
+    CalendarDays,
+    EditarPerfilModal
   },
 
   data() {
     return {
-      isCollapsed: false
+      isCollapsed: false,
+      modalPerfilAbierto: false
     }
   },
 
@@ -188,6 +216,13 @@ export default {
         RECEPCIONISTA: { title: 'Recepción',       subtitle: 'Panel operativo',    avatar: 'R' }
       }
       return roles[this.rol] || roles.CLIENTE
+    },
+    usuarioNombre() {
+      const nombre = useUsuarioStore().nombreCompleto
+      return nombre || this.roleConfig.title
+    },
+    usuarioInicial() {
+      return (this.usuarioNombre[0] || '?').toUpperCase()
     }
   },
 
@@ -214,6 +249,7 @@ export default {
 
   mounted() {
     window.addEventListener('resize', this.handleResize)
+    useUsuarioStore().init()
   },
   beforeUnmount() {
     window.removeEventListener('resize', this.handleResize)

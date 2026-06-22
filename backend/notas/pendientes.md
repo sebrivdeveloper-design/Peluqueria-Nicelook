@@ -1,0 +1,1 @@
+Al eliminar una cita queda el bloque del servicio eliminado, ese bloque no se integra con otros bloques disponibles y no permite agregar un servicio de mas tiempo que el servicio anterior

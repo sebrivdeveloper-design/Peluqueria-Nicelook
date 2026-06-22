@@ -3,6 +3,7 @@ package co.edu.univalle.NiceLook.Segurity;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -18,10 +19,13 @@ public class SecurityConfig {
     @Autowired
     private JwtFilter jwtFilter;
 
+    @Value("${app.frontend.url:http://localhost:5173}")
+    private String frontendUrl;
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:5173"));
+        config.setAllowedOrigins(List.of(frontendUrl));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
@@ -39,18 +43,33 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(auth -> auth
 
-                // 🔥 PÚBLICOS
+                // PÚBLICOS
                 .requestMatchers("/auth/**").permitAll()
-                .requestMatchers("/api/servicios/**").permitAll()
+                .requestMatchers("/api/public/**").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/servicios/**").permitAll()
                 .requestMatchers("/api/categorias/categoria/**").permitAll()
                 .requestMatchers("/api/citas/**").permitAll()
-                
-                .requestMatchers("/api/empleados/**").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/empleados/**").permitAll()
 
-                // 🔒 PROTEGIDOS
+                // Mutaciones de empleados solo ADMIN (HU-15/16/37)
+                .requestMatchers("/api/empleados/**").hasRole("ADMIN")
+                // Crear/editar/desactivar servicios solo ADMIN
+                .requestMatchers("/api/servicios/**").hasRole("ADMIN")
+
+                // PROTEGIDOS
+                .requestMatchers("/api/usuarios/me").authenticated()
                 .requestMatchers("/api/categorias/**").hasRole("ADMIN")
                 .requestMatchers("/api/clientes/**").hasAnyRole("RECEPCIONISTA", "ADMIN")
                 .requestMatchers("/api/disponibilidad/**").hasAnyRole("EMPLEADO", "ADMIN", "RECEPCIONISTA")
+                .requestMatchers("/api/caja/**").hasAnyRole("RECEPCIONISTA", "ADMIN")
+                .requestMatchers("/api/pagos/**").hasAnyRole("RECEPCIONISTA", "ADMIN")
+                .requestMatchers("/api/pagos-empleados/**").hasRole("ADMIN")
+                .requestMatchers("/api/arrendamientos/**").hasRole("ADMIN")
+                // Historial por estilista: el estilista ve solo el suyo (/mio); ADMIN ve cualquiera
+                .requestMatchers("/api/historial-estilistas/mio").hasAnyRole("EMPLEADO", "ADMIN")
+                .requestMatchers("/api/historial-estilistas/**").hasRole("ADMIN")
+                .requestMatchers("/api/reportes/**").hasRole("ADMIN")
+                .requestMatchers("/api/notificaciones/**").hasAnyRole("ADMIN", "RECEPCIONISTA")
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

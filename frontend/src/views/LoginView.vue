@@ -43,17 +43,36 @@
 
     </div>
 
+    <AppToast
+      :visible="toast.visible"
+      :type="toast.type"
+      :title="toast.title"
+      :message="toast.message"
+      @close="toast.visible = false"
+    />
+
   </div>
 </template>
 
 <script setup>
-import { onMounted, ref } from "vue";
+import { onMounted, ref, reactive } from "vue";
 import axios from "axios";
 import { useRouter } from "vue-router";
+import AppToast from "@/components/AppToast.vue";
 
 const router = useRouter();
 
 const loading = ref(false);
+
+const toast = reactive({ visible: false, type: 'info', title: '', message: '' });
+
+function mostrarToast(type, title, message) {
+  toast.type = type;
+  toast.title = title;
+  toast.message = message;
+  toast.visible = true;
+  setTimeout(() => { toast.visible = false }, 3500);
+}
 
 const CLIENT_ID =
   "1055219399395-41dgigof08dichfdip9uf0f5affo5vcp.apps.googleusercontent.com";
@@ -73,7 +92,7 @@ window.handleCredentialResponse = async (response) => {
     const tokenGoogle = response.credential;
 
     const res = await axios.post(
-      "http://localhost:8080/auth/google",
+      `${import.meta.env.VITE_API_URL.replace('/api', '')}/auth/google`,
       {
         token: tokenGoogle
       }
@@ -117,7 +136,8 @@ window.handleCredentialResponse = async (response) => {
       }
 
       else {
-        router.push("/cliente");
+        // El cliente ya no usa panel con login: va a la landing pública de reservas.
+        router.push("/reservar");
       }
 
       loading.value = false;
@@ -132,7 +152,10 @@ window.handleCredentialResponse = async (response) => {
 
     loading.value = false;
 
-    alert("Error iniciando sesión");
+    const msg = typeof error.response?.data === 'string'
+      ? error.response.data
+      : 'No se pudo iniciar sesión. Intenta de nuevo.';
+    mostrarToast('error', 'Error de acceso', msg);
 
   }
 
@@ -146,15 +169,11 @@ onMounted(() => {
 
   localStorage.removeItem("token");
 
-  if (!window.googleInitialized) {
-
+  // Inicializar siempre: otras vistas (reserva del cliente) registran su propio callback
   google.accounts.id.initialize({
     client_id: CLIENT_ID,
     callback: handleCredentialResponse
   })
-
-  window.googleInitialized = true
-}
 
   google.accounts.id.renderButton(
     document.querySelector(".g_id_signin"),
@@ -203,7 +222,7 @@ onMounted(() => {
   display: flex;
   min-height: 100dvh;
   overflow: hidden;
-  font-family: 'Segoe UI', sans-serif;
+  font-family: 'Manrope', sans-serif;
 }
 
 /* ==========================================

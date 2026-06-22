@@ -1,35 +1,22 @@
-import axios from 'axios'
-
-const API = 'http://localhost:8080/api/categorias'
-
-// 🔥 función para obtener headers con token
-function getAuthHeader() {
-  const token = localStorage.getItem("token")
-
-  return {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  }
-}
+import api from './axiosInstance'
 
 export const getCategoriasAdmin = () =>
-  axios.get(`${API}/admin`, getAuthHeader())
+  api.get('/categorias/admin')
 
 export const getCategorias = () =>
-  axios.get(API, getAuthHeader())
+  api.get('/categorias')
 
 export const crearCategoria = (data) =>
-  axios.post(API, data, getAuthHeader())
+  api.post('/categorias', data)
 
 export const actualizarCategoria = (idCategoria, data) =>
-  axios.put(`${API}/${idCategoria}`, data, getAuthHeader())
+  api.put(`/categorias/${idCategoria}`, data)
 
 export const deshabilitarCategoria = (idCategoria) =>
-  axios.delete(`${API}/${idCategoria}`, getAuthHeader())
+  api.delete(`/categorias/${idCategoria}`)
 
 export const activarCategoria = (idCategoria) =>
-  axios.put(`${API}/activar/${idCategoria}`, {}, getAuthHeader())
+  api.put(`/categorias/activar/${idCategoria}`, {})
 
 export const getCategoriaById = (idCategoria) =>
-  axios.get(`${API}/${idCategoria}`, getAuthHeader())
+  api.get(`/categorias/${idCategoria}`)

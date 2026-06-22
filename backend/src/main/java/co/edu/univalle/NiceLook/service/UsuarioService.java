@@ -16,4 +16,8 @@ public class UsuarioService {
     public Usuario buscarPorCorreo(String correo) {
         return usuarioRepository.findByCorreo(correo).orElse(null);
     }
+
+    public Usuario guardar(Usuario usuario) {
+        return usuarioRepository.save(usuario);
+    }
 }

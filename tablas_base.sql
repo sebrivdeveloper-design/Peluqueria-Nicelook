@@ -85,7 +85,7 @@ CREATE TABLE cita (
   hora_inicio TIME NOT NULL,
   hora_fin TIME NOT NULL,
   estado_cita TEXT DEFAULT 'pendiente'
-    CHECK (estado_cita IN ('pendiente','confirmada','cancelada','completada','no_asistio')),
+    CHECK (estado_cita IN ('pendiente','confirmada','cancelada','completada','no_asistio','finalizada')),
   observaciones TEXT,
   fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (id_cliente) REFERENCES cliente(id_cliente),
@@ -136,7 +136,46 @@ CREATE TABLE pago (
   metodo_pago TEXT CHECK (metodo_pago IN ('efectivo','tarjeta','transferencia','billetera_digital')),
   referencia VARCHAR(100),
   estado_pago TEXT DEFAULT 'pendiente'
-    CHECK (estado_pago IN ('pendiente','pagado','anulado','reembolsado')),
+    CHECK (estado_pago IN ('pendiente','pagado','anulado','reembolsado','completado')),
   fecha_pago TIMESTAMP,
   FOREIGN KEY (id_cita) REFERENCES cita(id_cita) ON DELETE CASCADE
 );
+
+-- ========================================================
+-- V2 · CAMBIO 1 — Estilistas con comisión por arrendamiento
+-- Estas sentencias las crea/aplica Hibernate automáticamente
+-- (spring.jpa.hibernate.ddl-auto=update). Se documentan aquí
+-- como referencia del esquema resultante.
+-- ========================================================
+
+-- Tarifa de arrendamiento (uso del salón) por servicio realizado.
+-- Resolución de más específico a más general:
+--   1) (id_empleado, id_servicio)  2) (id_empleado, NULL)  3) (NULL, NULL) = valor por defecto.
+CREATE TABLE arrendamiento (
+  id_arrendamiento SERIAL PRIMARY KEY,
+  id_empleado INTEGER,                  -- NULL = aplica a todos (valor por defecto)
+  id_servicio INTEGER,                  -- NULL = tarifa general del estilista
+  valor DECIMAL(10,2) NOT NULL,
+  fecha_actualizacion TIMESTAMP NOT NULL,
+  FOREIGN KEY (id_empleado) REFERENCES empleado(id_empleado),
+  FOREIGN KEY (id_servicio) REFERENCES servicio(id_servicio)
+);
+
+-- Comisión CONGELADA en la cita al momento de cobrar (histórica e inmutable).
+ALTER TABLE cita ADD COLUMN valor_servicio DECIMAL(10,2);
+ALTER TABLE cita ADD COLUMN valor_arrendamiento DECIMAL(10,2);
+ALTER TABLE cita ADD COLUMN valor_a_pagar_estilista DECIMAL(10,2);
+ALTER TABLE cita ADD COLUMN valor_para_salon DECIMAL(10,2);
+
+-- empleado.salario queda DEPRECADO (modelo de salario fijo eliminado). Se conserva
+-- la columna para no perder datos históricos, pero ya no se usa ni se muestra.
+
+-- ========================================================
+-- V2 · CAMBIO 4 — Landing pública de reservas
+-- No requiere tablas nuevas (el OTP vive en memoria, ver OtpService).
+-- RECOMENDADO: permitir nulos en los datos de cliente que la landing no captura,
+-- para no depender de valores centinela en reservas web.
+-- (Hibernate ddl-auto=update NO relaja NOT NULL por sí solo; ejecutar manualmente.)
+-- ========================================================
+ALTER TABLE cliente ALTER COLUMN genero DROP NOT NULL;
+ALTER TABLE cliente ALTER COLUMN fecha_nacimiento DROP NOT NULL;
