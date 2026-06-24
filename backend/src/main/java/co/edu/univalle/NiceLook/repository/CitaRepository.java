@@ -56,4 +56,23 @@ public interface CitaRepository extends JpaRepository<Cita, Integer> {
 
         // 🔥 HISTORIAL
     List<Cita> findByCliente_IdCliente(Integer idCliente);
+    // Citas de un cliente ordenadas por fecha desc
+    @Query("SELECT c FROM Cita c WHERE c.cliente.idCliente = :idCliente ORDER BY c.fechaCita DESC, c.horaInicio DESC")
+    List<Cita> findByClienteOrdenadas(@Param("idCliente") Integer idCliente);
+
+    // Citas activas (no canceladas) de un día
+    @Query("SELECT c FROM Cita c WHERE c.fechaCita = :fecha AND c.estadoCita != 'cancelada' ORDER BY c.horaInicio ASC")
+    List<Cita> findCitasActivasPorFecha(@Param("fecha") LocalDate fecha);
+
+    // Citas finalizadas de un empleado entre dos fechas
+    @Query("SELECT c FROM Cita c WHERE c.empleado.idEmpleado = :idEmpleado AND c.fechaCita BETWEEN :inicio AND :fin AND c.estadoCita = 'finalizada'")
+    List<Cita> findFinalizadasPorEmpleadoEntre(@Param("idEmpleado") Integer idEmpleado, @Param("inicio") LocalDate inicio, @Param("fin") LocalDate fin);
+
+    // Citas finalizadas entre dos fechas
+    @Query("SELECT c FROM Cita c WHERE c.fechaCita BETWEEN :inicio AND :fin AND c.estadoCita = 'finalizada'")
+    List<Cita> findFinalizadasEntre(@Param("inicio") LocalDate inicio, @Param("fin") LocalDate fin);
+
+    // Citas finalizadas en una fecha
+    @Query("SELECT c FROM Cita c WHERE c.fechaCita = :fecha AND c.estadoCita = 'finalizada'")
+    List<Cita> findFinalizadasPorFecha(@Param("fecha") LocalDate fecha);
 }

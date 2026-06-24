@@ -5,7 +5,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-
+import java.util.HashMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -148,18 +148,27 @@ public class CitaController {
     }
 
     // PUT finalizar cita (barbero)
-    @PutMapping("/{id}/finalizar")
-    public ResponseEntity<?> finalizarCita(@PathVariable Integer id) {
+@PutMapping("/{id}/finalizar")
+public ResponseEntity<?> finalizarCita(@PathVariable Integer id) {
 
-        Cita cita = citaRepository.findById(id).orElse(null);
+    Cita cita = citaRepository.findById(id).orElse(null);
 
-        if (cita == null) return ResponseEntity.notFound().build();
+    if (cita == null) return ResponseEntity.notFound().build();
 
+    String estado = cita.getEstadoCita().toLowerCase();
+    if (!estado.equals("pendiente") && !estado.equals("confirmada")) {
         return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(e.getMessage());
-        }
+                .status(HttpStatus.CONFLICT)
+                .body("Solo se pueden finalizar citas pendientes o confirmadas. Estado actual: "
+                        + cita.getEstadoCita());
     }
+
+    cita.setEstadoCita("finalizada");
+    citaRepository.save(cita);
+
+    return ResponseEntity.ok("Cita finalizada. Quedó disponible para registro de pago.");
+}
+    
 
 // PUT cancelar cita
     @PutMapping("/{idCita}/cancelar")
